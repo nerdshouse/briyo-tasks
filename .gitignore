@@ -10,3 +10,5 @@ Thumbs.db
 __pycache__
 functions/node_modules
 functions/.env
+.vercel
+.env*
