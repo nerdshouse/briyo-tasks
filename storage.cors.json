@@ -1,0 +1,22 @@
+[
+  {
+    "origin": [
+      "http://localhost:5173",
+      "http://localhost:3000",
+      "https://tasks.whiterock.co.in",
+      "https://whiterock.co.in"
+    ],
+    "method": ["GET", "HEAD", "PUT", "POST", "DELETE", "OPTIONS"],
+    "maxAgeSeconds": 3600,
+    "responseHeader": [
+      "Content-Type",
+      "Authorization",
+      "Content-Length",
+      "User-Agent",
+      "X-Requested-With",
+      "Accept",
+      "Origin",
+      "x-firebase-storage-version"
+    ]
+  }
+]

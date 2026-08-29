@@ -1,0 +1,1582 @@
+/*
+ * Developed by Nerdshouse Technologies LLP — https://nerdshouse.com
+ * © 2026 WhiteRock (Royal Enterprise). All rights reserved.
+ *
+ * Unauthorized copying, modification, or distribution is strictly prohibited.
+ */
+import {
+  db,
+  COLLECTIONS,
+  timestampToISO,
+  isoToTimestamp,
+} from '../lib/firebase';
+import bcrypt from 'bcryptjs';
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  getCountFromServer,
+  addDoc,
+  updateDoc,
+  deleteField,
+  deleteDoc,
+  query,
+  where,
+  orderBy,
+  limit,
+  startAfter,
+  QueryDocumentSnapshot,
+  FirestoreError,
+  writeBatch,
+} from 'firebase/firestore';
+import {
+  User,
+  Task,
+  TaskStatus,
+  // TaskPriority,
+  Holiday,
+  Absence,
+  RemovalRequest,
+  AuditStatus,
+  HelpTicket,
+  HelpTicketStatus,
+  HelpTicketProposedSolution,
+  HelpTicketRating,
+  TaskLogAction,
+} from '../types';
+import { getTodayIST, resolveInitialTaskStatus } from '../lib/dates';
+
+/** Actor descriptor passed into audit-logging mutations. */
+type Actor = { id: string; name: string; role: string };
+
+/**
+ * Internal fire-and-forget audit log writer.
+ * Never throws — a logging failure must never block the real operation.
+ */
+const writeTaskLog = (
+  action: TaskLogAction,
+  taskId: string,
+  taskTitle: string,
+  actor: Actor,
+  extra?: {
+    changes?: Record<string, { from: unknown; to: unknown }>;
+    deleted_snapshot?: Record<string, unknown>;
+    note?: string;
+  }
+): void => {
+  addDoc(collection(db, COLLECTIONS.TASK_LOGS), {
+    task_id: taskId,
+    task_title: taskTitle,
+    action,
+    actor_id: actor.id,
+    actor_name: actor.name,
+    actor_role: actor.role,
+    timestamp: isoToTimestamp(new Date().toISOString()),
+    ...(extra?.changes && { changes: extra.changes }),
+    ...(extra?.deleted_snapshot && { deleted_snapshot: extra.deleted_snapshot }),
+    ...(extra?.note && { note: extra.note }),
+  }).catch((err) => console.error('[TaskLog] write failed:', err));
+};
+
+/** Debounce in-flight scheduled→pending promotions per task id. */
+const activatingScheduledTaskIds = new Set<string>();
+
+const promoteScheduledTaskIfDue = (task: Task): Task => {
+  if (task.status !== 'scheduled' || !task.start_date) return task;
+  const today = getTodayIST();
+  if (task.start_date > today) return task;
+
+  if (!activatingScheduledTaskIds.has(task.id)) {
+    activatingScheduledTaskIds.add(task.id);
+    const now = new Date().toISOString();
+    updateDoc(doc(db, COLLECTIONS.TASKS, task.id), {
+      status: 'pending',
+      updated_at: isoToTimestamp(now),
+    }).catch((err) => {
+      console.error(`Failed to activate scheduled task ${task.id}:`, err);
+      activatingScheduledTaskIds.delete(task.id);
+    });
+  }
+
+  return { ...task, status: 'pending' };
+};
+
+const docToTask = (d: any): Task => {
+  const data = d.data();
+  const task: Task = {
+    id: d.id,
+    title: data.title || '',
+    description: data.description || '',
+    start_date: data.start_date,
+    due_date: data.due_date || '',
+    priority: data.priority || 'medium',
+    status: (data.status as TaskStatus) || 'pending',
+    recurring: data.recurring || 'none',
+    attachment_required: data.attachment_required || false,
+    attachment_type: data.attachment_type,
+    attachment_description: data.attachment_description,
+    recurring_days: data.recurring_days,
+    assigned_to_id: data.assigned_to_id || '',
+    assigned_to_name: data.assigned_to_name || '',
+    assigned_to_city: data.assigned_to_city,
+    assigned_by_id: data.assigned_by_id || '',
+    assigned_by_name: data.assigned_by_name || '',
+    verification_required: data.verification_required === true,
+    verifier_id: data.verifier_id,
+    verifier_name: data.verifier_name,
+    created_at: timestampToISO(data.created_at),
+    updated_at: timestampToISO(data.updated_at),
+    completed_at: data.completed_at ? timestampToISO(data.completed_at) : undefined,
+    is_holiday: data.is_holiday,
+    is_recurring_master: data.is_recurring_master === true,
+    parent_task_id: data.parent_task_id,
+    audit_status: data.audit_status,
+    audited_at: data.audited_at ? timestampToISO(data.audited_at) : undefined,
+    audited_by: data.audited_by,
+    attachment_url: data.attachment_url,
+    attachment_urls: data.attachment_urls,
+    attachment_text: data.attachment_text,
+    assignee_deleted: data.assignee_deleted === true,
+    verified_at: data.verified_at ? timestampToISO(data.verified_at) : undefined,
+    verified_by: data.verified_by,
+    verification_rejection_comment: data.verification_rejection_comment,
+    verification_rejected_at:
+      data.verification_rejected_at == null
+        ? undefined
+        : typeof data.verification_rejected_at === 'string'
+          ? data.verification_rejected_at
+          : timestampToISO(data.verification_rejected_at),
+    verification_rejected_by: data.verification_rejected_by,
+    doer_remark: data.doer_remark,
+    audit_sop_text: data.audit_sop_text,
+    audit_sop_updated_by: data.audit_sop_updated_by,
+    audit_sop_updated_at: data.audit_sop_updated_at ? timestampToISO(data.audit_sop_updated_at) : undefined,
+    audit_sop_attachments: data.audit_sop_attachments,
+    audit_sop_links: data.audit_sop_links,
+  };
+  return promoteScheduledTaskIfDue(task);
+};
+
+const docToHelpTicket = (d: any): HelpTicket => {
+  const data = d.data();
+  return {
+    id: d.id,
+    title: data.title || '',
+    description: data.description || '',
+    doer_id: data.doer_id || '',
+    doer_name: data.doer_name || '',
+    helper_id: data.helper_id || '',
+    helper_name: data.helper_name || '',
+    status: (data.status as HelpTicketStatus) || 'open',
+    proposed_solutions: Array.isArray(data.proposed_solutions) ? data.proposed_solutions : undefined,
+    helper_note: data.helper_note || undefined,
+    created_at: timestampToISO(data.created_at),
+    updated_at: timestampToISO(data.updated_at),
+    resolved_at: data.resolved_at ? timestampToISO(data.resolved_at) : undefined,
+    rated_at: data.rated_at ? timestampToISO(data.rated_at) : undefined,
+    rating: data.rating || undefined,
+  };
+};
+
+
+
+export const api = {
+  // --- Auth ---
+  login: async (email: string, password: string): Promise<User> => {
+    const usersRef = collection(db, COLLECTIONS.USERS);
+    const q = query(usersRef, where('email', '==', email.toLowerCase().trim()));
+    const snap = await getDocs(q);
+    if (snap.empty) throw new Error('Invalid email or password');
+    const doc = snap.docs[0];
+    const data = doc.data();
+
+    let isMatch = false;
+    // Check if the stored password looks like a bcrypt hash (or $2b$ / $2y$)
+    if (data.password && typeof data.password === 'string' && data.password.startsWith('$2')) {
+      isMatch = bcrypt.compareSync(password, data.password);
+    } else {
+      // Fallback for plaintext (legacy support)
+      isMatch = data.password === password;
+    }
+
+    if (!isMatch) throw new Error('Invalid email or password');
+    const { password: _, ...u } = { ...data, id: doc.id } as Record<string, any>;
+    return u as User;
+  },
+
+  // --- Users ---
+  getUsers: async (): Promise<User[]> => {
+    const snap = await getDocs(collection(db, COLLECTIONS.USERS));
+    return snap.docs.map((d) => {
+      const data = d.data();
+      const { password, ...u } = { ...data, id: d.id } as Record<string, any>;
+      return u as User;
+    });
+  },
+
+  createUser: async (u: Omit<User, 'id'> & { password: string }): Promise<User> => {
+    const hashedPassword = bcrypt.hashSync(u.password, 10);
+    const ref = await addDoc(collection(db, COLLECTIONS.USERS), {
+      ...u,
+      password: hashedPassword,
+      approved: true,
+      created_at: isoToTimestamp(new Date().toISOString()),
+    });
+    const { password, ...safe } = u;
+    return { ...safe, id: ref.id } as User;
+  },
+
+  deleteUser: async (id: string): Promise<void> => {
+    await deleteDoc(doc(db, COLLECTIONS.USERS, id));
+  },
+
+  getMemberDeletionImpact: async (userId: string): Promise<{
+    assignedToCount: number;
+    assignedByCount: number;
+    totalUniqueTasksCount: number;
+  }> => {
+    const tasksRef = collection(db, COLLECTIONS.TASKS);
+    const [assignedToSnap, assignedBySnap] = await Promise.all([
+      getDocs(query(tasksRef, where('assigned_to_id', '==', userId))),
+      getDocs(query(tasksRef, where('assigned_by_id', '==', userId))),
+    ]);
+    const uniqueIds = new Set<string>();
+    assignedToSnap.forEach((d) => uniqueIds.add(d.id));
+    assignedBySnap.forEach((d) => uniqueIds.add(d.id));
+
+    return {
+      assignedToCount: assignedToSnap.size,
+      assignedByCount: assignedBySnap.size,
+      totalUniqueTasksCount: uniqueIds.size,
+    };
+  },
+
+  deleteUserAndAssociatedTasks: async (userId: string): Promise<{ deletedTasksCount: number }> => {
+    const tasksRef = collection(db, COLLECTIONS.TASKS);
+    const [assignedToSnap, assignedBySnap] = await Promise.all([
+      getDocs(query(tasksRef, where('assigned_to_id', '==', userId))),
+      getDocs(query(tasksRef, where('assigned_by_id', '==', userId))),
+    ]);
+
+    const tasksToDelete = new Map<string, any>();
+    assignedToSnap.forEach((d) => tasksToDelete.set(d.id, d.data()));
+    assignedBySnap.forEach((d) => tasksToDelete.set(d.id, d.data()));
+
+    // Also delete any recurring masters assigned by or to this user
+    const recurringRef = collection(db, COLLECTIONS.RECURRING_TASKS);
+    const [recToSnap, recBySnap] = await Promise.all([
+      getDocs(query(recurringRef, where('assigned_to_id', '==', userId))),
+      getDocs(query(recurringRef, where('assigned_by_id', '==', userId))),
+    ]);
+    
+    const recurringToDelete = new Set<string>();
+    recToSnap.forEach((d) => recurringToDelete.add(d.id));
+    recBySnap.forEach((d) => recurringToDelete.add(d.id));
+
+    for (const recId of recurringToDelete) {
+      await deleteDoc(doc(db, COLLECTIONS.RECURRING_TASKS, recId));
+    }
+
+    // Safeguard other doers: unlink verifier_id == userId on tasks belonging to other members
+    const verifierSnap = await getDocs(query(tasksRef, where('verifier_id', '==', userId)));
+    for (const docSnap of verifierSnap.docs) {
+      if (!tasksToDelete.has(docSnap.id)) {
+        const data = docSnap.data();
+        const updates: Record<string, any> = {
+          verification_required: false,
+          verifier_id: null,
+          verifier_name: null,
+          updated_at: isoToTimestamp(new Date().toISOString()),
+        };
+        if (data.status === 'pending_verification') {
+          updates.status = 'completed';
+          updates.completed_at = timestampToISO(new Date().toISOString());
+        }
+        await updateDoc(doc(db, COLLECTIONS.TASKS, docSnap.id), updates);
+      }
+    }
+
+    // Clean up removal requests
+    const allReqsSnap = await getDocs(collection(db, COLLECTIONS.REMOVAL_REQUESTS));
+    const reqIdsToDelete = new Set<string>();
+    allReqsSnap.forEach((d) => {
+      const data = d.data();
+      if (data.requested_by_id === userId || (data.task_id && tasksToDelete.has(data.task_id))) {
+        reqIdsToDelete.add(d.id);
+      }
+    });
+
+    // Clean up absences
+    const absSnap = await getDocs(
+      query(collection(db, COLLECTIONS.ABSENCES), where('user_id', '==', userId))
+    );
+    const absIdsToDelete = absSnap.docs.map((d) => d.id);
+
+    // Batch delete all matched documents in chunks of 450
+    const taskDocRefs = Array.from(tasksToDelete.keys()).map((id) => doc(db, COLLECTIONS.TASKS, id));
+    const reqDocRefs = Array.from(reqIdsToDelete).map((id) =>
+      doc(db, COLLECTIONS.REMOVAL_REQUESTS, id)
+    );
+    const absDocRefs = absIdsToDelete.map((id) => doc(db, COLLECTIONS.ABSENCES, id));
+    const userDocRef = doc(db, COLLECTIONS.USERS, userId);
+
+    const allRefsToDelete = [...taskDocRefs, ...reqDocRefs, ...absDocRefs, userDocRef];
+    const BATCH_SIZE = 450;
+    for (let i = 0; i < allRefsToDelete.length; i += BATCH_SIZE) {
+      const chunk = allRefsToDelete.slice(i, i + BATCH_SIZE);
+      const batch = writeBatch(db);
+      chunk.forEach((ref) => batch.delete(ref));
+      await batch.commit();
+    }
+
+    return { deletedTasksCount: tasksToDelete.size };
+  },
+
+  updateUser: async (id: string, updates: Partial<User>): Promise<void> => {
+    await updateDoc(doc(db, COLLECTIONS.USERS, id), {
+      ...updates,
+      updated_at: isoToTimestamp(new Date().toISOString()),
+    });
+  },
+
+  // --- Tasks ---
+  getTasks: async (filters?: {
+    assignedTo?: string;
+    assignedBy?: string;
+    status?: TaskStatus;
+  }): Promise<Task[]> => {
+    const tasksRef = collection(db, COLLECTIONS.TASKS);
+    let q = query(tasksRef, orderBy('updated_at', 'desc'));
+    if (filters?.assignedTo) {
+      q = query(tasksRef, where('assigned_to_id', '==', filters.assignedTo), orderBy('updated_at', 'desc'));
+    } else if (filters?.assignedBy) {
+      q = query(tasksRef, where('assigned_by_id', '==', filters.assignedBy), orderBy('updated_at', 'desc'));
+    } else if (filters?.status) {
+      q = query(tasksRef, where('status', '==', filters.status), orderBy('updated_at', 'desc'));
+    }
+    const snap = await getDocs(q);
+    let tasks = snap.docs.map((d) => docToTask(d));
+    if (filters?.assignedTo && filters?.status) {
+      tasks = tasks.filter((t) => t.status === filters.status);
+    }
+    return tasks;
+  },
+
+  getTaskById: async (id: string): Promise<Task | null> => {
+    let snap = await getDoc(doc(db, COLLECTIONS.TASKS, id));
+    if (snap.exists()) return docToTask(snap);
+    
+    snap = await getDoc(doc(db, COLLECTIONS.RECURRING_TASKS, id));
+    return snap.exists() ? docToTask(snap) : null;
+  },
+
+  /** Recent completed tasks for sidebar (e.g. limit 10). Requires Firestore index: status asc, completed_at desc. */
+  getRecentCompletedTasks: async (limitCount: number = 10): Promise<Task[]> => {
+    const tasksRef = collection(db, COLLECTIONS.TASKS);
+    const q = query(
+      tasksRef,
+      where('status', '==', 'completed'),
+      orderBy('completed_at', 'desc'),
+      limit(limitCount)
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => docToTask(d));
+  },
+
+  /** Overdue tasks (server-side). Optional assignedToId for doer. Requires composite index. */
+  getOverdueTasks: async (
+    opts: { assignedToId?: string; limitCount?: number } = {}
+  ): Promise<Task[]> => {
+    const { assignedToId, limitCount = 50 } = opts;
+    const tasksRef = collection(db, COLLECTIONS.TASKS);
+    const today = getTodayIST();
+    let q = query(
+      tasksRef,
+      where('status', 'in', ['pending', 'overdue', 'pending_verification', 'correction_required']),
+      where('due_date', '<', today),
+      orderBy('due_date', 'asc'),
+      limit(limitCount)
+    );
+    if (assignedToId) {
+      q = query(
+        tasksRef,
+        where('assigned_to_id', '==', assignedToId),
+        where('status', 'in', ['pending', 'overdue', 'pending_verification', 'correction_required']),
+        where('due_date', '<', today),
+        orderBy('due_date', 'asc'),
+        limit(limitCount)
+      );
+    }
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => docToTask(d));
+  },
+
+  /** Completed tasks with required attachment for Bogus Attachment page. */
+  getBogusAttachmentTasks: async (limitCount: number = 50): Promise<Task[]> => {
+    const tasksRef = collection(db, COLLECTIONS.TASKS);
+    const q = query(
+      tasksRef,
+      where('status', '==', 'completed'),
+      where('attachment_required', '==', true),
+      orderBy('updated_at', 'desc'),
+      limit(limitCount)
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => docToTask(d));
+  },
+
+  /** Paginated tasks. Returns tasks and lastDoc for next page. */
+  getTasksPaginated: async (opts: {
+    pageSize: number;
+    startAfterDoc?: QueryDocumentSnapshot | null;
+    assignedTo?: string;
+    assignedBy?: string;
+    status?: TaskStatus;
+    statusIn?: TaskStatus[];
+    recurring?: string;
+    dueDateFrom?: string;
+    dueDateTo?: string;
+    verifierId?: string;
+    sortBy?: 'updated_at' | 'start_date' | 'due_date' | 'completed_at';
+    sortDirection?: 'asc' | 'desc';
+  }): Promise<{ tasks: Task[]; lastDoc: QueryDocumentSnapshot | null }> => {
+    const {
+      pageSize,
+      startAfterDoc,
+      assignedTo,
+      assignedBy,
+      status,
+      statusIn,
+      recurring,
+      dueDateFrom,
+      dueDateTo,
+      verifierId,
+      sortBy,
+      sortDirection,
+    } = opts;
+    const tasksRef = collection(db, COLLECTIONS.TASKS);
+    const hasDueDateRange = Boolean(dueDateFrom || dueDateTo);
+    const effectiveSortBy = sortBy || (hasDueDateRange ? 'due_date' : 'updated_at');
+    const effectiveSortDirection = sortDirection || 'desc';
+    const constraints: any[] = [
+      orderBy(effectiveSortBy, effectiveSortDirection),
+    ];
+    if (assignedTo) {
+      constraints.unshift(where('assigned_to_id', '==', assignedTo));
+    }
+    if (assignedBy) {
+      constraints.unshift(where('assigned_by_id', '==', assignedBy));
+    }
+    if (verifierId) {
+      constraints.unshift(where('verifier_id', '==', verifierId));
+    }
+    if (status) {
+      constraints.unshift(where('status', '==', status));
+    }
+    if (statusIn && statusIn.length > 0) {
+      constraints.unshift(where('status', 'in', statusIn));
+    }
+    if (recurring) {
+      constraints.unshift(where('recurring', '==', recurring));
+    }
+    if (dueDateFrom) {
+      constraints.unshift(where('due_date', '>=', dueDateFrom));
+    }
+    if (dueDateTo) {
+      constraints.unshift(where('due_date', '<=', dueDateTo));
+    }
+    try {
+      const fetchedTasks: Task[] = [];
+      let currentCursor = startAfterDoc;
+      let finalLastDoc: QueryDocumentSnapshot | null = null;
+
+      while (fetchedTasks.length < pageSize) {
+        const fetchConstraints = [...constraints];
+        if (currentCursor) {
+          fetchConstraints.push(startAfter(currentCursor));
+        }
+        fetchConstraints.push(limit(pageSize));
+
+        const q = query(tasksRef, ...fetchConstraints);
+        const snap = await getDocs(q);
+
+        if (snap.empty) break;
+
+        for (const docSnap of snap.docs) {
+          const task = docToTask(docSnap);
+          fetchedTasks.push(task);
+          finalLastDoc = docSnap;
+          if (fetchedTasks.length === pageSize) {
+            break;
+          }
+          currentCursor = docSnap;
+        }
+
+        if (snap.docs.length < pageSize) {
+          break;
+        }
+      }
+
+      const lastDoc = fetchedTasks.length === pageSize ? finalLastDoc : null;
+      return { tasks: fetchedTasks, lastDoc };
+    } catch (error) {
+      const firestoreError = error as FirestoreError;
+      const isFallbackError = firestoreError?.code === 'failed-precondition' || firestoreError?.code === 'invalid-argument';
+      if (!isFallbackError) throw error;
+
+      if (firestoreError?.code === 'failed-precondition') {
+        console.warn('⚠️ FIRESTORE INDEX MISSING ⚠️');
+        console.warn('The app is falling back to client-side filtering which is slower. To fix this and make it lightning fast, open your browser console, find the Firebase error below, and click the link to create the index:');
+        console.warn(firestoreError.message);
+      }
+
+      // Fallback when composite index is missing or multi-inequality is rejected:
+      // Query by ALL equality fields to reduce payload as much as natively possible,
+      // then filter ranges and sort client-side.
+      const fallbackConstraints: any[] = [];
+      if (assignedTo) {
+        fallbackConstraints.push(where('assigned_to_id', '==', assignedTo));
+      } else if (assignedBy) {
+        fallbackConstraints.push(where('assigned_by_id', '==', assignedBy));
+      } else if (verifierId) {
+        fallbackConstraints.push(where('verifier_id', '==', verifierId));
+      } else if (status) {
+        fallbackConstraints.push(where('status', '==', status));
+      }
+
+      const fallbackQuery =
+        fallbackConstraints.length > 0
+          ? query(tasksRef, ...fallbackConstraints)
+          : query(tasksRef);
+
+      const fallbackSnap = await getDocs(fallbackQuery);
+      let rawTasks = fallbackSnap.docs.map((d) => docToTask(d));
+
+      if (assignedTo) rawTasks = rawTasks.filter((t) => t.assigned_to_id === assignedTo);
+      if (assignedBy) rawTasks = rawTasks.filter((t) => t.assigned_by_id === assignedBy);
+      if (verifierId) rawTasks = rawTasks.filter((t) => t.verifier_id === verifierId);
+      if (status) rawTasks = rawTasks.filter((t) => t.status === status);
+      if (statusIn && statusIn.length > 0) rawTasks = rawTasks.filter((t) => statusIn.includes(t.status as TaskStatus));
+      if (recurring) rawTasks = rawTasks.filter((t) => t.recurring === recurring);
+      if (dueDateFrom) rawTasks = rawTasks.filter((t) => t.due_date && t.due_date >= dueDateFrom);
+      if (dueDateTo) rawTasks = rawTasks.filter((t) => t.due_date && t.due_date <= dueDateTo);
+
+      const tasks = rawTasks.sort((a, b) => {
+        const aValue = (a[effectiveSortBy] || '') as string;
+        const bValue = (b[effectiveSortBy] || '') as string;
+        if (aValue === bValue) return 0;
+        if (!aValue) return 1;
+        if (!bValue) return -1;
+        if (effectiveSortDirection === 'asc') {
+          return aValue < bValue ? -1 : 1;
+        }
+        return aValue > bValue ? -1 : 1;
+      });
+
+      return { tasks, lastDoc: null };
+    }
+  },
+
+  /** Fetch all tasks matching filters/sort. Useful for full-data export across pages. */
+  getAllTasksByFilters: async (opts: {
+    assignedTo?: string;
+    assignedBy?: string;
+    status?: TaskStatus;
+    statusIn?: TaskStatus[];
+    recurring?: string;
+    dueDateFrom?: string;
+    dueDateTo?: string;
+    verifierId?: string;
+    sortBy?: 'updated_at' | 'start_date' | 'due_date' | 'completed_at';
+    sortDirection?: 'asc' | 'desc';
+    batchSize?: number;
+  }): Promise<Task[]> => {
+    const { batchSize = 1000, ...filters } = opts;
+    const allTasks: Task[] = [];
+    let cursor: QueryDocumentSnapshot | null | undefined = undefined;
+
+    for (let i = 0; i < 200; i += 1) { // hard limit to prevent infinite loops
+      const { tasks, lastDoc } = await api.getTasksPaginated({
+        pageSize: batchSize,
+        startAfterDoc: cursor,
+        ...filters,
+      });
+
+      allTasks.push(...tasks);
+
+      if (!lastDoc || tasks.length === 0) {
+        break;
+      }
+
+      cursor = lastDoc;
+    }
+
+    return allTasks;
+  },
+
+  /** Count tasks matching filters (for pagination totals). */
+  getTasksCount: async (filters?: {
+    assignedTo?: string;
+    assignedBy?: string;
+    status?: TaskStatus;
+    statusIn?: TaskStatus[];
+    recurring?: string;
+    dueDateFrom?: string;
+    dueDateTo?: string;
+    verifierId?: string;
+    includeRecurringMasters?: boolean;
+  }): Promise<number> => {
+    if (!filters?.includeRecurringMasters) {
+      const all = await api.getAllTasksByFilters({ ...(filters || {}), batchSize: 1000 });
+      return all.length;
+    }
+
+    const tasksRef = collection(db, COLLECTIONS.TASKS);
+    const constraints: any[] = [];
+    if (filters?.assignedTo) constraints.push(where('assigned_to_id', '==', filters.assignedTo));
+    if (filters?.assignedBy) constraints.push(where('assigned_by_id', '==', filters.assignedBy));
+    if (filters?.verifierId) constraints.push(where('verifier_id', '==', filters.verifierId));
+    if (filters?.status) constraints.push(where('status', '==', filters.status));
+    if (filters?.statusIn && filters.statusIn.length > 0) constraints.push(where('status', 'in', filters.statusIn));
+    if (filters?.recurring) constraints.push(where('recurring', '==', filters.recurring));
+    if (filters?.dueDateFrom) constraints.push(where('due_date', '>=', filters.dueDateFrom));
+    if (filters?.dueDateTo) constraints.push(where('due_date', '<=', filters.dueDateTo));
+    const q = constraints.length > 0 ? query(tasksRef, ...constraints) : query(tasksRef);
+    const countSnap = await getCountFromServer(q);
+    return countSnap.data().count;
+  },
+
+  /** Optimized Native Count for Task Summary Dashboard */
+  getTaskSummaryCounts: async (filters: any): Promise<{ dueToday: number; overdue: number }> => {
+    const tasksRef = collection(db, COLLECTIONS.TASKS);
+    const today = getTodayIST();
+    const openStatuses = ['pending', 'pending_verification', 'correction_required'];
+
+    const baseConstraints: any[] = [];
+    if (filters?.assignedTo) baseConstraints.push(where('assigned_to_id', '==', filters.assignedTo));
+    if (filters?.assignedBy) baseConstraints.push(where('assigned_by_id', '==', filters.assignedBy));
+    if (filters?.verifierId) baseConstraints.push(where('verifier_id', '==', filters.verifierId));
+    if (filters?.recurring) baseConstraints.push(where('recurring', '==', filters.recurring));
+    
+    baseConstraints.push(where('status', 'in', openStatuses));
+
+    try {
+      const dueTodayQuery = query(tasksRef, ...baseConstraints, where('due_date', '==', today));
+      const overdueQuery = query(tasksRef, ...baseConstraints, where('due_date', '<', today));
+
+      const [dueTodaySnap, overdueSnap] = await Promise.all([
+        getCountFromServer(dueTodayQuery),
+        getCountFromServer(overdueQuery)
+      ]);
+
+      return {
+        dueToday: dueTodaySnap.data().count,
+        overdue: overdueSnap.data().count
+      };
+    } catch (err) {
+      // Fallback if composite index is missing: Download only open tasks and count in memory
+      const fallbackQuery = query(tasksRef, ...baseConstraints);
+      const snap = await getDocs(fallbackQuery);
+      
+      let dueToday = 0;
+      let overdue = 0;
+      snap.forEach(docSnap => {
+        const d = docSnap.data() as Partial<Task>;
+        if (d.due_date === today) dueToday++;
+        else if (d.due_date && d.due_date < today) overdue++;
+      });
+      
+      return { dueToday, overdue };
+    }
+  },
+
+  getVerifierPendingCounts: async (): Promise<{ verifier_id: string; verifier_name: string; count: number }[]> => {
+    const q = query(
+      collection(db, COLLECTIONS.TASKS),
+      where('status', '==', 'pending_verification')
+    );
+    const snap = await getDocs(q);
+    const counts: Record<string, { verifier_name: string; count: number }> = {};
+    snap.forEach((docSnap) => {
+      const task = docSnap.data() as Task;
+      if (!task.verifier_id) return;
+      if (!counts[task.verifier_id]) {
+        counts[task.verifier_id] = { verifier_name: task.verifier_name ?? task.verifier_id, count: 0 };
+      }
+      counts[task.verifier_id].count++;
+    });
+    return Object.entries(counts)
+      .map(([verifier_id, { verifier_name, count }]) => ({ verifier_id, verifier_name, count }))
+      .filter((r) => r.count > 0)
+      .sort((a, b) => b.count - a.count);
+  },
+
+  /** Incomplete tasks for current user (e.g. removal request dropdown). Limit 100. */
+  getMyIncompleteTasks: async (userId: string, limitCount: number = 100): Promise<Task[]> => {
+    const tasksRef = collection(db, COLLECTIONS.TASKS);
+    const q = query(
+      tasksRef,
+      where('assigned_to_id', '==', userId),
+      where('status', 'in', ['pending', 'overdue', 'pending_verification', 'correction_required']),
+      orderBy('updated_at', 'desc'),
+      limit(limitCount)
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => docToTask(d));
+  },
+
+  createTask: async (
+    t: Omit<Task, 'id' | 'created_at' | 'updated_at'>,
+    actor?: Actor
+  ): Promise<Task> => {
+    const now = new Date().toISOString();
+    const today = getTodayIST();
+    const status = resolveInitialTaskStatus(t.status, t.start_date, today);
+
+    const isMaster = t.recurring !== 'none' && !t.parent_task_id;
+    const targetCollection = isMaster ? COLLECTIONS.RECURRING_TASKS : COLLECTIONS.TASKS;
+
+    const normalizedTask: Omit<Task, 'id' | 'created_at' | 'updated_at'> = {
+      ...t,
+      status,
+      is_recurring_master: isMaster,
+    };
+    const cleanData = Object.fromEntries(Object.entries(normalizedTask).filter(([_, v]) => v !== undefined));
+    const ref = await addDoc(collection(db, targetCollection), {
+      ...cleanData,
+      created_at: isoToTimestamp(now),
+      updated_at: isoToTimestamp(now),
+    });
+
+    if (isMaster) {
+      // Also spawn the first immediate child instance so the doer has it
+      // The child is identical but with parent_task_id = ref.id, recurring = 'none'
+      const childData = {
+        ...cleanData,
+        parent_task_id: ref.id,
+        recurring: 'none',
+        is_recurring_master: false,
+        recurring_days: null,
+      };
+      await addDoc(collection(db, COLLECTIONS.TASKS), {
+        ...childData,
+        created_at: isoToTimestamp(now),
+        updated_at: isoToTimestamp(now),
+      });
+    }
+
+    // Log only human-initiated creations — skip auto-spawned child instances
+    const isChildInstance = Boolean(normalizedTask.parent_task_id);
+    if (!isChildInstance && actor) {
+      writeTaskLog('created', ref.id, normalizedTask.title, actor, {
+        note: isMaster
+          ? `Recurring master task (${normalizedTask.recurring})`
+          : 'One-off task',
+      });
+    }
+
+    return { ...normalizedTask, id: ref.id, created_at: now, updated_at: now };
+  },
+
+  cloneRecurringTask: async (original: Task, nextDueDate: string): Promise<Task> => {
+    const {
+      id,
+      created_at,
+      updated_at,
+      completed_at,
+      verified_at,
+      verified_by,
+      audit_status,
+      audited_at,
+      audited_by,
+      attachment_url,
+      attachment_urls,
+      attachment_text,
+      status,
+      due_date,
+      recurring,
+      recurring_days,
+      parent_task_id,
+      is_holiday,
+      audit_sop_text,
+      audit_sop_updated_by,
+      audit_sop_updated_at,
+      audit_sop_attachments,
+      audit_sop_links,
+      ...baseFields
+    } = original;
+
+    return api.createTask({
+      ...baseFields,
+      audit_sop_text,
+      audit_sop_updated_by,
+      audit_sop_updated_at,
+      audit_sop_attachments,
+      audit_sop_links,
+      due_date: nextDueDate,
+      status: 'pending',
+      recurring: 'none',
+      is_recurring_master: false,
+      recurring_days: undefined,
+      parent_task_id: parent_task_id || id,
+    } as Omit<Task, 'id' | 'created_at' | 'updated_at'>);
+  },
+
+  getRecurringTasks: async (filters?: {
+    assignedTo?: string;
+    assignedBy?: string;
+    recurring?: string;
+  }): Promise<Task[]> => {
+    const tasksRef = collection(db, COLLECTIONS.RECURRING_TASKS);
+    let q = query(tasksRef, orderBy('updated_at', 'desc'));
+    
+    const snap = await getDocs(q);
+    let tasks = snap.docs.map((d) => docToTask(d));
+
+    if (filters?.assignedTo) {
+      tasks = tasks.filter(t => t.assigned_to_id === filters.assignedTo);
+    }
+    if (filters?.assignedBy) {
+      tasks = tasks.filter(t => t.assigned_by_id === filters.assignedBy);
+    }
+    if (filters?.recurring) {
+      tasks = tasks.filter(t => t.recurring === filters.recurring);
+    }
+    return tasks;
+  },
+
+  updateRecurringTask: async (
+    id: string,
+    updates: Partial<Task>,
+    actor?: Actor,
+    note?: string
+  ): Promise<void> => {
+    let beforeData: Record<string, unknown> = {};
+    let taskTitle = updates.title || id;
+    if (actor) {
+      const snap = await getDoc(doc(db, COLLECTIONS.RECURRING_TASKS, id));
+      if (snap.exists()) {
+        beforeData = snap.data();
+        if (beforeData.title) taskTitle = String(beforeData.title);
+      }
+    }
+
+    const cleanUpdates = Object.fromEntries(Object.entries(updates).filter(([_, v]) => v !== undefined));
+    const now = new Date().toISOString();
+    await updateDoc(doc(db, COLLECTIONS.RECURRING_TASKS, id), {
+      ...cleanUpdates,
+      updated_at: isoToTimestamp(now),
+    });
+
+    if (actor) {
+      const changes: Record<string, { from: unknown; to: unknown }> = {};
+      for (const [key, value] of Object.entries(cleanUpdates)) {
+        const oldVal = beforeData[key];
+        if (JSON.stringify(oldVal) !== JSON.stringify(value)) {
+          changes[key] = { from: oldVal, to: value };
+        }
+      }
+      writeTaskLog('updated', id, taskTitle, actor, {
+        changes,
+        note: note || 'Updated recurring task',
+      });
+    }
+  },
+
+  deleteRecurringTask: async (id: string, actor?: Actor, note?: string): Promise<{ deletedTasksCount: number }> => {
+    const masterRef = doc(db, COLLECTIONS.RECURRING_TASKS, id);
+    const snap = await getDoc(masterRef);
+    if (!snap.exists()) return { deletedTasksCount: 0 };
+    
+    const data = snap.data();
+    const taskTitle = data.title || id;
+
+    // Delete all child instances as well
+    const childQ = query(collection(db, COLLECTIONS.TASKS), where('parent_task_id', '==', id));
+    const childSnap = await getDocs(childQ);
+    
+    // Batch operations limited to 500, we'll assume less than 500 active child instances for simplicity
+    const batch = writeBatch(db);
+    batch.delete(masterRef);
+    childSnap.forEach(d => batch.delete(d.ref));
+    
+    await batch.commit();
+
+    if (actor) {
+      writeTaskLog('deleted', id, taskTitle, actor, {
+        deleted_snapshot: data,
+        note: note || 'Deleted recurring task stream',
+      });
+    }
+
+    return { deletedTasksCount: childSnap.docs.length + 1 };
+  },
+
+  updateTask: async (
+    id: string,
+    updates: Partial<Task>,
+    actor?: Actor,
+    note?: string
+  ): Promise<void> => {
+    // Read current state before write so we can compute a diff for the log
+    let beforeData: Record<string, unknown> = {};
+    let taskTitle = updates.title || id;
+    if (actor) {
+      try {
+        const snap = await getDoc(doc(db, COLLECTIONS.TASKS, id));
+        if (snap.exists()) {
+          beforeData = snap.data() as Record<string, unknown>;
+          taskTitle = (beforeData.title as string) || taskTitle;
+        }
+      } catch (_) { /* non-blocking — proceed with write even if read fails */ }
+    }
+
+    const normalizedUpdates = Object.fromEntries(
+      Object.entries(updates).map(([k, v]) => [k, v === undefined ? deleteField() : v])
+    );
+    const toUpdate: Record<string, unknown> = {
+      ...normalizedUpdates,
+      updated_at: isoToTimestamp(new Date().toISOString()),
+    };
+    if (updates.completed_at) {
+      toUpdate.completed_at = updates.completed_at;
+      if (!updates.status) {
+        toUpdate.status = 'completed';
+      }
+    }
+    await updateDoc(doc(db, COLLECTIONS.TASKS, id), toUpdate);
+
+    if (actor) {
+      // Determine the most specific action type
+      let action: TaskLogAction = 'updated';
+      if (updates.status === 'closed_permanently') {
+        action = 'closed_permanently';
+      } else if (updates.status === 'completed' || updates.verified_at || updates.status === 'pending_verification') {
+        action = 'status_changed';
+      } else if (updates.status) {
+        action = 'status_changed';
+      } else if (updates.verification_rejected_at) {
+        action = 'verification_rejected';
+      } else if (updates.verified_at) {
+        action = 'verified';
+      } else if (updates.audit_sop_text !== undefined || updates.audit_sop_attachments !== undefined) {
+        action = 'audit_sop_updated';
+      }
+
+      // Build changes diff — only include keys that actually changed
+      const SKIP_KEYS = new Set(['updated_at', 'created_at']);
+      const changes: Record<string, { from: unknown; to: unknown }> = {};
+      for (const [k, newVal] of Object.entries(updates)) {
+        if (SKIP_KEYS.has(k)) continue;
+        const oldVal = beforeData[k];
+        // Compare by JSON string to handle objects/arrays
+        if (JSON.stringify(oldVal) !== JSON.stringify(newVal)) {
+          changes[k] = { from: oldVal ?? null, to: newVal ?? null };
+        }
+      }
+
+      writeTaskLog(action, id, taskTitle, actor, {
+        changes: Object.keys(changes).length > 0 ? changes : undefined,
+        note,
+      });
+    }
+  },
+
+  deleteTask: async (id: string, actor?: Actor, note?: string): Promise<void> => {
+    // Read the task snapshot before deleting so the log survives the deletion
+    let snapshot: Record<string, unknown> = {};
+    let taskTitle = id;
+    if (actor) {
+      try {
+        const snap = await getDoc(doc(db, COLLECTIONS.TASKS, id));
+        if (snap.exists()) {
+          snapshot = snap.data() as Record<string, unknown>;
+          taskTitle = (snapshot.title as string) || taskTitle;
+        }
+      } catch (_) { /* non-blocking */ }
+    }
+
+    await deleteDoc(doc(db, COLLECTIONS.TASKS, id));
+
+    if (actor) {
+      writeTaskLog('deleted', id, taskTitle, actor, {
+        deleted_snapshot: snapshot,
+        note,
+      });
+    }
+  },
+
+  setAuditStatus: async (
+    id: string,
+    status: AuditStatus,
+    auditedBy: string,
+    actor?: Actor
+  ): Promise<void> => {
+    let taskTitle = id;
+    if (actor) {
+      try {
+        const snap = await getDoc(doc(db, COLLECTIONS.TASKS, id));
+        if (snap.exists()) taskTitle = (snap.data().title as string) || taskTitle;
+      } catch (_) { /* non-blocking */ }
+    }
+    await updateDoc(doc(db, COLLECTIONS.TASKS, id), {
+      audit_status: status,
+      audited_at: isoToTimestamp(new Date().toISOString()),
+      audited_by: auditedBy,
+      updated_at: isoToTimestamp(new Date().toISOString()),
+    });
+    if (actor) {
+      writeTaskLog('audit_set', id, taskTitle, actor, {
+        changes: { audit_status: { from: null, to: status } },
+      });
+    }
+  },
+
+  /** All tasks assigned to a user (for delete-member flow). */
+  getTasksAssignedTo: async (userId: string): Promise<Task[]> => {
+    const tasksRef = collection(db, COLLECTIONS.TASKS);
+    const q = query(
+      tasksRef,
+      where('assigned_to_id', '==', userId),
+      orderBy('updated_at', 'desc')
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => docToTask(d));
+  },
+
+  /** Reassign all tasks from one user to another. */
+  reassignTasksToUser: async (
+    fromUserId: string,
+    toUser: Pick<User, 'id' | 'name' | 'city'>
+  ): Promise<void> => {
+    const tasks = await api.getTasksAssignedTo(fromUserId);
+    for (const t of tasks) {
+      await api.updateTask(t.id, {
+        assigned_to_id: toUser.id,
+        assigned_to_name: toUser.name,
+        assigned_to_city: toUser.city,
+        assignee_deleted: false,
+      });
+    }
+  },
+
+  /** Mark all tasks assigned to user as assignee_deleted (after member delete). */
+  markTasksAssigneeDeleted: async (userId: string): Promise<void> => {
+    const tasks = await api.getTasksAssignedTo(userId);
+    for (const t of tasks) {
+      await api.updateTask(t.id, { assignee_deleted: true });
+    }
+  },
+
+  // --- Holidays ---
+  getHolidays: async (): Promise<Holiday[]> => {
+    const snap = await getDocs(
+      query(collection(db, COLLECTIONS.HOLIDAYS), orderBy('date', 'asc'))
+    );
+    return snap.docs.map((d) => {
+      const data = d.data();
+      return {
+        id: d.id,
+        date: data.date,
+        name: data.name,
+        created_at: timestampToISO(data.created_at),
+      };
+    });
+  },
+
+  addHoliday: async (date: string, name: string): Promise<Holiday> => {
+    const ref = await addDoc(collection(db, COLLECTIONS.HOLIDAYS), {
+      date,
+      name,
+      created_at: isoToTimestamp(new Date().toISOString()),
+    });
+    return { id: ref.id, date, name, created_at: new Date().toISOString() };
+  },
+
+  deleteHoliday: async (id: string): Promise<void> => {
+    await deleteDoc(doc(db, COLLECTIONS.HOLIDAYS, id));
+  },
+
+  // --- Absences ---
+  getAbsences: async (): Promise<Absence[]> => {
+    const snap = await getDocs(
+      query(collection(db, COLLECTIONS.ABSENCES), orderBy('from_date', 'desc'))
+    );
+    return snap.docs.map((d) => {
+      const data = d.data();
+      return {
+        id: d.id,
+        user_id: data.user_id,
+        user_name: data.user_name,
+        from_date: data.from_date,
+        to_date: data.to_date,
+        reason: data.reason,
+        created_at: timestampToISO(data.created_at),
+      };
+    });
+  },
+
+  addAbsence: async (a: Omit<Absence, 'id' | 'created_at'>): Promise<Absence> => {
+    const ref = await addDoc(collection(db, COLLECTIONS.ABSENCES), {
+      ...a,
+      created_at: isoToTimestamp(new Date().toISOString()),
+    });
+    return { ...a, id: ref.id, created_at: new Date().toISOString() };
+  },
+
+  // --- Removal Requests ---
+  getRemovalRequests: async (): Promise<RemovalRequest[]> => {
+    const snap = await getDocs(
+      query(
+        collection(db, COLLECTIONS.REMOVAL_REQUESTS),
+        orderBy('created_at', 'desc')
+      )
+    );
+    return snap.docs.map((d) => {
+      const data = d.data();
+      return {
+        id: d.id,
+        task_id: data.task_id,
+        task_title: data.task_title,
+        requested_by_id: data.requested_by_id,
+        requested_by_name: data.requested_by_name,
+        reason: data.reason,
+        status: data.status || 'pending',
+        created_at: timestampToISO(data.created_at),
+        resolved_at: data.resolved_at ? timestampToISO(data.resolved_at) : undefined,
+        resolved_by: data.resolved_by,
+        rejection_reason: data.rejection_reason || undefined,
+      };
+    });
+  },
+
+  getRemovalRequestsPaginated: async (opts: {
+    limitCount: number;
+    startAfterDoc?: QueryDocumentSnapshot | null;
+    requestedById?: string;
+  }): Promise<{ requests: RemovalRequest[]; lastDoc: QueryDocumentSnapshot | null }> => {
+    const { limitCount, startAfterDoc, requestedById } = opts;
+    const ref = collection(db, COLLECTIONS.REMOVAL_REQUESTS);
+    const base = requestedById
+      ? query(ref, where('requested_by_id', '==', requestedById), orderBy('created_at', 'desc'), limit(limitCount))
+      : query(ref, orderBy('created_at', 'desc'), limit(limitCount));
+    const q = startAfterDoc ? query(base, startAfter(startAfterDoc)) : base;
+    const snap = await getDocs(q);
+    const requests = snap.docs.map((d) => {
+      const data = d.data();
+      return {
+        id: d.id,
+        task_id: data.task_id,
+        task_title: data.task_title,
+        requested_by_id: data.requested_by_id,
+        requested_by_name: data.requested_by_name,
+        reason: data.reason,
+        status: data.status || 'pending',
+        created_at: timestampToISO(data.created_at),
+        resolved_at: data.resolved_at ? timestampToISO(data.resolved_at) : undefined,
+        resolved_by: data.resolved_by,
+        rejection_reason: data.rejection_reason || undefined,
+      };
+    });
+    const lastDoc = snap.docs.length === limitCount ? snap.docs[snap.docs.length - 1] : null;
+    return { requests, lastDoc };
+  },
+
+  createRemovalRequest: async (
+    r: Omit<RemovalRequest, 'id' | 'created_at' | 'status'>
+  ): Promise<RemovalRequest> => {
+    const ref = await addDoc(collection(db, COLLECTIONS.REMOVAL_REQUESTS), {
+      ...r,
+      status: 'pending',
+      created_at: isoToTimestamp(new Date().toISOString()),
+    });
+    return {
+      ...r,
+      id: ref.id,
+      created_at: new Date().toISOString(),
+      status: 'pending',
+    };
+  },
+
+  resolveRemovalRequest: async (
+    id: string,
+    status: 'approved' | 'rejected',
+    resolvedBy: string,
+    options?: { rejectionReason?: string }
+  ): Promise<void> => {
+    const payload: Record<string, unknown> = {
+      status,
+      resolved_at: isoToTimestamp(new Date().toISOString()),
+      resolved_by: resolvedBy,
+    };
+    if (status === 'rejected') {
+      payload.rejection_reason = (options?.rejectionReason ?? '').trim() || null;
+    } else {
+      payload.rejection_reason = null;
+    }
+    await updateDoc(doc(db, COLLECTIONS.REMOVAL_REQUESTS, id), payload);
+  },
+
+  // --- Help Tickets ---
+  createHelpTicket: async (t: {
+    title: string;
+    description: string;
+    helper: Pick<User, 'id' | 'name'>;
+    doer: Pick<User, 'id' | 'name'>;
+    proposedSolutions?: HelpTicketProposedSolution[];
+  }): Promise<HelpTicket> => {
+    const now = new Date().toISOString();
+    const proposed_solutions = (t.proposedSolutions || [])
+      .map((s) => ({
+        text: (s?.text || '').trim(),
+        priority: s?.priority,
+      }))
+      .filter((s) => s.text.length > 0)
+      .slice(0, 3);
+
+    const ref = await addDoc(collection(db, COLLECTIONS.HELP_TICKETS), {
+      title: t.title.trim(),
+      description: t.description.trim(),
+      doer_id: t.doer.id,
+      doer_name: t.doer.name,
+      helper_id: t.helper.id,
+      helper_name: t.helper.name,
+      status: 'open',
+      proposed_solutions: proposed_solutions.length > 0 ? proposed_solutions : null,
+      helper_note: null,
+      created_at: isoToTimestamp(now),
+      updated_at: isoToTimestamp(now),
+      resolved_at: null,
+      rated_at: null,
+      rating: null,
+    });
+
+    return {
+      id: ref.id,
+      title: t.title.trim(),
+      description: t.description.trim(),
+      doer_id: t.doer.id,
+      doer_name: t.doer.name,
+      helper_id: t.helper.id,
+      helper_name: t.helper.name,
+      status: 'open',
+      proposed_solutions: proposed_solutions.length > 0 ? proposed_solutions : undefined,
+      created_at: now,
+      updated_at: now,
+    };
+  },
+
+  deleteHelpTicket: async (id: string): Promise<void> => {
+    await deleteDoc(doc(db, COLLECTIONS.HELP_TICKETS, id));
+  },
+
+  updateHelpTicket: async (
+    id: string,
+    updates: Partial<{
+      status: HelpTicketStatus;
+      helper_note: string | null;
+      resolved_at: any;
+      rated_at: any;
+      rating: HelpTicketRating | null;
+      title: string;
+      description: string;
+      proposed_solutions: HelpTicketProposedSolution[];
+      helper_id: string;
+      helper_name: string;
+    }>
+  ): Promise<void> => {
+    const normalizedUpdates = Object.fromEntries(
+      Object.entries(updates).map(([k, v]) => [k, v === undefined ? deleteField() : v])
+    );
+    await updateDoc(doc(db, COLLECTIONS.HELP_TICKETS, id), {
+      ...normalizedUpdates,
+      updated_at: isoToTimestamp(new Date().toISOString()),
+    });
+  },
+
+  addHelpTicketHelperNote: async (id: string, note: string): Promise<void> => {
+    await api.updateHelpTicket(id, { helper_note: note.trim() || null });
+  },
+
+  setHelpTicketStatus: async (id: string, status: HelpTicketStatus): Promise<void> => {
+    const payload: any = { status };
+    if (status === 'resolved') {
+      payload.resolved_at = isoToTimestamp(new Date().toISOString());
+    }
+    await api.updateHelpTicket(id, payload);
+  },
+
+  rateHelpTicket: async (id: string, rating: HelpTicketRating): Promise<void> => {
+    const now = new Date().toISOString();
+    await updateDoc(doc(db, COLLECTIONS.HELP_TICKETS, id), {
+      rating: {
+        stars: rating.stars,
+        comment: (rating.comment || '').trim() || null,
+      },
+      rated_at: isoToTimestamp(now),
+      status: 'rated',
+      updated_at: isoToTimestamp(now),
+    });
+  },
+
+  getHelpTickets: async (filters?: {
+    helperId?: string;
+    doerId?: string;
+    status?: HelpTicketStatus;
+    statusIn?: HelpTicketStatus[];
+    dateFrom?: string; // ISO or yyyy-mm-dd
+    dateTo?: string; // ISO or yyyy-mm-dd
+    sortBy?: 'date' | 'rating' | 'resolution_time';
+    sortDirection?: 'asc' | 'desc';
+  }): Promise<HelpTicket[]> => {
+    // Keep querying simple to avoid requiring new composite indexes.
+    const snap = await getDocs(query(collection(db, COLLECTIONS.HELP_TICKETS), orderBy('updated_at', 'desc')));
+    let tickets = snap.docs.map((d) => docToHelpTicket(d));
+
+    if (filters?.helperId) tickets = tickets.filter((t) => t.helper_id === filters.helperId);
+    if (filters?.doerId) tickets = tickets.filter((t) => t.doer_id === filters.doerId);
+    if (filters?.status) tickets = tickets.filter((t) => t.status === filters.status);
+    if (filters?.statusIn && filters.statusIn.length > 0) tickets = tickets.filter((t) => filters.statusIn!.includes(t.status));
+
+    const parseDay = (s?: string) => {
+      if (!s) return '';
+      // allow ISO or yyyy-mm-dd; keep yyyy-mm-dd for comparisons
+      return s.includes('T') ? s.split('T')[0] : s;
+    };
+    const fromDay = parseDay(filters?.dateFrom);
+    const toDay = parseDay(filters?.dateTo);
+    if (fromDay) tickets = tickets.filter((t) => parseDay(t.created_at) >= fromDay);
+    if (toDay) tickets = tickets.filter((t) => parseDay(t.created_at) <= toDay);
+
+    const sortBy = filters?.sortBy || 'date';
+    const dir = filters?.sortDirection || 'desc';
+    const dirMul = dir === 'asc' ? 1 : -1;
+
+    const getResolutionMinutes = (t: HelpTicket): number | null => {
+      if (!t.resolved_at) return null;
+      const a = new Date(t.created_at).getTime();
+      const b = new Date(t.resolved_at).getTime();
+      if (!Number.isFinite(a) || !Number.isFinite(b)) return null;
+      return Math.max(0, Math.round((b - a) / 60000));
+    };
+
+    tickets.sort((a, b) => {
+      if (sortBy === 'rating') {
+        const ar = a.rating?.stars ?? -1;
+        const br = b.rating?.stars ?? -1;
+        if (ar !== br) return (ar - br) * dirMul;
+        return (new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime()) * dirMul;
+      }
+      if (sortBy === 'resolution_time') {
+        const am = getResolutionMinutes(a);
+        const bm = getResolutionMinutes(b);
+        const av = am == null ? Number.POSITIVE_INFINITY : am;
+        const bv = bm == null ? Number.POSITIVE_INFINITY : bm;
+        if (av !== bv) return (av - bv) * dirMul;
+        return (new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime()) * dirMul;
+      }
+      // date
+      return (new Date(a.created_at).getTime() - new Date(b.created_at).getTime()) * dirMul;
+    });
+
+    return tickets;
+  },
+
+  getHelpTicketsCount: async (filters?: { helperId?: string; statusIn?: HelpTicketStatus[] }): Promise<number> => {
+    const all = await api.getHelpTickets({
+      helperId: filters?.helperId,
+      statusIn: filters?.statusIn,
+      sortBy: 'date',
+      sortDirection: 'desc',
+    });
+    return all.length;
+  },
+
+  computeHelpKpis: async (opts?: { dateFrom?: string; dateTo?: string }): Promise<{
+    doerWise: { doer_id: string; doer_name: string; unresolved_count: number }[];
+    helperWise: { helper_id: string; helper_name: string; avg_rating: number | null; total_solved: number; avg_resolution_minutes: number | null }[];
+  }> => {
+    const tickets = await api.getHelpTickets({
+      dateFrom: opts?.dateFrom,
+      dateTo: opts?.dateTo,
+      sortBy: 'date',
+      sortDirection: 'desc',
+    });
+
+    const parseMinutes = (t: HelpTicket): number | null => {
+      if (!t.resolved_at) return null;
+      const diff = new Date(t.resolved_at).getTime() - new Date(t.created_at).getTime();
+      if (!Number.isFinite(diff)) return null;
+      return Math.max(0, Math.round(diff / 60000));
+    };
+
+    const doerMap = new Map<string, { doer_id: string; doer_name: string; unresolved_count: number }>();
+    const helperMap = new Map<string, {
+      helper_id: string;
+      helper_name: string;
+      total_solved: number;
+      rating_sum: number;
+      rating_count: number;
+      resolution_sum: number;
+      resolution_count: number;
+    }>();
+
+    for (const t of tickets) {
+      // Doer-wise unresolved: anything not resolved/rated counts as unresolved
+      const unresolved = t.status !== 'resolved' && t.status !== 'rated';
+      if (unresolved) {
+        const cur = doerMap.get(t.doer_id) || { doer_id: t.doer_id, doer_name: t.doer_name, unresolved_count: 0 };
+        cur.unresolved_count += 1;
+        doerMap.set(t.doer_id, cur);
+      }
+
+      // Helper-wise solved: resolved or rated
+      const solved = t.status === 'resolved' || t.status === 'rated';
+      if (solved) {
+        const cur = helperMap.get(t.helper_id) || {
+          helper_id: t.helper_id,
+          helper_name: t.helper_name,
+          total_solved: 0,
+          rating_sum: 0,
+          rating_count: 0,
+          resolution_sum: 0,
+          resolution_count: 0,
+        };
+        cur.total_solved += 1;
+
+        if (t.rating?.stars) {
+          cur.rating_sum += t.rating.stars;
+          cur.rating_count += 1;
+        }
+        const mins = parseMinutes(t);
+        if (mins != null) {
+          cur.resolution_sum += mins;
+          cur.resolution_count += 1;
+        }
+        helperMap.set(t.helper_id, cur);
+      }
+    }
+
+    const doerWise = [...doerMap.values()].sort((a, b) => b.unresolved_count - a.unresolved_count);
+    const helperWise = [...helperMap.values()]
+      .map((h) => ({
+        helper_id: h.helper_id,
+        helper_name: h.helper_name,
+        avg_rating: h.rating_count > 0 ? Math.round((h.rating_sum / h.rating_count) * 10) / 10 : null,
+        total_solved: h.total_solved,
+        avg_resolution_minutes: h.resolution_count > 0 ? Math.round(h.resolution_sum / h.resolution_count) : null,
+      }))
+      .sort((a, b) => (b.avg_rating ?? -1) - (a.avg_rating ?? -1));
+
+    return { doerWise, helperWise };
+  },
+
+  // --- WhatsApp (11za) ---
+  sendTaskAssignmentWhatsApp: async (
+    phone: string,
+    task: { title: string; due_date: string; description: string; link: string; assigned_by_name: string }
+  ): Promise<void> => {
+    const { whatsappService } = await import('./whatsapp');
+    const templateName =
+      import.meta.env.VITE_11ZA_TEMPLATE_TASK_ASSIGNMENT || 'task_assignment';
+
+    await whatsappService.sendTaskAssignment({
+      phone,
+      templateName,
+      taskName: task.title,
+      dueDate: task.due_date,
+      assignedBy: task.assigned_by_name,
+      description: task.description,
+      link: task.link,
+    });
+  },
+
+  // --- Forgot Password (OTP) ---
+
+  /** Find a user by phone number (normalized). Returns user doc id + data if found. */
+  findUserByPhone: async (phone: string): Promise<{ id: string; name: string; phone: string } | null> => {
+    const digits = phone.replace(/\D/g, '');
+    // Try matching with +91 prefix, 91 prefix, and raw 10 digits
+    const variants = new Set<string>();
+    if (digits.length === 10) {
+      variants.add('+91' + digits);
+      variants.add('91' + digits);
+      variants.add(digits);
+    } else if (digits.length === 12 && digits.startsWith('91')) {
+      variants.add('+' + digits);
+      variants.add(digits);
+      variants.add(digits.slice(2));
+    } else {
+      variants.add(phone.trim());
+      variants.add(digits);
+    }
+
+    const usersRef = collection(db, COLLECTIONS.USERS);
+    for (const variant of variants) {
+      const q = query(usersRef, where('phone', '==', variant));
+      const snap = await getDocs(q);
+      if (!snap.empty) {
+        const d = snap.docs[0];
+        const data = d.data();
+        return { id: d.id, name: data.name || '', phone: data.phone || '' };
+      }
+    }
+    return null;
+  },
+
+  /** Generate and store a 6-digit OTP for password reset. Returns the OTP string. */
+  createOtp: async (userId: string): Promise<string> => {
+    const otp = String(Math.floor(100000 + Math.random() * 900000));
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + 5 * 60 * 1000); // 5 minutes
+
+    // Delete any previous OTPs for this user
+    const otpRef = collection(db, COLLECTIONS.PASSWORD_RESET_OTPS);
+    const oldSnap = await getDocs(query(otpRef, where('user_id', '==', userId)));
+    for (const d of oldSnap.docs) {
+      await deleteDoc(d.ref);
+    }
+
+    await addDoc(otpRef, {
+      user_id: userId,
+      otp,
+      created_at: isoToTimestamp(now.toISOString()),
+      expires_at: isoToTimestamp(expiresAt.toISOString()),
+    });
+
+    return otp;
+  },
+
+  /** Verify the OTP for a user. Returns true if valid, false otherwise. Deletes OTP on success. */
+  verifyOtp: async (userId: string, otp: string): Promise<boolean> => {
+    const otpRef = collection(db, COLLECTIONS.PASSWORD_RESET_OTPS);
+    const q = query(otpRef, where('user_id', '==', userId), where('otp', '==', otp));
+    const snap = await getDocs(q);
+
+    if (snap.empty) return false;
+
+    const d = snap.docs[0];
+    const data = d.data();
+    const expiresAt = data.expires_at?.toDate ? data.expires_at.toDate() : new Date(data.expires_at);
+
+    if (new Date() > expiresAt) {
+      // OTP expired — delete it
+      await deleteDoc(d.ref);
+      return false;
+    }
+
+    // Valid — delete OTP
+    await deleteDoc(d.ref);
+    return true;
+  },
+
+  /** Reset user password in Firestore. */
+  resetPassword: async (userId: string, newPassword: string): Promise<void> => {
+    const hashedPassword = bcrypt.hashSync(newPassword, 10);
+    await updateDoc(doc(db, COLLECTIONS.USERS, userId), {
+      password: hashedPassword,
+      updated_at: isoToTimestamp(new Date().toISOString()),
+    });
+  },
+};

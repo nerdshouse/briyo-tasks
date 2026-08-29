@@ -1,0 +1,12 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Task attachment uploads: allow read/write for task-attachments path
+    match /task-attachments/{taskId}/{fileName} {
+      allow read, write: if true;
+    }
+    match /task-audit-attachments/{allPaths=**} {
+      allow read, write: if true;
+    }
+  }
+}

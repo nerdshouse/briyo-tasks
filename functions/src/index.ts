@@ -1,0 +1,744 @@
+/*
+ * Developed by Nerdshouse Technologies LLP — https://nerdshouse.com
+ * © 2026 WhiteRock (Royal Enterprise). All rights reserved.
+ *
+ * Unauthorized copying, modification, or distribution is strictly prohibited.
+ */
+import * as admin from 'firebase-admin';
+import { logger } from 'firebase-functions';
+import { onRequest } from 'firebase-functions/v2/https';
+import { onSchedule } from 'firebase-functions/v2/scheduler';
+import { onDocumentUpdated } from 'firebase-functions/v2/firestore';
+
+admin.initializeApp();
+
+const COLLECTIONS = {
+  TASKS: 'tasks',
+  USERS: 'tasks_users',
+  RECURRING_TASKS: 'recurring_tasks',
+};
+
+const RECURRING_TYPES = [
+  'daily',
+  'weekly',
+  'fortnightly',
+  'monthly',
+  'quarterly',
+  'half_yearly',
+  'yearly',
+] as const;
+
+type RecurringType = (typeof RECURRING_TYPES)[number];
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function parseISODateOnly(value: string): Date | null {
+  if (!value) return null;
+  const parsed = new Date(`${value}T00:00:00Z`);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed;
+}
+
+function toISODateOnly(date: Date): string {
+  return date.toISOString().split('T')[0];
+}
+
+function getStartDateForRecurringDue(
+  baseStartDate: string,
+  baseDueDate: string,
+  targetDueDate: string
+): string | null {
+  const startBase = parseISODateOnly(baseStartDate);
+  const dueBase = parseISODateOnly(baseDueDate);
+  const targetDue = parseISODateOnly(targetDueDate);
+
+  if (!startBase || !dueBase || !targetDue) return null;
+
+  const dueDeltaDays = Math.round((targetDue.getTime() - dueBase.getTime()) / DAY_MS);
+  const nextStart = new Date(startBase);
+  nextStart.setUTCDate(nextStart.getUTCDate() + dueDeltaDays);
+  return toISODateOnly(nextStart);
+}
+
+function toAppWeekday(date: Date): number {
+  const jsWeekday = date.getUTCDay(); // 0 = Sun .. 6 = Sat
+  return jsWeekday === 0 ? 6 : jsWeekday - 1; // 0 = Mon .. 6 = Sun
+}
+
+function getNextRecurringDueDate(
+  dueDate: string,
+  recurring: RecurringType,
+  recurringDays?: number[]
+): string | null {
+  if (!dueDate) return null;
+  const base = new Date(`${dueDate}T00:00:00Z`);
+  if (Number.isNaN(base.getTime())) return null;
+
+  const next = new Date(base);
+  switch (recurring) {
+    case 'daily': {
+      const days = (recurringDays || []).slice().sort((a, b) => a - b);
+      if (days.length === 0) {
+        next.setUTCDate(next.getUTCDate() + 1);
+      } else {
+        const current = toAppWeekday(base);
+        const nextDay = days.find((d) => d > current);
+        const target = nextDay ?? days[0];
+        const delta = nextDay != null ? target - current : 7 - current + target;
+        next.setUTCDate(next.getUTCDate() + delta);
+      }
+      break;
+    }
+    case 'weekly':
+      next.setUTCDate(next.getUTCDate() + 7);
+      break;
+    case 'fortnightly':
+      next.setUTCDate(next.getUTCDate() + 14);
+      break;
+    case 'monthly':
+      next.setUTCMonth(next.getUTCMonth() + 1);
+      break;
+    case 'quarterly':
+      next.setUTCMonth(next.getUTCMonth() + 3);
+      break;
+    case 'half_yearly':
+      next.setUTCMonth(next.getUTCMonth() + 6);
+      break;
+    case 'yearly':
+      next.setUTCFullYear(next.getUTCFullYear() + 1);
+      break;
+    default:
+      return null;
+  }
+
+  return next.toISOString().split('T')[0];
+}
+
+function getRecurringStreamKey(task: FirebaseFirestore.DocumentData): string {
+  return JSON.stringify({
+    assigned_to_id: task.assigned_to_id || '',
+    assigned_by_id: task.assigned_by_id || '',
+    title: task.title || '',
+    recurring: task.recurring || '',
+    recurring_days: Array.isArray(task.recurring_days) ? [...task.recurring_days].sort((a, b) => a - b) : [],
+    verifier_id: task.verifier_id || '',
+    attachment_required: Boolean(task.attachment_required),
+    attachment_type: task.attachment_type || '',
+    attachment_description: task.attachment_description || '',
+  });
+}
+
+function isRecurringMaster(task: FirebaseFirestore.DocumentData): boolean {
+  if (!task) return false;
+  return task.is_recurring_master === true;
+}
+
+/** Normalize phone to 11za format: country code + number, no + or spaces */
+function normalizePhone(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length === 10 && !digits.startsWith('0')) return '91' + digits;
+  if (digits.startsWith('91') && digits.length === 12) return digits;
+  return digits;
+}
+
+/** Sanitize origin website for API calls */
+function sanitizeOrigin(origin: string): string {
+  return origin.replace(/[`"' ]/g, '').trim();
+}
+
+/** Call 11za sendTemplate API */
+async function send11zaTemplate(
+  phone: string,
+  templateName: string,
+  bodyParams: string[],
+  config: { apiUrl: string; originWebsite: string; authToken: string }
+): Promise<void> {
+  const normalizedPhone = normalizePhone(phone);
+  if (!normalizedPhone) return;
+
+  const body = {
+    sendto: normalizedPhone,
+    authToken: config.authToken,
+    originWebsite: sanitizeOrigin(config.originWebsite),
+    language: 'en',
+    templateName,
+    data: bodyParams,
+  };
+
+  const res = await fetch(config.apiUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`11za API ${res.status}: ${text}`);
+  }
+}
+
+
+/**
+ * Scheduled function: runs daily at 8:00 AM IST.
+ * Sends a WhatsApp reminder to every member who has at least one
+ * assigned/pending task, prompting them to check the task software.
+ */
+export const sendDailyReminder = onSchedule(
+  {
+    schedule: '30 10 * * *',
+    timeZone: 'Asia/Kolkata',
+    timeoutSeconds: 120,
+    memory: '256MiB',
+  },
+  async () => {
+    const authToken = process.env.ELEVENZA_AUTH_TOKEN;
+    const apiUrl =
+      process.env.ELEVENZA_API_URL ||
+      'https://app.11za.in/apis/template/sendTemplate';
+    const originWebsite =
+      process.env.ELEVENZA_ORIGIN_WEBSITE ||
+      'https://whiterock.co.in/';
+    const templateDailyReminder =
+      process.env.ELEVENZA_TEMPLATE_DAILY_REMINDER ||
+      'daily_reminder_v1';
+
+    if (!templateDailyReminder.trim()) {
+      logger.warn('ELEVENZA_TEMPLATE_DAILY_REMINDER is empty; skipping daily reminders');
+      return;
+    }
+
+    if (!authToken) {
+      logger.warn('ELEVENZA_AUTH_TOKEN not set; skipping daily reminders');
+      return;
+    }
+
+    const db = admin.firestore();
+
+    // Find all tasks that are active (assigned/pending)
+    const activeTasksSnap = await db
+      .collection(COLLECTIONS.TASKS)
+      .where('status', 'in', ['pending', 'in_progress', 'overdue'])
+      .get();
+
+    // Collect unique user IDs who have at least one active task
+    const userIdsWithTasks = new Set<string>();
+    for (const doc of activeTasksSnap.docs) {
+      const uid = doc.data().assigned_to_id;
+      if (uid) userIdsWithTasks.add(uid);
+    }
+
+    if (userIdsWithTasks.size === 0) {
+      logger.info('No users with active tasks; skipping daily reminders');
+      return;
+    }
+
+    // Fetch all users to get phone numbers
+    const usersSnap = await db.collection(COLLECTIONS.USERS).get();
+    const usersById = new Map<string, { phone?: string; name: string }>();
+    for (const doc of usersSnap.docs) {
+      const d = doc.data();
+      usersById.set(doc.id, { phone: d.phone, name: d.name || '' });
+    }
+
+    const elevenzaConfig = {
+      apiUrl,
+      originWebsite,
+      authToken,
+    };
+
+    let sentCount = 0;
+    for (const userId of userIdsWithTasks) {
+      const user = usersById.get(userId);
+      const phone = user?.phone;
+      if (!phone) {
+        logger.info(`No phone for user ${userId}; skipping daily reminder`);
+        continue;
+      }
+
+      try {
+        await send11zaTemplate(phone, templateDailyReminder, [user.name], elevenzaConfig);
+        logger.info(`Daily reminder sent to ${user.name} (${phone})`);
+        sentCount++;
+      } catch (err) {
+        logger.error(`Failed to send daily reminder to ${phone}:`, err);
+      }
+    }
+
+    logger.info(`Daily reminders complete: sent to ${sentCount} users`);
+    return;
+  }
+);
+
+
+function getTodayIST(): string {
+  return new Date()
+    .toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' })
+    .replace(/\//g, '-');
+}
+
+function resolveInstanceStartDate(
+  baseStartDate: string,
+  baseDueDate: string,
+  dueCursor: string
+): string {
+  return getStartDateForRecurringDue(baseStartDate, baseDueDate, dueCursor) || dueCursor;
+}
+
+function resolveInitialTaskStatus(
+  requestedStatus: string,
+  startDate: string | undefined,
+  today: string
+): string {
+  if (requestedStatus === 'pending' && startDate && startDate > today) {
+    return 'scheduled';
+  }
+  return requestedStatus;
+}
+
+interface RecurringGenerationResult {
+  streamCount: number;
+  createdCount: number;
+  dryRun: boolean;
+  created: { masterId: string; dueDate: string; startDate: string; title: string }[];
+}
+
+/**
+ * Creates recurring child instances when their start_date has arrived (not due_date).
+ * Also advances master pointers to the next future period.
+ */
+async function runGenerateRecurringTasks(
+  db: FirebaseFirestore.Firestore,
+  opts: { dryRun?: boolean } = {}
+): Promise<RecurringGenerationResult> {
+  const dryRun = opts.dryRun === true;
+  const nowIso = new Date().toISOString();
+  const today = getTodayIST();
+
+  const recurringSnap = await db
+    .collection(COLLECTIONS.RECURRING_TASKS)
+    .get();
+
+  if (recurringSnap.empty) {
+    logger.info('No recurring tasks found; skipping recurring generation');
+    return { streamCount: 0, createdCount: 0, dryRun, created: [] };
+  }
+
+  const streamMap = new Map<string, FirebaseFirestore.DocumentData[]>();
+  for (const taskDoc of recurringSnap.docs) {
+    const task = taskDoc.data();
+    if (!task?.due_date) continue;
+    if (!isRecurringMaster(task)) continue;
+    if (task.status === 'completed') continue;
+    if (task.status === 'closed_permanently') continue;
+    const streamKey = getRecurringStreamKey(task);
+    const existing = streamMap.get(streamKey) || [];
+    existing.push({ id: taskDoc.id, ...task });
+    streamMap.set(streamKey, existing);
+  }
+
+  let createdCount = 0;
+  let streamCount = 0;
+  const created: RecurringGenerationResult['created'] = [];
+
+  for (const streamTasks of streamMap.values()) {
+    if (streamTasks.length === 0) continue;
+
+    streamCount += 1;
+    streamTasks.sort((a, b) => String(a.due_date || '').localeCompare(String(b.due_date || '')));
+
+    const template = streamTasks[streamTasks.length - 1];
+    const recurring = template.recurring as RecurringType;
+    if (!RECURRING_TYPES.includes(recurring)) continue;
+
+    const masterTaskId = String(template.id || '');
+    const masterRef = db.collection(COLLECTIONS.RECURRING_TASKS).doc(masterTaskId);
+
+    const existingInstanceSnap = await db
+      .collection(COLLECTIONS.TASKS)
+      .where('parent_task_id', '==', masterTaskId)
+      .where('recurring', '==', 'none')
+      .get();
+
+    const existingInstanceDueDates = new Set(
+      existingInstanceSnap.docs.map((d) => String(d.data().due_date || ''))
+    );
+
+    const baseStartDate = String(template.start_date || '');
+    const baseDueDate = String(template.due_date || '');
+    let cursor = String(template.due_date || '');
+    const originalCursor = cursor;
+    let guard = 0;
+
+    while (guard < 400) {
+      guard += 1;
+
+      const instanceStartDate = resolveInstanceStartDate(baseStartDate, baseDueDate, cursor);
+
+      // Stop at the first period whose work window has not opened yet
+      if (instanceStartDate > today) break;
+
+      let shouldCreateInstance = true;
+      if (
+        recurring === 'daily' &&
+        template.recurring_days &&
+        Array.isArray(template.recurring_days) &&
+        template.recurring_days.length > 0
+      ) {
+        const cursorWeekday = toAppWeekday(new Date(`${cursor}T00:00:00Z`));
+        shouldCreateInstance = template.recurring_days.includes(cursorWeekday);
+      }
+
+      if (shouldCreateInstance && !existingInstanceDueDates.has(cursor)) {
+        const status = resolveInitialTaskStatus('pending', instanceStartDate, today);
+
+        const newTask: FirebaseFirestore.DocumentData = {
+          title: template.title || '',
+          description: template.description || '',
+          start_date: instanceStartDate,
+          due_date: cursor,
+          priority: template.priority || 'medium',
+          status,
+          recurring: 'none',
+          is_recurring_master: false,
+          recurring_days: null,
+          verification_required: template.verification_required === true,
+          verifier_id: template.verifier_id || null,
+          verifier_name: template.verifier_name || null,
+          attachment_required: template.attachment_required === true,
+          attachment_type: template.attachment_type || null,
+          attachment_description: template.attachment_description || null,
+          assigned_to_id: template.assigned_to_id || '',
+          assigned_to_name: template.assigned_to_name || '',
+          assigned_to_city: template.assigned_to_city || null,
+          assigned_by_id: template.assigned_by_id || '',
+          assigned_by_name: template.assigned_by_name || '',
+          assignee_deleted: template.assignee_deleted === true,
+          parent_task_id: masterTaskId,
+          is_holiday: template.is_holiday === true,
+          audit_sop_text: template.audit_sop_text || null,
+          audit_sop_attachments: template.audit_sop_attachments || null,
+          audit_sop_links: template.audit_sop_links || null,
+          audit_sop_updated_by: template.audit_sop_updated_by || null,
+          audit_sop_updated_at: template.audit_sop_updated_at || null,
+          created_at: admin.firestore.Timestamp.fromDate(new Date(nowIso)),
+          updated_at: admin.firestore.Timestamp.fromDate(new Date(nowIso)),
+        };
+
+        created.push({
+          masterId: masterTaskId,
+          dueDate: cursor,
+          startDate: instanceStartDate,
+          title: String(template.title || ''),
+        });
+
+        if (!dryRun) {
+          await db.collection(COLLECTIONS.TASKS).add(newTask);
+        }
+        existingInstanceDueDates.add(cursor);
+        createdCount += 1;
+      }
+
+      const nextDueDate = getNextRecurringDueDate(
+        cursor,
+        recurring,
+        template.recurring_days as number[] | undefined
+      );
+      if (!nextDueDate) break;
+      cursor = nextDueDate;
+    }
+
+    if (cursor !== originalCursor) {
+      const nextMasterStartDate =
+        resolveInstanceStartDate(baseStartDate, baseDueDate, cursor) ||
+        String(template.start_date || today);
+
+      if (!dryRun) {
+        await masterRef.update({
+          start_date: nextMasterStartDate,
+          due_date: cursor,
+          updated_at: admin.firestore.Timestamp.fromDate(new Date(nowIso)),
+        });
+      }
+    }
+  }
+
+  logger.info(
+    `Recurring generation complete (dryRun=${dryRun}): processed ${streamCount} streams, created ${createdCount} tasks`
+  );
+
+  return { streamCount, createdCount, dryRun, created };
+}
+
+/**
+ * Scheduled function: runs daily at 00:10 AM IST (after transitionScheduledTasks at 00:05).
+ * Creates recurring child instances when start_date has arrived and advances master due dates.
+ */
+export const generateRecurringTasksDaily = onSchedule(
+  {
+    schedule: '10 0 * * *',
+    timeZone: 'Asia/Kolkata',
+    timeoutSeconds: 540,
+    memory: '512MiB',
+  },
+  async () => {
+    await runGenerateRecurringTasks(admin.firestore());
+    return;
+  }
+);
+
+
+/**
+ * Scheduled function: runs daily at 00:05 AM IST (18:05 UTC).
+ * Finds all tasks with status 'scheduled' whose start_date has arrived (start_date <= today).
+ * Updates them to 'pending' so they become visible to assignees in the task tables.
+ */
+export const transitionScheduledTasks = onSchedule(
+  {
+    schedule: '05 00 * * *', // 00:05 IST
+    timeZone: 'Asia/Kolkata',
+    timeoutSeconds: 540,
+    memory: '512MiB',
+  },
+  async () => {
+    const db = admin.firestore();
+    const today = getTodayIST(); // YYYY-MM-DD in IST
+
+    logger.info(`transitionScheduledTasks: running for date ${today}`);
+
+    // Fetch all tasks with 'scheduled' status
+    const scheduledSnap = await db
+      .collection(COLLECTIONS.TASKS)
+      .where('status', '==', 'scheduled')
+      .get();
+
+    if (scheduledSnap.empty) {
+      logger.info('No scheduled tasks found; nothing to transition.');
+      return;
+    }
+
+    // Filter to only those whose start_date has arrived (start_date <= today)
+    const tasksToActivate = scheduledSnap.docs.filter((docSnap) => {
+      const startDate = docSnap.data().start_date as string | undefined;
+      // If no start_date set, activate it (edge case safety)
+      if (!startDate) return true;
+      return startDate <= today;
+    });
+
+    if (tasksToActivate.length === 0) {
+      logger.info('No scheduled tasks are ready to activate yet.');
+      return;
+    }
+
+    logger.info(`Activating ${tasksToActivate.length} scheduled task(s)...`);
+
+    // Firestore batch writes are limited to 500 ops per batch — use chunks of 450 to be safe
+    const BATCH_SIZE = 450;
+    const nowTimestamp = admin.firestore.Timestamp.now();
+
+    for (let i = 0; i < tasksToActivate.length; i += BATCH_SIZE) {
+      const batch = db.batch();
+      const chunk = tasksToActivate.slice(i, i + BATCH_SIZE);
+      for (const docSnap of chunk) {
+        batch.update(docSnap.ref, {
+          status: 'pending',
+          updated_at: nowTimestamp,
+        });
+      }
+      await batch.commit();
+      logger.info(`Batch committed: ${chunk.length} tasks activated.`);
+    }
+
+    logger.info(
+      `transitionScheduledTasks complete: ${tasksToActivate.length} task(s) transitioned to pending.`
+    );
+    return;
+  }
+);
+
+/**
+ * Triggered when a task document is updated.
+ * Checks if audit_sop fields changed and sends a WhatsApp notification to the assigned doer and verifier.
+ */
+export const onTaskAuditSopUpdated = onDocumentUpdated(
+  {
+    document: `${COLLECTIONS.TASKS}/{taskId}`,
+  },
+  async (event) => {
+    if (!event.data) return;
+
+    const before = event.data.before.data();
+    const after = event.data.after.data();
+
+    // Check if any audit SOP field changed
+    const sopTextChanged = before.audit_sop_text !== after.audit_sop_text;
+    const sopAttachmentsChanged = JSON.stringify(before.audit_sop_attachments || []) !== JSON.stringify(after.audit_sop_attachments || []);
+    const sopLinksChanged = JSON.stringify(before.audit_sop_links || []) !== JSON.stringify(after.audit_sop_links || []);
+
+    const hasSopChanged = sopTextChanged || sopAttachmentsChanged || sopLinksChanged;
+
+    if (!hasSopChanged) {
+      return;
+    }
+
+    const db = admin.firestore();
+
+    // If it's a recurring master, propagate the SOP changes to active child instances
+
+    const authToken = process.env.ELEVENZA_AUTH_TOKEN;
+    const apiUrl =
+      process.env.ELEVENZA_API_URL ||
+      'https://app.11za.in/apis/template/sendTemplate';
+    const originWebsite =
+      process.env.ELEVENZA_ORIGIN_WEBSITE ||
+      'https://whiterock.co.in/';
+    const templateAuditSopUpdate =
+      process.env.ELEVENZA_TEMPLATE_AUDIT_SOP_UPDATE ||
+      'audit_sop_update';
+
+    if (!authToken) {
+      logger.warn('ELEVENZA_AUTH_TOKEN not set; skipping audit SOP notification');
+      return;
+    }
+
+    const taskTitle = after.title || 'Unknown Task';
+    const updatedByName = after.audit_sop_updated_by || 'Assigner/Admin';
+
+    // Collect users to notify
+    const usersToNotify = new Set<string>();
+    if (after.assigned_to_id) usersToNotify.add(after.assigned_to_id);
+    if (after.verifier_id) usersToNotify.add(after.verifier_id);
+
+    if (usersToNotify.size === 0) return;
+
+    const elevenzaConfig = {
+      apiUrl,
+      originWebsite,
+      authToken,
+    };
+
+    const usersSnap = await db.collection(COLLECTIONS.USERS).get();
+    const usersById = new Map<string, { phone?: string; name: string }>();
+    for (const doc of usersSnap.docs) {
+      const d = doc.data();
+      usersById.set(doc.id, { phone: d.phone, name: d.name || '' });
+    }
+
+    for (const userId of usersToNotify) {
+      const user = usersById.get(userId);
+      const phone = user?.phone;
+      if (!phone) continue;
+
+      try {
+        await send11zaTemplate(phone, templateAuditSopUpdate, [user.name, taskTitle, updatedByName], elevenzaConfig);
+        logger.info(`Audit SOP update notification sent to ${user.name} (${phone})`);
+      } catch (err) {
+        logger.error(`Failed to send Audit SOP update notification to ${phone}:`, err);
+      }
+    }
+  }
+);
+
+/**
+ * Triggered when a recurring task template is updated.
+ * Checks if audit_sop fields changed and propagates them to active children, and notifies doer/verifier.
+ */
+export const onRecurringTaskAuditSopUpdated = onDocumentUpdated(
+  {
+    document: `${COLLECTIONS.RECURRING_TASKS}/{taskId}`,
+  },
+  async (event) => {
+    if (!event.data) return;
+
+    const before = event.data.before.data();
+    const after = event.data.after.data();
+
+    const sopTextChanged = before.audit_sop_text !== after.audit_sop_text;
+    const sopAttachmentsChanged = JSON.stringify(before.audit_sop_attachments || []) !== JSON.stringify(after.audit_sop_attachments || []);
+    const sopLinksChanged = JSON.stringify(before.audit_sop_links || []) !== JSON.stringify(after.audit_sop_links || []);
+
+    const hasSopChanged = sopTextChanged || sopAttachmentsChanged || sopLinksChanged;
+
+    if (!hasSopChanged) {
+      return;
+    }
+
+    const db = admin.firestore();
+    const taskId = event.data.after.id;
+
+    try {
+      const activeChildrenSnap = await db
+        .collection(COLLECTIONS.TASKS)
+        .where('parent_task_id', '==', taskId)
+        .where('recurring', '==', 'none')
+        .where('status', 'in', ['pending', 'scheduled', 'in_progress', 'correction_required', 'pending_verification', 'overdue'])
+        .get();
+
+      if (!activeChildrenSnap.empty) {
+        const batch = db.batch();
+        activeChildrenSnap.forEach(doc => {
+          batch.update(doc.ref, {
+            audit_sop_text: after.audit_sop_text || null,
+            audit_sop_attachments: after.audit_sop_attachments || null,
+            audit_sop_links: after.audit_sop_links || null,
+            audit_sop_updated_by: after.audit_sop_updated_by || null,
+            audit_sop_updated_at: after.audit_sop_updated_at || null,
+            updated_at: admin.firestore.Timestamp.now(),
+          });
+        });
+        await batch.commit();
+        logger.info(`Propagated SOP updates from recurring master ${taskId} to ${activeChildrenSnap.size} active child tasks.`);
+      }
+    } catch (err) {
+      logger.error(`Failed to propagate SOP updates for recurring master ${taskId}:`, err);
+    }
+
+    const authToken = process.env.ELEVENZA_AUTH_TOKEN;
+    const apiUrl =
+      process.env.ELEVENZA_API_URL ||
+      'https://app.11za.in/apis/template/sendTemplate';
+    const originWebsite =
+      process.env.ELEVENZA_ORIGIN_WEBSITE ||
+      'https://whiterock.co.in/';
+    const templateAuditSopUpdate =
+      process.env.ELEVENZA_TEMPLATE_AUDIT_SOP_UPDATE ||
+      'audit_sop_update';
+
+    if (!authToken) return;
+
+    const taskTitle = after.title || 'Unknown Task';
+    const updatedByName = after.audit_sop_updated_by || 'Assigner/Admin';
+
+    const usersToNotify = new Set<string>();
+    if (after.assigned_to_id) usersToNotify.add(after.assigned_to_id);
+    if (after.verifier_id) usersToNotify.add(after.verifier_id);
+
+    if (usersToNotify.size === 0) return;
+
+    const elevenzaConfig = {
+      apiUrl,
+      originWebsite,
+      authToken,
+    };
+
+    const usersSnap = await db.collection(COLLECTIONS.USERS).get();
+    const usersById = new Map<string, { phone?: string; name: string }>();
+    for (const doc of usersSnap.docs) {
+      const d = doc.data();
+      usersById.set(doc.id, { phone: d.phone, name: d.name || '' });
+    }
+
+    for (const userId of usersToNotify) {
+      const user = usersById.get(userId);
+      const phone = user?.phone;
+      if (!phone) continue;
+
+      try {
+        await send11zaTemplate(phone, templateAuditSopUpdate, [user.name, taskTitle, updatedByName], elevenzaConfig);
+      } catch (err) {
+        logger.error(`Failed to send Audit SOP update notification to ${phone}:`, err);
+      }
+    }
+  }
+);
