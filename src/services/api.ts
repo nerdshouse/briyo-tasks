@@ -1508,26 +1508,4 @@ export const api = {
     });
   },
 
-  // --- Forgot Password (OTP) ---
-  // All three steps are verified server-side (Cloud Functions) since the caller has no
-  // session yet — see functions/src/auth.ts.
-
-  requestPasswordResetOtp: async (phone: string): Promise<void> => {
-    const fn = httpsCallable(functions, 'requestPasswordResetOtp');
-    await fn({ phone });
-  },
-
-  verifyPasswordResetOtp: async (phone: string, otp: string): Promise<boolean> => {
-    const fn = httpsCallable<{ phone: string; otp: string }, { valid: boolean }>(
-      functions,
-      'verifyPasswordResetOtp'
-    );
-    const res = await fn({ phone, otp });
-    return res.data.valid;
-  },
-
-  resetPasswordWithOtp: async (phone: string, otp: string, newPassword: string): Promise<void> => {
-    const fn = httpsCallable(functions, 'resetPasswordWithOtp');
-    await fn({ phone, otp, newPassword });
-  },
 };
