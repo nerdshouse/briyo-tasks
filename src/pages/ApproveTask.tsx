@@ -229,7 +229,7 @@ export const ApproveTask: React.FC = () => {
         setCurrentPage(totalPages);
     };
 
-    const isDoer = user?.role === UserRole.DOER;
+    const isDoer = user?.role !== UserRole.ADMIN;
 
     const totalPages = Math.max(1, Math.ceil(totalResults / rowsPerPage));
     const startRow = totalResults === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
@@ -365,7 +365,7 @@ export const ApproveTask: React.FC = () => {
                                                     {(() => {
                                                     const hasSop = !!task.audit_sop_text || (task.audit_sop_attachments && task.audit_sop_attachments.length > 0) || (task.audit_sop_links && task.audit_sop_links.length > 0);
                                                     const isAssigner = user?.id === task.assigned_by_id;
-                                                    const isAdmin = user?.role === UserRole.OWNER || user?.role === UserRole.MANAGER;
+                                                    const isAdmin = user?.role === UserRole.ADMIN;
                                                     const canEditSop = (isAssigner || isAdmin) && !task.verified_at;
 
                                                     if (hasSop) {

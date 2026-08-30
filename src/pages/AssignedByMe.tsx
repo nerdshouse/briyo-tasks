@@ -24,14 +24,10 @@ import { SearchableUserSelect } from '../components/ui/SearchableUserSelect';
 import { CompleteTaskModal } from '../components/ui/CompleteTaskModal';
 import { AttachmentViewerModal } from '../components/ui/AttachmentViewerModal';
 import { exportRowsToCsv, type CsvColumn } from '../lib/csv';
-import { isHoliday, getPendingDays, formatDateDDMMYYYY, getDisplayRecurring, formatRecurringLabel } from '../lib/utils';
+import { isHoliday, formatDateDDMMYYYY, getDisplayRecurring, formatRecurringLabel } from '../lib/utils';
 import { getTodayIST } from '../lib/dates';
 import { AuditSopModal } from '../components/ui/AuditSopModal';
 import {
-  Paperclip,
-  Check,
-  X,
-  HelpCircle,
   ExternalLink,
   FileText,
   Pencil,
@@ -167,11 +163,10 @@ export const AssignedByMe: React.FC = () => {
   const [editError, setEditError] = useState('');
   const [editSubmitting, setEditSubmitting] = useState(false);
 
-  const isAuditor = user?.role === UserRole.AUDITOR;
-  const isOwner = user?.role === UserRole.OWNER;
-  const isManager = user?.role === UserRole.MANAGER || user?.role === UserRole.OWNER;
-  const isDoer = user?.role === UserRole.DOER;
-  const isVerifier = user?.role === UserRole.VERIFIER;
+  const isAuditor = false;
+  const isManager = user?.role === UserRole.ADMIN;
+  const isDoer = user?.role !== UserRole.ADMIN;
+  const isVerifier = false;
   const isSelfTasksView = true;
 
   useEffect(() => {
@@ -749,17 +744,6 @@ export const AssignedByMe: React.FC = () => {
     setCompleteTask(null);
   };
 
-  const handleAudit = async (taskId: string, status: 'audited' | 'bogus' | 'unclear') => {
-    if (!user) return;
-    try {
-      const actor = { id: user.id, name: user.name, role: user.role };
-      await api.setAuditStatus(taskId, status, user.name, actor);
-      setLoading(true);
-      await loadPage(pageCursors[currentPage - 1] ?? null, currentPage);
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
   const handleNextPage = () => {
     if (isClientMode) {
@@ -1093,7 +1077,7 @@ export const AssignedByMe: React.FC = () => {
       (t.audit_sop_attachments && t.audit_sop_attachments.length > 0) ||
       (t.audit_sop_links && t.audit_sop_links.length > 0);
     const isAssigner = user?.id === t.assigned_by_id;
-    const isAdmin = user?.role === UserRole.OWNER || user?.role === UserRole.MANAGER;
+    const isAdmin = user?.role === UserRole.ADMIN;
     const canEditSop = (isAssigner || isAdmin) && !t.verified_at;
 
     if (hasSop) {
@@ -1149,293 +1133,16 @@ export const AssignedByMe: React.FC = () => {
       t.status !== 'completed' &&
       t.status !== 'pending_verification';
     const isAssigner = t.assigned_by_id === user?.id;
-    const isManagerOrOwner = isOwner || isManager;
-    const assignerUser = allUsers.find((u) => u.id === t.assigned_by_id);
-    const isAssignedByDoer = assignerUser?.role === UserRole.DOER;
+    const isAdminRole = user?.role === UserRole.ADMIN;
 
-    const canEditTask = isAssigner || (isManagerOrOwner && !isAssignedByDoer);
-    const canDeleteTask = isAssigner || (!isSelfTasksView && isManagerOrOwner && !isAssignedByDoer);
+    const canEditTask = isAssigner || isAdminRole;
+    const canDeleteTask = isAdminRole;
     const canClosePermanently =
-      t.recurring !== 'none' &&
-      t.status !== 'closed_permanently' &&
-      (isAssigner || isManagerOrOwner);
+      t.recurring !== 'none' && t.status !== 'closed_permanently' && (isAssigner || isAdminRole);
 
     return { showComplete, canEditTask, canDeleteTask, canClosePermanently };
   };
 
-  if (isAuditor) {
-    return (
-      <div>
-
-        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-          {paginationControls}
-        </div>
-        <div className="table-container task-table-container">
-          <table>
-            <thead>
-              <tr>
-                <th className="sticky-col-1 text-center">Task</th>
-                <th className="sticky-col-2 text-center">Description</th>
-                <th className="whitespace-nowrap text-center">Name</th>
-                <th className="whitespace-nowrap text-center">Department</th>
-                <th className="whitespace-nowrap text-center">Attachment</th>
-                <th className="whitespace-nowrap text-center">Status</th>
-                <th className="whitespace-nowrap text-center">Pending Days</th>
-                <th className="whitespace-nowrap text-center pr-4">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredTasks.map((t) => (
-                <tr
-                  key={t.id}
-                  className={`${(t.status === 'overdue' || t.due_date < getTodayIST()) &&
-                    t.status !== 'completed' &&
-                    t.status !== 'cancelled' &&
-                    t.status !== 'closed_permanently'
-                    ? 'overdue-row'
-                    : ''} ${highlightId === t.id ? 'ring-2 ring-warning-300' : ''}`}
-                >
-                  <td className="sticky-col-1">{t.title}</td>
-                  <td className="sticky-col-2 whitespace-pre-wrap wrap-break-word text-sm text-slate-700">
-                    {t.description || '-'}
-                  </td>
-                  <td>
-                    {t.assigned_to_name}
-                    {t.assignee_deleted && (
-                      <span className="ml-2 text-xs px-2 py-0.5 rounded bg-slate-200 text-slate-600">Member deleted</span>
-                    )}
-                  </td>
-                  <td>{t.assigned_to_department || (t.assignee_deleted ? '—' : '-')}</td>
-                  <td className="text-center">
-                    {(t.attachment_url || t.attachment_text) ? (
-                      <button
-                        type="button"
-                        onClick={() => setViewAttachment({
-                          urls: t.attachment_urls || (t.attachment_url ? [t.attachment_url] : []),
-                          text: t.attachment_text
-                        })}
-                        className="text-brand-600 hover:underline text-sm inline-flex items-center justify-center gap-1 font-medium"
-                      >
-                        {t.attachment_url ? <ExternalLink size={14} /> : <FileText size={14} />}
-                        View
-                      </button>
-                    ) : t.attachment_required ? (
-                      <span className="text-warning-600 flex items-center justify-center gap-1">
-                        <Paperclip size={14} /> Required
-                      </span>
-                    ) : (
-                      '-'
-                    )}
-                  </td>
-                  <td className="text-center">
-                    <span
-                      className={`inline-flex px-2 py-0.5 rounded-lg text-xs font-medium ${t.audit_status === 'audited'
-                        ? 'bg-success-100 text-success-800'
-                        : t.audit_status === 'bogus'
-                          ? 'bg-danger-100 text-danger-800'
-                          : t.audit_status === 'unclear'
-                            ? 'bg-warning-100 text-warning-800'
-                            : 'bg-slate-100 text-slate-600'
-                        }`}
-                    >
-                      {t.audit_status || 'pending'}
-                    </span>
-                  </td>
-                  <td className="text-center">{getPendingDays(t.due_date)}</td>
-                  <td className="text-right pr-4">
-                    {(!t.audit_status || t.audit_status === 'pending') && (
-                      <div className="flex gap-1 justify-end">
-                        <Button
-                          size="sm"
-                          variant="success"
-                          onClick={() => handleAudit(t.id, 'audited')}
-                        >
-                          <Check size={14} />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="danger"
-                          onClick={() => handleAudit(t.id, 'bogus')}
-                        >
-                          <X size={14} />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          onClick={() => handleAudit(t.id, 'unclear')}
-                        >
-                          <HelpCircle size={14} />
-                        </Button>
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="mt-3 flex justify-end border-t border-slate-100 pt-3">{paginationControls}</div>
-      </div>
-    );
-  }
-
-  if (isVerifier) {
-    return (
-      <div>
-
-        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-          {paginationControls}
-        </div>
-        <div className="table-container task-table-container">
-          <table>
-            <thead>
-              <tr>
-                <th className="sticky-col-1 text-center">Title</th>
-                <th className="sticky-col-2 text-center">Description</th>
-                <th className="whitespace-nowrap text-center">Doer</th>
-                <th className="whitespace-nowrap text-center">Due Date</th>
-                {/* <th className="whitespace-nowrap text-center">Priority</th> */}
-                <th className="whitespace-nowrap text-center">Status</th>
-                <th className="whitespace-nowrap text-center">Attachment</th>
-                <th className="whitespace-nowrap text-center pr-4">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredTasks.map((t) => (
-                <tr
-                  key={t.id}
-                  className={`${(t.status === 'overdue' || t.due_date < getTodayIST()) &&
-                    t.status !== 'completed' &&
-                    t.status !== 'cancelled' &&
-                    t.status !== 'closed_permanently'
-                    ? 'overdue-row'
-                    : ''} ${highlightId === t.id ? 'ring-2 ring-warning-300' : ''}`}
-                >
-                  <td className="sticky-col-1">
-                    <span className="font-medium text-slate-800">{t.title}</span>
-                  </td>
-                  <td className="sticky-col-2 whitespace-pre-wrap wrap-break-word text-sm text-slate-700">
-                    {t.description || '-'}
-                  </td>
-                  <td>
-                    {t.assigned_to_name}
-                    {t.assignee_deleted && (
-                      <span className="ml-2 text-xs px-2 py-0.5 rounded bg-slate-200 text-slate-600">Member deleted</span>
-                    )}
-                  </td>
-                  <td className="text-center whitespace-nowrap text-slate-600 font-medium">{formatDateValue(t.due_date)}</td>
-                  {/*
-                  <td className="text-center">
-                    <span
-                      className={`inline-flex px-2 py-0.5 rounded-lg text-xs font-medium whitespace-nowrap ${t.priority === 'urgent'
-                        ? 'bg-danger-100 text-danger-800'
-                        : t.priority === 'high'
-                          ? 'bg-warning-100 text-warning-800'
-                          : 'bg-slate-100 text-slate-600'
-                        }`}
-                    >
-                      {t.priority}
-                    </span>
-                  </td>
-                  */}
-                  <td className="text-center">
-                    <span
-                      className={`inline-flex px-2 py-0.5 rounded-lg text-xs font-medium whitespace-nowrap ${t.status === 'completed'
-                        ? 'bg-success-100 text-success-800'
-                        : t.status === 'overdue'
-                          ? 'bg-danger-100 text-danger-800'
-                          : t.status === 'correction_required'
-                            ? 'bg-warning-100 text-warning-800'
-                            : t.status === 'pending_verification'
-                              ? 'bg-info-100 text-info-800'
-                              : t.status === 'closed_permanently'
-                                ? 'bg-review-100 text-review-800'
-                                : t.status === 'scheduled'
-                                  ? 'bg-slate-100 text-slate-700'
-                                  : 'bg-slate-100 text-slate-600'
-                        }`}
-                    >
-                      {t.status === 'pending_verification'
-                        ? 'Pending Verification'
-                        : t.status === 'correction_required'
-                          ? 'Correction Required'
-                          : t.status === 'closed_permanently'
-                            ? 'Closed Permanently'
-                            : t.status === 'scheduled'
-                              ? 'Scheduled'
-                              : t.status}
-                    </span>
-                  </td>
-                  <td className="text-center">
-                    {(t.attachment_url || t.attachment_text) ? (
-                      <button
-                        type="button"
-                        onClick={() => setViewAttachment({
-                          urls: t.attachment_urls || (t.attachment_url ? [t.attachment_url] : []),
-                          text: t.attachment_text
-                        })}
-                        className="text-brand-600 hover:underline text-sm inline-flex items-center justify-center gap-1 font-medium whitespace-nowrap"
-                      >
-                        {t.attachment_url ? <ExternalLink size={14} /> : <FileText size={14} />}
-                        View
-                      </button>
-                    ) : t.attachment_required ? (
-                      <span className="text-warning-600 text-xs font-medium whitespace-nowrap">Required</span>
-                    ) : (
-                      <span className="text-slate-400">-</span>
-                    )}
-                  </td>
-                  <td className="py-3 px-2 text-right pr-4">
-                    {t.status === 'pending_verification' ? (
-                      <div className="flex flex-col gap-1 sm:flex-row sm:items-center justify-end py-2 h-full">
-                        <Button
-                          size="sm"
-                          variant="success"
-                          onClick={async () => {
-                            if (!user) return;
-                            try {
-                              const completedAt = new Date().toISOString();
-                              await api.updateTask(t.id, {
-                                status: 'completed',
-                                completed_at: completedAt,
-                                verified_by: user.name,
-                                verified_at: completedAt,
-                              }, { id: user.id, name: user.name, role: user.role }, 'Verified by verifier');
-                              setLoading(true);
-                              await loadPage(pageCursors[currentPage - 1] ?? null, currentPage);
-                            } catch (err) {
-                              console.error(err);
-                            }
-                          }}
-                          className="w-full sm:w-auto text-xs sm:text-sm px-2 py-1 whitespace-nowrap"
-                        >
-                          Approve
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="danger"
-                          onClick={() => {
-                            setRejectTask(t);
-                            setRejectComment('');
-                          }}
-                          className="w-full sm:w-auto text-xs sm:text-sm px-2 py-1 whitespace-nowrap"
-                        >
-                          Reject
-                        </Button>
-                      </div>
-                    ) : (
-                      <span className="text-slate-400 text-center">-</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="mt-3 flex justify-end border-t border-slate-100 pt-3">{paginationControls}</div>
-      </div>
-    );
-  }
 
   return (
     <div>

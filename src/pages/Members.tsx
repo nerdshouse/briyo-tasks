@@ -20,11 +20,9 @@ import Papa from 'papaparse';
 const ROWS_PER_PAGE_OPTIONS = [50, 100] as const;
 
 const ROLE_LABELS: Record<UserRole, string> = {
-  [UserRole.OWNER]: 'Owner',
-  [UserRole.MANAGER]: 'Manager',
-  [UserRole.DOER]: 'Doer',
-  [UserRole.AUDITOR]: 'Auditor',
-  [UserRole.VERIFIER]: 'Verifier',
+  [UserRole.ADMIN]: 'Admin',
+  [UserRole.SUB_ADMIN]: 'Sub-admin',
+  [UserRole.USER]: 'User',
 };
 
 export const Members: React.FC = () => {
@@ -34,7 +32,7 @@ export const Members: React.FC = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newUserName, setNewUserName] = useState('');
   const [newUserEmail, setNewUserEmail] = useState('');
-  const [newUserRole, setNewUserRole] = useState<UserRole>(UserRole.DOER);
+  const [newUserRole, setNewUserRole] = useState<UserRole>(UserRole.USER);
   const [newUserDepartment, setNewUserDepartment] = useState('');
   const [newUserPhone, setNewUserPhone] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -49,7 +47,7 @@ export const Members: React.FC = () => {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [editName, setEditName] = useState('');
   const [editEmail, setEditEmail] = useState('');
-  const [editRole, setEditRole] = useState<UserRole>(UserRole.DOER);
+  const [editRole, setEditRole] = useState<UserRole>(UserRole.USER);
   const [editDepartment, setEditDepartment] = useState('');
   const [editPhone, setEditPhone] = useState('');
   const [editSubmitting, setEditSubmitting] = useState(false);
@@ -64,8 +62,10 @@ export const Members: React.FC = () => {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
 
-  const isOwner = user?.role === UserRole.OWNER;
-  const isManager = user?.role === UserRole.MANAGER || user?.role === UserRole.OWNER;
+  const isOwner = user?.role === UserRole.ADMIN;
+  const isManager = user?.role === UserRole.ADMIN || user?.role === UserRole.SUB_ADMIN;
+  const canChangeRoles = isOwner;
+  const adminCount = users.filter((u) => u.role === UserRole.ADMIN).length;
 
   useEffect(() => {
     api.getUsers().then(setUsers).finally(() => setLoading(false));
@@ -151,6 +151,14 @@ export const Members: React.FC = () => {
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingUser) return;
+    if (
+      editingUser.role === UserRole.ADMIN &&
+      editRole !== UserRole.ADMIN &&
+      adminCount <= 1
+    ) {
+      setEditError('Cannot demote the only remaining admin.');
+      return;
+    }
     setEditSubmitting(true);
     setEditError('');
     try {
@@ -269,7 +277,7 @@ export const Members: React.FC = () => {
               const createdUser = await api.createUser({
                 name: row.Name.trim(),
                 email: row.Email.trim(), // Kept email, but isn't part of dupe check now
-                role: UserRole.DOER, // Enforce DOER role for bulk imports
+                role: UserRole.USER, // Bulk imports always create standard users
                 department: row.Department?.trim() || undefined,
                 phone: phoneCell || undefined,
               });
@@ -498,12 +506,12 @@ export const Members: React.FC = () => {
                   <select
                     value={newUserRole}
                     onChange={(e) => setNewUserRole(e.target.value as UserRole)}
-                    className="w-full h-10 rounded-control border border-slate-200 px-3 text-sm"
+                    disabled={!canChangeRoles}
+                    className="w-full h-10 rounded-control border border-slate-200 px-3 text-sm disabled:opacity-60"
                   >
-                    <option value={UserRole.OWNER}>Owner</option>
-                    <option value={UserRole.MANAGER}>Manager</option>
-                    <option value={UserRole.DOER}>Doer</option>
-                    <option value={UserRole.AUDITOR}>Auditor</option>
+                    <option value={UserRole.ADMIN}>Admin</option>
+                    <option value={UserRole.SUB_ADMIN}>Sub-admin</option>
+                    <option value={UserRole.USER}>User</option>
                   </select>
                 </div>
                 <DepartmentSelect
@@ -520,7 +528,7 @@ export const Members: React.FC = () => {
                   <Button type="submit" isLoading={submitting}>
                     Add Member
                   </Button>
-                  <Button type="button" variant="secondary" onClick={() => { setShowAddForm(false); setError(''); setNewUserName(''); setNewUserEmail(''); setNewUserDepartment(''); setNewUserPhone(''); setNewUserRole(UserRole.DOER); }}>
+                  <Button type="button" variant="secondary" onClick={() => { setShowAddForm(false); setError(''); setNewUserName(''); setNewUserEmail(''); setNewUserDepartment(''); setNewUserPhone(''); setNewUserRole(UserRole.USER); }}>
                     Cancel
                   </Button>
                 </div>
@@ -570,15 +578,17 @@ export const Members: React.FC = () => {
                   >
                     <Pencil size={15} />
                   </button>
+                  {isOwner && (
                   <button
                     type="button"
                     onClick={() => handleDeleteMember(u)}
-                    disabled={u.id === user?.id || deleteLoading}
+                    disabled={u.id === user?.id || deleteLoading || (u.role === UserRole.ADMIN && adminCount <= 1)}
                     className="p-2 rounded-control text-slate-400 hover:text-danger-600 hover:bg-danger-50 transition-colors disabled:opacity-40 disabled:pointer-events-none"
                     title="Remove member"
                   >
                     <Trash2 size={15} />
                   </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -627,15 +637,17 @@ export const Members: React.FC = () => {
                         >
                           <Pencil size={15} />
                         </button>
+                        {isOwner && (
                         <button
                           type="button"
                           onClick={() => handleDeleteMember(u)}
-                          disabled={u.id === user?.id || deleteLoading}
+                          disabled={u.id === user?.id || deleteLoading || (u.role === UserRole.ADMIN && adminCount <= 1)}
                           className="p-2 rounded-control text-slate-400 hover:text-danger-600 hover:bg-danger-50 transition-colors disabled:opacity-40 disabled:pointer-events-none"
                           title="Remove member"
                         >
                           <Trash2 size={15} />
                         </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -667,13 +679,14 @@ export const Members: React.FC = () => {
                   <select
                     value={editRole}
                     onChange={(e) => setEditRole(e.target.value as UserRole)}
-                    className="w-full h-10 rounded-control border border-slate-200 px-3 text-sm"
+                    disabled={!canChangeRoles}
+                    className="w-full h-10 rounded-control border border-slate-200 px-3 text-sm disabled:opacity-60"
                   >
-                    <option value={UserRole.OWNER}>Owner</option>
-                    <option value={UserRole.MANAGER}>Manager</option>
-                    <option value={UserRole.DOER}>Doer</option>
-                    <option value={UserRole.AUDITOR}>Auditor</option>
+                    <option value={UserRole.ADMIN}>Admin</option>
+                    <option value={UserRole.SUB_ADMIN}>Sub-admin</option>
+                    <option value={UserRole.USER}>User</option>
                   </select>
+                  <p className="mt-1 text-xs text-slate-500">Role changes take effect the next time the member signs in.</p>
                 </div>
                 <DepartmentSelect value={editDepartment} onChange={setEditDepartment} />
                 <Input label="Phone (for WhatsApp)" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} placeholder="+91..." />

@@ -56,7 +56,7 @@ const Stars = ({ value }: { value: number }) => {
 
 export const HelpTickets: React.FC = () => {
   const { user } = useAuth();
-  const isOwner = user?.role === UserRole.OWNER;
+  const isOwner = user?.role === UserRole.ADMIN;
   const [mainTab, setMainTab] = useState<'tickets' | 'logs' | 'mis'>('tickets');
   
   const [loading, setLoading] = useState(true);

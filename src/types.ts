@@ -5,11 +5,9 @@
  * Unauthorized copying, modification, or distribution is strictly prohibited.
  */
 export enum UserRole {
-  OWNER = 'owner',
-  MANAGER = 'manager',
-  DOER = 'doer',
-  AUDITOR = 'auditor',
-  VERIFIER = 'verifier',
+  ADMIN = 'admin',
+  SUB_ADMIN = 'sub_admin',
+  USER = 'user',
 }
 
 export interface User {

@@ -108,7 +108,7 @@ export const RedZone: React.FC = () => {
     setLoading(true);
     try {
       const assignedToId =
-        user?.role === UserRole.DOER ? user?.id : undefined;
+        user?.role !== UserRole.ADMIN ? user?.id : undefined;
       const overdue = await api.getOverdueTasks({
         assignedToId,
         limitCount: 500,
@@ -124,9 +124,9 @@ export const RedZone: React.FC = () => {
     loadTasks().catch(console.error);
   }, [loadTasks]);
 
-  const isOwner = user?.role === UserRole.OWNER;
-  const isManager = user?.role === UserRole.MANAGER;
-  const isDoer = user?.role === UserRole.DOER;
+  const isOwner = user?.role === UserRole.ADMIN;
+  const isManager = user?.role === UserRole.ADMIN;
+  const isDoer = user?.role !== UserRole.ADMIN;
 
 
 

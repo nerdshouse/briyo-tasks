@@ -25,11 +25,9 @@ import {
 } from 'lucide-react';
 
 const roleLabels: Record<UserRole, string> = {
-  [UserRole.OWNER]: 'Owner',
-  [UserRole.MANAGER]: 'Manager',
-  [UserRole.DOER]: 'Doer',
-  [UserRole.AUDITOR]: 'Auditor',
-  [UserRole.VERIFIER]: 'Verifier',
+  [UserRole.ADMIN]: 'Admin',
+  [UserRole.SUB_ADMIN]: 'Sub-admin',
+  [UserRole.USER]: 'User',
 };
 
 const NavItem = ({
@@ -111,7 +109,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         yesterday.setDate(today.getDate() - 1);
         const dueDateTo = yesterday.toISOString().split('T')[0];
 
-        const isManagerOrOwner = user.role === UserRole.MANAGER || user.role === UserRole.OWNER;
+        const isManagerOrOwner = user.role === UserRole.ADMIN;
 
         const openStatuses: any[] = ['pending', 'overdue', 'cancelled', 'pending_verification', 'correction_required'];
 
@@ -129,9 +127,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             helperId: user.id,
             statusIn: ['open', 'in_progress'],
           }),
-          api.getTasksCount({
-            statusIn: openStatuses,
-          }),
+          isManagerOrOwner ? api.getTasksCount({ statusIn: openStatuses }) : Promise.resolve(0),
           api.getTasksCount({
             assignedTo: user.id,
             statusIn: openStatuses,
@@ -182,38 +178,20 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   }, [user?.id]);
 
 
-  const isManagerOrOwnerRole = user.role === UserRole.MANAGER || user.role === UserRole.OWNER;
-  const isAuditor = user.role === UserRole.AUDITOR;
-  const isVerifier = user.role === UserRole.VERIFIER;
-  const isManager = user.role === UserRole.MANAGER || user.role === UserRole.OWNER;
-  const canAssign = [UserRole.OWNER, UserRole.MANAGER, UserRole.DOER].includes(user.role);
+  const isAdminRole = user.role === UserRole.ADMIN;
+  const isManagerOrOwnerRole = isAdminRole;
 
   type SectionType = 'Tasks' | 'Help' | 'Settings';
   type NavItemType = { to: string; icon: any; label: string; section: SectionType };
 
-  const navItems: NavItemType[] = isAuditor
-    ? [
-      { to: '/tasks', icon: Table2, label: 'Audit Tasks', section: 'Tasks' },
-      { to: '/completed-tasks', icon: CheckCircle2, label: 'Completed Tasks', section: 'Tasks' },
-      { to: '/approve', icon: ClipboardCheck, label: 'Approve Task', section: 'Tasks' },
-      { to: '/help', icon: LifeBuoy, label: 'Helper Dashboard', section: 'Help' },
-      { to: '/settings', icon: Settings, label: 'Settings', section: 'Settings' },
-    ]
-    : isVerifier
-      ? [
-        { to: '/completed-tasks', icon: CheckCircle2, label: 'Completed Tasks', section: 'Tasks' },
-        { to: '/approve', icon: ClipboardCheck, label: 'Approve Task', section: 'Tasks' },
-        { to: '/help', icon: LifeBuoy, label: 'Helper Dashboard', section: 'Help' },
-        { to: '/settings', icon: Settings, label: 'Settings', section: 'Settings' },
-      ]
-      : [
-        ...(isManager ? [{ to: '/my-tasks', icon: ClipboardList, label: 'My Tasks', section: 'Tasks' as const }] : []),
-        ...(canAssign ? [{ to: '/assign', icon: ClipboardList, label: 'Assign Task', section: 'Tasks' as const }] : []),
+  const navItems: NavItemType[] = [
+        ...(isAdminRole ? [{ to: '/my-tasks', icon: ClipboardList, label: 'My Tasks', section: 'Tasks' as const }] : []),
+        { to: '/assign', icon: ClipboardList, label: 'Assign Task', section: 'Tasks' as const },
         { to: '/approve', icon: ClipboardCheck, label: 'Approve Task', section: 'Tasks' as const },
-        ...(isManagerOrOwnerRole ? [{ to: '/verifier-pending', icon: ClipboardCheck, label: 'Verification Pending', section: 'Tasks' as const }] : []),
+        ...(isAdminRole ? [{ to: '/verifier-pending', icon: ClipboardCheck, label: 'Verification Pending', section: 'Tasks' as const }] : []),
         { to: '/tasks', icon: Table2, label: 'Task Table', section: 'Tasks' as const },
         { to: '/redzone', icon: AlertTriangle, label: 'Overdue', section: 'Tasks' as const },
-        ...(user.role === UserRole.DOER ? [{ to: '/assigned-by-me', icon: ClipboardList, label: 'Assigned By Me', section: 'Tasks' as const }] : []),
+        ...(!isAdminRole ? [{ to: '/assigned-by-me', icon: ClipboardList, label: 'Assigned By Me', section: 'Tasks' as const }] : []),
         { to: '/recurring-tasks', icon: Repeat, label: 'Recurring Tasks', section: 'Tasks' as const },
         { to: '/completed-tasks', icon: CheckCircle2, label: 'Completed Tasks', section: 'Tasks' as const },
         { to: '/kpi', icon: BarChart3, label: 'KPI', section: 'Tasks' as const },
@@ -314,9 +292,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     '/settings': 'Settings',
     '/verifier-pending': 'Verification Pending',
   };
-  const pageTitle = isAuditor && location.pathname === '/tasks'
-    ? 'Audit Tasks'
-    : (pathTitles[location.pathname] || 'Dashboard');
+  const pageTitle = pathTitles[location.pathname] || 'Dashboard';
 
   return (
     <div className="min-h-screen md:h-screen md:overflow-hidden bg-slate-50 flex flex-col md:flex-row">

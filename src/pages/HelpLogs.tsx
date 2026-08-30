@@ -21,7 +21,7 @@ const minutesBetween = (aIso: string, bIso: string): number | null => {
 
 export const HelpLogs: React.FC = () => {
   const { user } = useAuth();
-  const isOwner = user?.role === UserRole.OWNER;
+  const isOwner = user?.role === UserRole.ADMIN;
 
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);

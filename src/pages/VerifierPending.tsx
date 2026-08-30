@@ -16,7 +16,7 @@ export const VerifierPending: React.FC = () => {
   const [rows, setRows] = useState<VerifierRow[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const isManagerOrOwner = user?.role === UserRole.MANAGER || user?.role === UserRole.OWNER;
+  const isManagerOrOwner = user?.role === UserRole.ADMIN;
 
   useEffect(() => {
     if (!isManagerOrOwner) return;
@@ -35,7 +35,7 @@ export const VerifierPending: React.FC = () => {
   if (!isManagerOrOwner) {
     return (
       <div className="flex items-center justify-center min-h-[40vh]">
-        <p className="text-slate-500 text-sm">Access denied. This page is visible to Manager and Owner only.</p>
+        <p className="text-slate-500 text-sm">Access denied. This page is for admins only.</p>
       </div>
     );
   }

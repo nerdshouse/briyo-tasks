@@ -21,11 +21,9 @@ import { compressImageForUpload } from '../lib/utils';
 import { AuditSopModal } from '../components/ui/AuditSopModal';
 
 const ROLE_LABELS: Record<UserRole, string> = {
-  [UserRole.OWNER]: 'Owner',
-  [UserRole.MANAGER]: 'Manager',
-  [UserRole.DOER]: 'Doer',
-  [UserRole.AUDITOR]: 'Auditor',
-  [UserRole.VERIFIER]: 'Verifier',
+  [UserRole.ADMIN]: 'Admin',
+  [UserRole.SUB_ADMIN]: 'Sub-admin',
+  [UserRole.USER]: 'User',
 };
 
 export const AssignTask: React.FC = () => {
@@ -74,7 +72,7 @@ export const AssignTask: React.FC = () => {
   });
 
   useEffect(() => {
-    if (user?.role === UserRole.AUDITOR) {
+    if (false) {
       navigate('/tasks');
       return;
     }
@@ -317,8 +315,6 @@ export const AssignTask: React.FC = () => {
     document.addEventListener('mousedown', onOutside);
     return () => document.removeEventListener('mousedown', onOutside);
   }, []);
-
-  if (user?.role === UserRole.AUDITOR) return null;
 
   return (
     <div className="w-full max-w-5xl">

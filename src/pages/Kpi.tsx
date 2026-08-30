@@ -25,8 +25,8 @@ export const Kpi: React.FC = () => {
   const [customEnd, setCustomEnd] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('');
 
-  const isOwnerOrManager = user?.role === UserRole.OWNER || user?.role === UserRole.MANAGER;
-  const isDoer = user?.role === UserRole.DOER;
+  const isOwnerOrManager = user?.role === UserRole.ADMIN;
+  const isDoer = user?.role !== UserRole.ADMIN;
 
   useEffect(() => {
     if (isOwnerOrManager && !isDoer && !sortConfig) {

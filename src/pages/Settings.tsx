@@ -34,7 +34,10 @@ export const Settings: React.FC = () => {
   const [showMarkAbsentModal, setShowMarkAbsentModal] = useState(false);
   const [mainTab, setMainTab] = useState<'general' | 'members'>('general');
 
-  const isManager = user?.role === UserRole.MANAGER || user?.role === UserRole.OWNER;
+  const isAdminRole = user?.role === UserRole.ADMIN;
+  const canMembers = isAdminRole || user?.role === UserRole.SUB_ADMIN;
+  const seeAllAbsences = isAdminRole || user?.role === UserRole.SUB_ADMIN;
+  const visibleAbsences = seeAllAbsences ? absences : absences.filter((a) => a.user_id === user?.id);
 
   useEffect(() => {
     api.getHolidays().then(setHolidays);
@@ -94,7 +97,7 @@ export const Settings: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      {isManager && (
+      {canMembers && (
         <div className="bg-slate-100 rounded-control p-1 overflow-x-auto mb-6 w-fit max-w-full">
           <div className="flex gap-2 min-w-max">
             <button
@@ -113,7 +116,7 @@ export const Settings: React.FC = () => {
         </div>
       )}
 
-      {mainTab === 'members' && isManager ? (
+      {mainTab === 'members' && canMembers ? (
         <Members />
       ) : (
       <>
@@ -145,7 +148,7 @@ export const Settings: React.FC = () => {
                 )}
               </span>
             </button>
-            {isManager && (
+            {isAdminRole && (
               <Button type="button" onClick={() => setShowAddHolidayModal(true)} size="sm">
                 <Plus size={14} className="mr-1.5" />
                 Add Holiday
@@ -171,7 +174,7 @@ export const Settings: React.FC = () => {
                     <tr className="border-b border-slate-100">
                       <th className="text-left py-2.5 px-4 sm:px-5 text-xs font-semibold uppercase tracking-wide text-slate-400">Date</th>
                       <th className="text-left py-2.5 px-4 text-xs font-semibold uppercase tracking-wide text-slate-400">Name</th>
-                      {isManager && <th className="w-16" aria-label="Actions" />}
+                      {isAdminRole && <th className="w-16" aria-label="Actions" />}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -179,7 +182,7 @@ export const Settings: React.FC = () => {
                       <tr key={h.id} className="hover:bg-slate-50/60 transition-colors">
                         <td className="py-3 px-4 sm:px-5 text-slate-600 whitespace-nowrap">{formatDateDDMMYYYY(h.date)}</td>
                         <td className="py-3 px-4 font-medium text-slate-800">{h.name}</td>
-                        {isManager && (
+                        {isAdminRole && (
                           <td className="py-2 px-4 text-right">
                             <button
                               type="button"
@@ -214,7 +217,7 @@ export const Settings: React.FC = () => {
               <span className="flex items-center gap-2 min-w-0">
                 <span className="font-semibold text-slate-900 truncate">Absence records</span>
                 <span className="inline-flex min-w-5 h-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold bg-slate-100 text-slate-600">
-                  {absences.length}
+                  {visibleAbsences.length}
                 </span>
                 {absencesOpen ? (
                   <ChevronUp size={16} className="text-slate-400 shrink-0" />
@@ -229,7 +232,7 @@ export const Settings: React.FC = () => {
             </Button>
           </div>
           {absencesOpen && (
-            absences.length === 0 ? (
+            visibleAbsences.length === 0 ? (
               <div className="border-t border-slate-100">
                 <EmptyState
                   icon={UserMinus}
@@ -252,7 +255,7 @@ export const Settings: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {absences.map((a) => (
+                    {visibleAbsences.map((a) => (
                       <tr key={a.id} className="hover:bg-slate-50/60 transition-colors">
                         <td className="py-3 px-4 sm:px-5 font-medium text-slate-800 whitespace-nowrap">{a.user_name}</td>
                         <td className="py-3 px-4 text-slate-600 whitespace-nowrap">{formatDateDDMMYYYY(a.from_date)}</td>
@@ -268,7 +271,7 @@ export const Settings: React.FC = () => {
         </div>
       </section>
 
-      {showAddHolidayModal && isManager && (
+      {showAddHolidayModal && isAdminRole && (
         <Modal
           open
           onClose={() => setShowAddHolidayModal(false)}

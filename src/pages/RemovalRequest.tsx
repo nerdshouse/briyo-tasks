@@ -31,8 +31,8 @@ export const RemovalRequest: React.FC = () => {
   const [rejectModal, setRejectModal] = useState<{ id: string; taskId: string } | null>(null);
   const [rejectNote, setRejectNote] = useState('');
   const [resolving, setResolving] = useState(false);
-  const isOwner = user?.role === UserRole.OWNER;
-  const isManager = user?.role === UserRole.MANAGER;
+  const isOwner = user?.role === UserRole.ADMIN;
+  const isManager = user?.role === UserRole.ADMIN;
   const canReviewRequests = isOwner || isManager;
 
   const loadRequests = useCallback(async (startAfterDoc?: QueryDocumentSnapshot | null) => {

@@ -62,7 +62,7 @@ export const AuditSopModal: React.FC<AuditSopModalProps> = ({
 }) => {
   const isAssignMode = !task && !!onSaveAssign;
   const isAssigner = task ? user.id === task.assigned_by_id : true;
-  const isAdmin = user.role === UserRole.OWNER || user.role === UserRole.MANAGER;
+  const isAdmin = user.role === UserRole.ADMIN;
   const canEdit = isAssignMode || ((isAssigner || isAdmin) && !task?.verified_at);
   
   const hasContent = isAssignMode 

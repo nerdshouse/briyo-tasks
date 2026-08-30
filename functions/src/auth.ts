@@ -43,7 +43,7 @@ async function findUserByPhone(
     if (!snap.empty) {
       const d = snap.docs[0];
       const data = d.data();
-      return { id: d.id, name: data.name || '', phone: data.phone || '', role: data.role || 'doer' };
+      return { id: d.id, name: data.name || '', phone: data.phone || '', role: data.role || 'user' };
     }
   }
   return null;

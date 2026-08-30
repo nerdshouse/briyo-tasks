@@ -12,7 +12,7 @@ import { UserRole } from '../types';
 
 export const HelpKpi: React.FC = () => {
   const { user } = useAuth();
-  const isOwner = user?.role === UserRole.OWNER;
+  const isOwner = user?.role === UserRole.ADMIN;
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');

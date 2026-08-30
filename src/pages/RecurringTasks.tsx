@@ -100,8 +100,8 @@ export const RecurringTasks: React.FC = () => {
 
 
 
-  const isDoer = user?.role === UserRole.DOER;
-  const isManager = user?.role === UserRole.MANAGER || user?.role === UserRole.OWNER;
+  const isDoer = user?.role !== UserRole.ADMIN;
+  const isManager = user?.role === UserRole.ADMIN;
 
   const resolveDoerDateRange = useCallback((): { dueDateFrom?: string; dueDateTo?: string } => {
     if (dateFilter === 'all_time') return {};
@@ -672,7 +672,7 @@ export const RecurringTasks: React.FC = () => {
                         {(() => {
                           const hasSop = !!t.audit_sop_text || (t.audit_sop_attachments && t.audit_sop_attachments.length > 0) || (t.audit_sop_links && t.audit_sop_links.length > 0);
                           const isAssigner = user?.id === t.assigned_by_id;
-                          const isAdmin = user?.role === UserRole.OWNER || user?.role === UserRole.MANAGER;
+                          const isAdmin = user?.role === UserRole.ADMIN;
                           const canEditSop = (isAssigner || isAdmin) && !t.verified_at;
 
                           if (hasSop) {

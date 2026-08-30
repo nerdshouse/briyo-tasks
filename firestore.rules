@@ -4,34 +4,53 @@ service cloud.firestore {
     function isSignedIn() {
       return request.auth != null;
     }
-    function isOwnerOrManager() {
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.role == 'admin';
+    }
+    function canManageMembers() {
       return isSignedIn()
-        && (request.auth.token.role == 'owner' || request.auth.token.role == 'manager');
+        && (request.auth.token.role == 'admin' || request.auth.token.role == 'sub_admin');
+    }
+    // The requester is a participant on this task doc.
+    function involvedIn(data) {
+      return isSignedIn()
+        && (data.assigned_to_id == request.auth.uid
+          || data.assigned_by_id == request.auth.uid
+          || data.verifier_id == request.auth.uid);
     }
 
     match /tasks_users/{userId} {
       allow read: if isSignedIn();
-      allow create: if isOwnerOrManager();
-      // `password` is only ever written by Cloud Functions (Admin SDK bypasses rules) —
-      // loginWithPassword, resetPasswordWithOtp, adminSetUserPassword.
-      allow update: if (request.auth.uid == userId || isOwnerOrManager())
-        && !('password' in request.resource.data.diff(resource.data).affectedKeys());
-      allow delete: if isOwnerOrManager();
+      allow create: if canManageMembers();
+      // Role changes are admin-only; other profile edits by admins/sub-admins or self.
+      allow update: if (request.auth.uid == userId || canManageMembers())
+        && (!('role' in request.resource.data.diff(resource.data).affectedKeys()) || isAdmin());
+      allow delete: if isAdmin();
     }
     match /tasks/{taskId} {
-      allow read, write: if isSignedIn();
+      // Admins see everything; others only tasks they're involved in.
+      allow read: if isAdmin() || involvedIn(resource.data);
+      allow create: if isSignedIn();
+      allow update: if isAdmin() || involvedIn(resource.data);
+      allow delete: if isAdmin();
     }
     match /recurring_tasks/{docId} {
-      allow read, write: if isSignedIn();
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn();
+      allow delete: if isAdmin();
     }
     match /holidays/{docId} {
-      allow read, write: if isSignedIn();
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
     }
     match /absences/{docId} {
-      allow read, write: if isSignedIn();
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.user_id == request.auth.uid;
+      allow update, delete: if isAdmin();
     }
     match /removal_requests/{docId} {
-      allow read, write: if isSignedIn();
+      allow read, create: if isSignedIn();
+      allow update, delete: if isAdmin();
     }
     match /password_reset_otps/{docId} {
       allow read, write: if false; // server-only (Cloud Functions, Admin SDK)

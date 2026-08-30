@@ -7,7 +7,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api';
-import { Task } from '../types';
+import { Task, UserRole } from '../types';
 import { Button } from '../components/ui/Button';
 import { Check, X, HelpCircle, ExternalLink } from 'lucide-react';
 import { AttachmentViewerModal } from '../components/ui/AttachmentViewerModal';
@@ -36,6 +36,10 @@ export const BogusAttachment: React.FC = () => {
   };
 
   if (loading) return <div className="text-slate-500">Loading...</div>;
+
+  if (user?.role !== UserRole.ADMIN) {
+    return <p className="text-slate-500 text-sm">Access denied. This page is for admins only.</p>;
+  }
 
   return (
     <div>

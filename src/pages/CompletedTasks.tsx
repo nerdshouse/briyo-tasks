@@ -17,7 +17,7 @@ const ROWS_PER_PAGE_OPTIONS = [50, 100, 500, 1000] as const;
 
 export const CompletedTasks: React.FC = () => {
     const { user } = useAuth();
-    const isDoer = user?.role === UserRole.DOER;
+    const isDoer = user?.role !== UserRole.ADMIN;
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(true);
     const [viewAttachment, setViewAttachment] = useState<{ urls: string[]; text?: string } | null>(null);
@@ -41,7 +41,7 @@ export const CompletedTasks: React.FC = () => {
 
 
 
-    const isManager = user?.role === UserRole.OWNER || user?.role === UserRole.MANAGER;
+    const isManager = user?.role === UserRole.ADMIN;
 
 
 
