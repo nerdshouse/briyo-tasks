@@ -8,7 +8,7 @@ import React, { useState } from 'react';
 import { Select } from './Select';
 import { Input } from './Input';
 
-export const DEPARTMENTS = ['Marketing', 'Tech', 'Accounts', 'Operations', 'CRM'] as const;
+export const DEPARTMENTS = ['Marketing', 'Tech', 'Accounts', 'Operations', 'CRM', 'C-Level'] as const;
 
 const OTHER = '__other__';
 
@@ -19,7 +19,7 @@ interface DepartmentSelectProps {
 }
 
 /**
- * Department picker: the five standard departments plus "Other", which reveals
+ * Department picker: the standard departments plus "Other", which reveals
  * a free-text input whose value is stored as the department.
  */
 export const DepartmentSelect: React.FC<DepartmentSelectProps> = ({
