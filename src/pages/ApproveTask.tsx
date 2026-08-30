@@ -243,7 +243,7 @@ export const ApproveTask: React.FC = () => {
                     <select
                         value={rowsPerPage}
                         onChange={(e) => setRowsPerPage(Number(e.target.value))}
-                        className="h-10 rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        className="h-10 rounded-control border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
                     >
                         {ROWS_PER_PAGE_OPTIONS.map((size) => (
                             <option key={size} value={size}>
@@ -263,7 +263,7 @@ export const ApproveTask: React.FC = () => {
                             aria-label="First page"
                             onClick={handleFirstPage}
                             disabled={loading || currentPage <= 1}
-                            className="h-9 w-9 inline-flex items-center justify-center rounded-xl border border-slate-300 bg-slate-50 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="h-9 w-9 inline-flex items-center justify-center rounded-control border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                             <ChevronsLeft size={16} />
                         </button>
@@ -272,7 +272,7 @@ export const ApproveTask: React.FC = () => {
                             aria-label="Previous page"
                             onClick={handlePreviousPage}
                             disabled={loading || currentPage <= 1}
-                            className="h-9 w-9 inline-flex items-center justify-center rounded-xl border border-slate-300 bg-slate-50 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="h-9 w-9 inline-flex items-center justify-center rounded-control border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                             <ChevronLeft size={16} />
                         </button>
@@ -281,7 +281,7 @@ export const ApproveTask: React.FC = () => {
                             aria-label="Next page"
                             onClick={handleNextPage}
                             disabled={loading || !hasNextPage}
-                            className="h-9 w-9 inline-flex items-center justify-center rounded-xl border border-slate-300 bg-slate-50 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="h-9 w-9 inline-flex items-center justify-center rounded-control border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                             <ChevronRight size={16} />
                         </button>
@@ -290,7 +290,7 @@ export const ApproveTask: React.FC = () => {
                             aria-label="Last page"
                             onClick={handleLastPage}
                             disabled={loading || currentPage >= totalPages || !hasNextPage}
-                            className="h-9 w-9 inline-flex items-center justify-center rounded-xl border border-slate-300 bg-slate-50 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="h-9 w-9 inline-flex items-center justify-center rounded-control border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                             <ChevronsRight size={16} />
                         </button>
@@ -335,7 +335,7 @@ export const ApproveTask: React.FC = () => {
                             <tr>
                                 <td colSpan={isDoer ? 9 : 10} className="py-12 text-center text-slate-500">
                                     <div className="flex justify-center mb-4">
-                                        <div className="w-8 h-8 rounded-full border-2 border-slate-300 border-t-teal-600 animate-spin"></div>
+                                        <div className="w-8 h-8 rounded-full border-2 border-slate-300 border-t-brand-600 animate-spin"></div>
                                     </div>
                                     Loading tasks...
                                 </td>
@@ -373,7 +373,7 @@ export const ApproveTask: React.FC = () => {
                                                             <button
                                                                 type="button"
                                                                 onClick={() => setSelectedAuditTask(task)}
-                                                                className="mt-2 text-xs font-medium text-teal-600 hover:text-teal-800 hover:bg-teal-50 px-2 py-1 rounded inline-flex items-center gap-1 w-fit transition-colors border border-teal-100"
+                                                                className="mt-2 text-xs font-medium text-brand-600 hover:text-brand-800 hover:bg-brand-50 px-2 py-1 rounded inline-flex items-center gap-1 w-fit transition-colors border border-brand-100"
                                                             >
                                                                 <FileText size={12} /> View Guidelines to Audit
                                                             </button>
@@ -383,7 +383,7 @@ export const ApproveTask: React.FC = () => {
                                                             <button
                                                                 type="button"
                                                                 onClick={() => setSelectedAuditTask(task)}
-                                                                className="mt-2 text-xs font-medium text-slate-400 hover:text-teal-600 hover:bg-slate-50 px-2 py-1 rounded inline-flex items-center gap-1 w-fit transition-colors border border-transparent border-dashed hover:border-teal-200"
+                                                                className="mt-2 text-xs font-medium text-slate-400 hover:text-brand-600 hover:bg-slate-50 px-2 py-1 rounded inline-flex items-center gap-1 w-fit transition-colors border border-transparent border-dashed hover:border-brand-200"
                                                             >
                                                                 + Add Guidelines to Audit
                                                             </button>
@@ -448,7 +448,7 @@ export const ApproveTask: React.FC = () => {
                                                             setEditTask(task);
                                                             setEditDueDate(task.due_date || '');
                                                         }}
-                                                        className="inline-flex items-center justify-center w-[85px] h-8 rounded-lg border border-slate-300 bg-slate-50 text-slate-600 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-300 transition-colors text-xs gap-1.5 font-medium"
+                                                        className="inline-flex items-center justify-center w-[85px] h-8 rounded-control border border-slate-200 bg-white text-slate-600 hover:bg-brand-50 hover:text-brand-700 hover:border-brand-200 transition-colors text-xs gap-1.5 font-medium"
                                                     >
                                                         <Pencil size={12} /> Edit Date
                                                     </button>
@@ -460,9 +460,9 @@ export const ApproveTask: React.FC = () => {
                                         <td className="text-center">
                                             <span
                                                 className={`inline-flex px-2 py-0.5 rounded-lg text-xs font-medium whitespace-nowrap ${task.priority === 'urgent'
-                                                    ? 'bg-red-100 text-red-800'
+                                                    ? 'bg-danger-100 text-danger-800'
                                                     : task.priority === 'high'
-                                                        ? 'bg-amber-100 text-amber-800'
+                                                        ? 'bg-warning-100 text-warning-800'
                                                         : 'bg-slate-100 text-slate-600'
                                                     }`}
                                             >
@@ -478,7 +478,7 @@ export const ApproveTask: React.FC = () => {
                                                         urls: task.attachment_urls || (task.attachment_url ? [task.attachment_url] : []),
                                                         text: task.attachment_text
                                                     })}
-                                                    className="text-teal-600 hover:underline text-sm inline-flex items-center justify-center gap-1 font-medium whitespace-nowrap"
+                                                    className="text-brand-600 hover:underline text-sm inline-flex items-center justify-center gap-1 font-medium whitespace-nowrap"
                                                 >
                                                     <ExternalLink size={14} />
                                                     View

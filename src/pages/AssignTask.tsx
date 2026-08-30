@@ -321,10 +321,11 @@ export const AssignTask: React.FC = () => {
   if (user?.role === UserRole.AUDITOR) return null;
 
   return (
-    <div className="w-full max-w-6xl">
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="space-y-6">
+    <div className="w-full max-w-5xl">
+      <form onSubmit={handleSubmit} className="bg-white rounded-card border border-slate-200 shadow-card p-5 sm:p-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6">
+          <div className="space-y-5">
+            <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">Task details</p>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Task Title</label>
               <div className="flex items-center gap-2">
@@ -333,7 +334,7 @@ export const AssignTask: React.FC = () => {
                   onChange={(e) => setTitle(e.target.value)}
                   required
                   placeholder={titleSpeech.interimTranscript || 'Enter task title'}
-                  className="flex h-10 w-full rounded-xl border bg-white px-3.5 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 disabled:opacity-50 transition-colors border-slate-200 hover:border-slate-300"
+                  className="flex h-10 w-full rounded-xl border bg-white px-3.5 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 disabled:opacity-50 transition-colors border-slate-200 hover:border-slate-300"
                 />
                 {titleSpeech.isSupported && (
                   <button
@@ -342,7 +343,7 @@ export const AssignTask: React.FC = () => {
                     title={titleSpeech.isListening ? 'Stop dictating' : 'Dictate title'}
                     className={`flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-xl border transition-all duration-200 ${titleSpeech.isListening
                       ? 'bg-red-50 border-red-300 text-red-500 shadow-sm shadow-red-100 animate-pulse'
-                      : 'bg-slate-50 border-slate-200 text-slate-400 hover:bg-teal-50 hover:border-teal-300 hover:text-teal-600'
+                      : 'bg-slate-50 border-slate-200 text-slate-400 hover:bg-brand-50 hover:border-brand-200 hover:text-brand-600'
                       }`}
                   >
                     <Mic size={16} />
@@ -360,7 +361,7 @@ export const AssignTask: React.FC = () => {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={4}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 pr-12 text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  className="w-full rounded-control border border-slate-200 hover:border-slate-300 px-3 py-2 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500"
                   placeholder={descSpeech.interimTranscript || 'Task description...'}
                 />
                 {descSpeech.isSupported && (
@@ -370,7 +371,7 @@ export const AssignTask: React.FC = () => {
                     title={descSpeech.isListening ? 'Stop dictating' : 'Dictate description'}
                     className={`absolute right-2 top-2 flex items-center justify-center w-8 h-8 rounded-lg border transition-all duration-200 ${descSpeech.isListening
                       ? 'bg-red-50 border-red-300 text-red-500 shadow-sm shadow-red-100 animate-pulse'
-                      : 'bg-white border-slate-200 text-slate-400 hover:bg-teal-50 hover:border-teal-300 hover:text-teal-600'
+                      : 'bg-white border-slate-200 text-slate-400 hover:bg-brand-50 hover:border-brand-200 hover:text-brand-600'
                       }`}
                   >
                     <Mic size={16} />
@@ -405,7 +406,7 @@ export const AssignTask: React.FC = () => {
                 <select
                   value={priority}
                   onChange={(e) => setPriority(e.target.value as TaskPriority)}
-                  className="w-full h-10 rounded-lg border border-slate-300 px-3 text-sm focus:ring-2 focus:ring-teal-500"
+                  className="w-full h-10 rounded-control border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500"
                 >
                   {PRIORITY_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>
@@ -420,7 +421,7 @@ export const AssignTask: React.FC = () => {
                 <select
                   value={recurring}
                   onChange={(e) => setRecurring(e.target.value as RecurringType)}
-                  className="w-full h-10 rounded-lg border border-slate-300 px-3 text-sm focus:ring-2 focus:ring-teal-500"
+                  className="w-full h-10 rounded-control border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500"
                 >
                   {RECURRING_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>
@@ -431,7 +432,7 @@ export const AssignTask: React.FC = () => {
               </div>
             </div>
             {recurring === 'daily' && (
-              <div className="p-4 bg-slate-50 rounded-lg">
+              <div className="p-4 bg-slate-50 rounded-control">
                 <p className="text-xs text-slate-600 mb-2">On which days of the week?</p>
                 <div className="flex flex-wrap gap-2">
                   {DAYS.map((d) => (
@@ -440,7 +441,7 @@ export const AssignTask: React.FC = () => {
                       type="button"
                       onClick={() => toggleDay(d.value)}
                       className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${recurringDays.includes(d.value)
-                        ? 'bg-teal-600 text-white'
+                        ? 'bg-brand-600 text-white'
                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                         }`}
                     >
@@ -453,74 +454,18 @@ export const AssignTask: React.FC = () => {
           </div>
 
           <div className="space-y-5">
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="attachment"
-                checked={attachmentRequired}
-                onChange={(e) => {
-                  setAttachmentRequired(e.target.checked);
-                  if (!e.target.checked) {
-                    setAttachmentDesc('');
-                    setAttachmentType('media');
-                  }
-                }}
-                className="rounded border-slate-300 text-teal-600 focus:ring-teal-500"
-              />
-              <label htmlFor="attachment" className="text-sm font-medium text-slate-700">
-                Attachment required
-              </label>
-            </div>
-            {attachmentRequired && (
-              <div className="bg-slate-50 rounded-lg space-y-2">
-                <div>
-                  <p className="text-sm font-medium text-slate-700 mb-1">Type</p>
-                  <div className="flex gap-4">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="attachmentType"
-                        checked={attachmentType === 'media'}
-                        onChange={() => setAttachmentType('media')}
-                        className="text-teal-600"
-                      />
-                      <span className="text-sm">Media (photo/video upload)</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="attachmentType"
-                        checked={attachmentType === 'text'}
-                        onChange={() => setAttachmentType('text')}
-                        className="text-teal-600"
-                      />
-                      <span className="text-sm">Text</span>
-                    </label>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-600 mb-1">Description (optional)</p>
-                  <textarea
-                    value={attachmentDesc}
-                    onChange={(e) => setAttachmentDesc(e.target.value)}
-                    rows={2}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                    placeholder="e.g. Photo of completed work..."
-                  />
-                </div>
-              </div>
-            )}
+            <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">Assignment</p>
             <div ref={assignDropdownRef} className="relative">
               <label className="block text-sm font-medium text-slate-700 mb-1">Assign To (select one or more)</label>
               {selectedUsers.length > 0 && (
                 <div className="flex flex-wrap gap-2 my-2">
                   {selectedUsers.map((u) => (
-                    <span key={u.id} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-teal-50 border border-teal-200 text-teal-800 text-xs font-medium">
+                    <span key={u.id} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-brand-50 border border-brand-200 text-brand-800 text-xs font-medium">
                       {u.name} {u.city ? `(${u.city})` : ''}
                       <button
                         type="button"
                         onClick={() => setAssignedToIds(prev => prev.filter(id => id !== u.id))}
-                        className="hover:text-teal-900 focus:outline-none ml-1 opacity-70 hover:opacity-100"
+                        className="hover:text-brand-800 focus:outline-none ml-1 opacity-70 hover:opacity-100"
                         title="Remove"
                       >
                         &times;
@@ -541,7 +486,7 @@ export const AssignTask: React.FC = () => {
                   }}
                   onFocus={() => setAssignDropdownOpen(true)}
                   placeholder="Search by name, email, role, or city..."
-                  className="w-full h-10 pl-10 pr-10 rounded-lg border border-slate-300 px-3 text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  className="w-full h-10 pl-10 pr-10 rounded-control border border-slate-200 hover:border-slate-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500"
                 />
                 {assignToSearch ? (
                   <button
@@ -561,7 +506,7 @@ export const AssignTask: React.FC = () => {
               </div>
 
               {assignDropdownOpen && (
-                <ul className="absolute z-10 mt-1 w-full max-h-56 overflow-auto rounded-lg border border-slate-200 bg-white shadow-lg py-1">
+                <ul className="absolute z-40 mt-1 w-full max-h-56 overflow-auto rounded-control border border-slate-200 bg-white shadow-lg py-1">
                   {assignFiltered.length === 0 ? (
                     <li className="py-2 px-3 text-sm text-slate-500">No member found</li>
                   ) : (
@@ -580,7 +525,7 @@ export const AssignTask: React.FC = () => {
                             }
                             if (formError) setFormError('');
                           }}
-                          className={`cursor-pointer py-2.5 px-3 text-sm hover:bg-slate-50 flex items-center justify-between ${isSelected ? 'bg-teal-50/50 text-teal-800' : 'text-slate-700'}`}
+                          className={`cursor-pointer py-2.5 px-3 text-sm hover:bg-slate-50 flex items-center justify-between ${isSelected ? 'bg-brand-50 text-brand-800' : 'text-slate-700'}`}
                         >
                           <div>
                             <span className="font-medium">{u.name}</span>
@@ -589,7 +534,7 @@ export const AssignTask: React.FC = () => {
                               {u.city ? ` · ${u.city}` : ''}
                             </span>
                           </div>
-                          {isSelected && <span className="text-teal-600 text-sm font-bold ml-2">✓</span>}
+                          {isSelected && <span className="text-brand-600 text-sm font-bold ml-2">✓</span>}
                         </li>
                       );
                     })
@@ -614,7 +559,7 @@ export const AssignTask: React.FC = () => {
                     setVerifierId(user.id);
                   }
                 }}
-                className="rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+                className="rounded border-slate-300 text-brand-600 focus:ring-brand-500"
               />
               <label htmlFor="verificationRequired" className="text-sm font-medium text-slate-700">
                 Verification Required
@@ -636,7 +581,7 @@ export const AssignTask: React.FC = () => {
                     }}
                     onFocus={() => setVerifierDropdownOpen(true)}
                     placeholder="Search verifier by name, email, role, or city..."
-                    className="w-full h-10 pl-10 pr-10 rounded-lg border border-slate-300 px-3 text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    className="w-full h-10 pl-10 pr-10 rounded-control border border-slate-200 hover:border-slate-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500"
                   />
                   <ChevronDown
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
@@ -644,7 +589,7 @@ export const AssignTask: React.FC = () => {
                   />
                 </div>
                 {verifierDropdownOpen && (
-                  <ul className="absolute z-10 mt-1 w-full max-h-56 overflow-auto rounded-lg border border-slate-200 bg-white shadow-lg py-1">
+                  <ul className="absolute z-40 mt-1 w-full max-h-56 overflow-auto rounded-control border border-slate-200 bg-white shadow-lg py-1">
                     {verifierFiltered.length === 0 ? (
                       <li className="py-2 px-3 text-sm text-slate-500">No verifier found</li>
                     ) : (
@@ -659,7 +604,7 @@ export const AssignTask: React.FC = () => {
                             setVerifierDropdownOpen(false);
                             setFormError('');
                           }}
-                          className={`cursor-pointer py-2.5 px-3 text-sm hover:bg-slate-50 ${verifierId === u.id ? 'bg-teal-50 text-teal-800' : 'text-slate-700'}`}
+                          className={`cursor-pointer py-2.5 px-3 text-sm hover:bg-slate-50 ${verifierId === u.id ? 'bg-brand-50 text-brand-800' : 'text-slate-700'}`}
                         >
                           <span className="font-medium">{u.name}</span>
                           <span className="text-slate-500">
@@ -678,32 +623,93 @@ export const AssignTask: React.FC = () => {
                 )}
               </div>
             )}
+            <div className="rounded-control border border-slate-200 bg-slate-50/60 p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="attachment"
+                checked={attachmentRequired}
+                onChange={(e) => {
+                  setAttachmentRequired(e.target.checked);
+                  if (!e.target.checked) {
+                    setAttachmentDesc('');
+                    setAttachmentType('media');
+                  }
+                }}
+                className="rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+              />
+              <label htmlFor="attachment" className="text-sm font-medium text-slate-700">
+                Attachment required
+              </label>
+            </div>
+            {attachmentRequired && (
+              <div className="space-y-3">
+                <div>
+                  <p className="text-sm font-medium text-slate-700 mb-1">Type</p>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="attachmentType"
+                        checked={attachmentType === 'media'}
+                        onChange={() => setAttachmentType('media')}
+                        className="text-brand-600"
+                      />
+                      <span className="text-sm">Media (photo/video upload)</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="attachmentType"
+                        checked={attachmentType === 'text'}
+                        onChange={() => setAttachmentType('text')}
+                        className="text-brand-600"
+                      />
+                      <span className="text-sm">Text</span>
+                    </label>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm text-slate-600 mb-1">Description (optional)</p>
+                  <textarea
+                    value={attachmentDesc}
+                    onChange={(e) => setAttachmentDesc(e.target.value)}
+                    rows={2}
+                    className="w-full rounded-control border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500"
+                    placeholder="e.g. Photo of completed work..."
+                  />
+                </div>
+              </div>
+            )}
+            </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">Add Guidelines to Audit (optional)</label>
               <button
                 type="button"
                 onClick={() => setIsAuditModalOpen(true)}
-                className="w-full sm:w-auto px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-center gap-2 shadow-sm font-medium"
+                className="w-full sm:w-auto px-4 py-2.5 bg-white border border-slate-200 rounded-control text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-center gap-2 shadow-sm font-medium"
               >
-                <FileText size={16} className={auditSopText || auditSopFiles.length > 0 || auditSopLinks.filter(l => l.trim()).length > 0 ? "text-teal-600" : "text-slate-400"} />
+                <FileText size={16} className={auditSopText || auditSopFiles.length > 0 || auditSopLinks.filter(l => l.trim()).length > 0 ? "text-brand-600" : "text-slate-400"} />
                 {auditSopText || auditSopFiles.length > 0 || auditSopLinks.filter(l => l.trim()).length > 0 ? 'Edit Guidelines to Audit' : 'Add Guidelines to Audit'}
               </button>
             </div>
+          </div>
+        </div>
             {formError && (
-              <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm">{formError}</div>
+              <div className="bg-danger-50 text-danger-700 border border-danger-100 p-3 rounded-control text-sm">{formError}</div>
             )}
             {success && (
-              <div className="bg-green-50 text-green-700 p-3 rounded-lg text-sm">{success}</div>
+              <div className="bg-success-50 text-success-700 border border-success-100 p-3 rounded-control text-sm">{success}</div>
             )}
             {loading && auditSopFiles.length > 0 && (
               <div className="mt-2 w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
-                <div className="bg-teal-600 h-1.5 rounded-full transition-all duration-300" style={{ width: `${Object.values(auditSopUploadProgresses).reduce((a, b) => a + b, 0) / auditSopFiles.length}%` }}></div>
+                <div className="bg-brand-600 h-1.5 rounded-full transition-all duration-300" style={{ width: `${Object.values(auditSopUploadProgresses).reduce((a, b) => a + b, 0) / auditSopFiles.length}%` }}></div>
               </div>
             )}
-            <Button type="submit" isLoading={loading}>
-              Save & Assign
-            </Button>
-          </div>
+        <div className="mt-6 pt-5 border-t border-slate-100 flex justify-end">
+          <Button type="submit" size="lg" isLoading={loading}>
+            Save & Assign
+          </Button>
         </div>
       </form>
 
