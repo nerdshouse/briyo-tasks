@@ -56,7 +56,7 @@ const Stars = ({ value }: { value: number }) => {
 
 export const HelpTickets: React.FC = () => {
   const { user } = useAuth();
-  const isOwner = user?.role === UserRole.ADMIN;
+  const isAdminRole = user?.role === UserRole.ADMIN;
   const [mainTab, setMainTab] = useState<'tickets' | 'logs' | 'mis'>('tickets');
   
   const [loading, setLoading] = useState(true);
@@ -210,7 +210,7 @@ export const HelpTickets: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      {isOwner && (
+      {isAdminRole && (
         <div className="bg-slate-100 rounded-control p-1 overflow-x-auto w-fit max-w-full">
           <div className="flex gap-2 min-w-max">
             <button
