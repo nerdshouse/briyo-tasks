@@ -5,7 +5,7 @@
  * Unauthorized copying, modification, or distribution is strictly prohibited.
  */
 import React, { Suspense, lazy } from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Layout } from './components/Layout';
 import { HelpKpi } from './pages/HelpKpi';
@@ -41,7 +41,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
 const App: React.FC = () => {
   return (
-    <HashRouter>
+    <BrowserRouter>
       <AuthProvider>
         <Suspense fallback={<PageFallback />}>
           <Routes>
@@ -203,7 +203,7 @@ const App: React.FC = () => {
           </Routes>
         </Suspense>
       </AuthProvider>
-    </HashRouter>
+    </BrowserRouter>
   );
 };
 

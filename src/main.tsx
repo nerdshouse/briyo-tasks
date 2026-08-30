@@ -8,6 +8,12 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 
+// Legacy hash-route links (from the old HashRouter era, e.g. WhatsApp messages
+// pointing at /#/tasks) — rewrite them to real paths before the router mounts.
+if (window.location.hash.startsWith('#/')) {
+  window.history.replaceState(null, '', window.location.hash.slice(1) + window.location.search);
+}
+
 const root = ReactDOM.createRoot(document.getElementById('root')!);
 
 function ConfigError({ message }: { message: string }) {
