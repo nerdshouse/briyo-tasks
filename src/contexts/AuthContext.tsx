@@ -13,7 +13,8 @@ import { User } from '../types';
 interface AuthContextType {
   user: User | null;
   ready: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  /** Completes the WhatsApp-OTP sign-in: verifies the OTP and establishes the session. */
+  login: (phone: string, otp: string) => Promise<void>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
 }
@@ -46,8 +47,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return unsubscribe;
   }, []);
 
-  const login = async (email: string, password: string) => {
-    const { token } = await api.loginWithPassword(email, password);
+  const login = async (phone: string, otp: string) => {
+    const { token } = await api.loginWithOtp(phone, otp);
     const { user: firebaseUser } = await signInWithCustomToken(auth, token);
     // Set state directly rather than waiting on onAuthStateChanged's async callback —
     // callers navigate right after `login()` resolves, and ProtectedRoute needs

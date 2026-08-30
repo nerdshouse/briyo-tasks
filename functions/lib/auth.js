@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.migrateLegacyPasswords = exports.sendTaskAssignmentNotification = exports.adminSetUserPassword = exports.resetPasswordWithOtp = exports.verifyPasswordResetOtp = exports.requestPasswordResetOtp = exports.loginWithPassword = void 0;
+exports.migrateLegacyPasswords = exports.sendTaskAssignmentNotification = exports.adminSetUserPassword = exports.resetPasswordWithOtp = exports.verifyPasswordResetOtp = exports.requestPasswordResetOtp = exports.loginWithOtp = exports.requestLoginOtp = exports.loginWithPassword = void 0;
 const admin = require("firebase-admin");
 const firebase_functions_1 = require("firebase-functions");
 const https_1 = require("firebase-functions/v2/https");
@@ -61,6 +61,106 @@ exports.loginWithPassword = (0, https_1.onCall)({ timeoutSeconds: 30, memory: '2
     const token = await admin.auth().createCustomToken(userDoc.id, { role });
     return { token };
 });
+/** Shared helper: resolve a tasks_users doc by any phone-number variant. */
+async function findUserByPhone(phoneRaw) {
+    const usersRef = admin.firestore().collection(shared_1.COLLECTIONS.USERS);
+    for (const variant of (0, shared_1.phoneVariants)(phoneRaw)) {
+        const snap = await usersRef.where('phone', '==', variant).limit(1).get();
+        if (!snap.empty) {
+            const d = snap.docs[0];
+            const data = d.data();
+            return { id: d.id, name: data.name || '', phone: data.phone || '', role: data.role || 'doer' };
+        }
+    }
+    return null;
+}
+/** Shared helper: create (replacing any previous) a purpose-tagged 6-digit OTP for a user. */
+async function issueOtp(userId, purpose) {
+    const db = admin.firestore();
+    const now = Date.now();
+    const otp = String(Math.floor(100000 + Math.random() * 900000));
+    const otpRef = db.collection(shared_1.COLLECTIONS.PASSWORD_RESET_OTPS);
+    const oldSnap = await otpRef.where('user_id', '==', userId).where('purpose', '==', purpose).get();
+    const batch = db.batch();
+    oldSnap.docs.forEach((d) => batch.delete(d.ref));
+    batch.set(otpRef.doc(), {
+        user_id: userId,
+        otp,
+        purpose,
+        created_at: admin.firestore.Timestamp.fromMillis(now),
+        expires_at: admin.firestore.Timestamp.fromMillis(now + 5 * 60 * 1000),
+    });
+    await batch.commit();
+    return otp;
+}
+/**
+ * Login step 1: send a WhatsApp OTP (11za `login_otp` template) to a registered phone.
+ * This is the primary sign-in method — there is no password login in the UI.
+ */
+exports.requestLoginOtp = (0, https_1.onCall)({ timeoutSeconds: 30 }, async (request) => {
+    const phoneRaw = String(request.data?.phone || '').trim();
+    if (!phoneRaw) {
+        throw new https_1.HttpsError('invalid-argument', 'Phone number is required.');
+    }
+    const digits = phoneRaw.replace(/\D/g, '');
+    await checkRateLimit(`login-otp:${digits}`, 5, 15 * 60 * 1000);
+    const found = await findUserByPhone(phoneRaw);
+    if (!found) {
+        throw new https_1.HttpsError('not-found', 'No account found with this mobile number. Contact your administrator.');
+    }
+    const otp = await issueOtp(found.id, 'login');
+    const { apiUrl, originWebsite, authToken } = elevenzaConfigFromEnv();
+    const templateLoginOtp = process.env.ELEVENZA_TEMPLATE_LOGIN_OTP || 'login_otp';
+    if (!authToken) {
+        firebase_functions_1.logger.error('ELEVENZA_AUTH_TOKEN not set; cannot send login OTP');
+        throw new https_1.HttpsError('internal', 'OTP service is not configured.');
+    }
+    try {
+        await (0, shared_1.send11zaTemplate)(found.phone, templateLoginOtp, [otp], { apiUrl, originWebsite, authToken });
+    }
+    catch (err) {
+        firebase_functions_1.logger.error('Failed to send login OTP:', err);
+        throw new https_1.HttpsError('internal', 'Failed to send OTP. Please try again.');
+    }
+    return { ok: true };
+});
+/** Login step 2: verify the OTP and mint a Firebase custom auth token. */
+exports.loginWithOtp = (0, https_1.onCall)({ timeoutSeconds: 30 }, async (request) => {
+    const phoneRaw = String(request.data?.phone || '').trim();
+    const otp = String(request.data?.otp || '').trim();
+    if (!phoneRaw || !otp) {
+        throw new https_1.HttpsError('invalid-argument', 'Phone number and OTP are required.');
+    }
+    const digits = phoneRaw.replace(/\D/g, '');
+    await checkRateLimit(`login-verify:${digits}`, 8, 15 * 60 * 1000);
+    const found = await findUserByPhone(phoneRaw);
+    if (!found) {
+        throw new https_1.HttpsError('unauthenticated', 'Invalid OTP.');
+    }
+    const db = admin.firestore();
+    const snap = await db
+        .collection(shared_1.COLLECTIONS.PASSWORD_RESET_OTPS)
+        .where('user_id', '==', found.id)
+        .where('otp', '==', otp)
+        .where('purpose', '==', 'login')
+        .limit(1)
+        .get();
+    if (snap.empty) {
+        throw new https_1.HttpsError('unauthenticated', 'Invalid OTP.');
+    }
+    const otpDoc = snap.docs[0];
+    const otpData = otpDoc.data();
+    const expiresAtMs = otpData.expires_at?.toMillis
+        ? otpData.expires_at.toMillis()
+        : new Date(otpData.expires_at).getTime();
+    if (Date.now() > expiresAtMs) {
+        await otpDoc.ref.delete();
+        throw new https_1.HttpsError('deadline-exceeded', 'OTP has expired. Please request a new one.');
+    }
+    await otpDoc.ref.delete();
+    const token = await admin.auth().createCustomToken(found.id, { role: found.role });
+    return { token };
+});
 /** Looks up a user by phone, generates a 6-digit OTP, and sends it via WhatsApp. */
 exports.requestPasswordResetOtp = (0, https_1.onCall)({ timeoutSeconds: 30 }, async (request) => {
     const phoneRaw = String(request.data?.phone || '').trim();
@@ -89,19 +189,7 @@ exports.requestPasswordResetOtp = (0, https_1.onCall)({ timeoutSeconds: 30 }, as
         firebase_functions_1.logger.info('Password reset OTP requested for unrecognized phone number.');
         return { ok: true };
     }
-    const now = Date.now();
-    const otp = String(Math.floor(100000 + Math.random() * 900000));
-    const otpRef = db.collection(shared_1.COLLECTIONS.PASSWORD_RESET_OTPS);
-    const oldSnap = await otpRef.where('user_id', '==', userId).get();
-    const batch = db.batch();
-    oldSnap.docs.forEach((d) => batch.delete(d.ref));
-    batch.set(otpRef.doc(), {
-        user_id: userId,
-        otp,
-        created_at: admin.firestore.Timestamp.fromMillis(now),
-        expires_at: admin.firestore.Timestamp.fromMillis(now + 5 * 60 * 1000),
-    });
-    await batch.commit();
+    const otp = await issueOtp(userId, 'reset');
     const { apiUrl, originWebsite, authToken } = elevenzaConfigFromEnv();
     const templateOtp = process.env.ELEVENZA_TEMPLATE_OTP || 'otp_verification_v2';
     if (!authToken) {
@@ -146,6 +234,7 @@ exports.verifyPasswordResetOtp = (0, https_1.onCall)({ timeoutSeconds: 30 }, asy
         .collection(shared_1.COLLECTIONS.PASSWORD_RESET_OTPS)
         .where('user_id', '==', userId)
         .where('otp', '==', otp)
+        .where('purpose', '==', 'reset')
         .limit(1)
         .get();
     if (snap.empty) {
@@ -185,7 +274,7 @@ exports.resetPasswordWithOtp = (0, https_1.onCall)({ timeoutSeconds: 30 }, async
         throw new https_1.HttpsError('unauthenticated', 'Invalid OTP.');
     }
     const otpRef = db.collection(shared_1.COLLECTIONS.PASSWORD_RESET_OTPS);
-    const snap = await otpRef.where('user_id', '==', userId).where('otp', '==', otp).limit(1).get();
+    const snap = await otpRef.where('user_id', '==', userId).where('otp', '==', otp).where('purpose', '==', 'reset').limit(1).get();
     if (snap.empty) {
         throw new https_1.HttpsError('unauthenticated', 'Invalid OTP.');
     }

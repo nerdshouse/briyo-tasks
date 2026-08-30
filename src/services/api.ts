@@ -185,14 +185,19 @@ const docToHelpTicket = (d: any): HelpTicket => {
 
 export const api = {
   // --- Auth ---
-  // Credential verification happens server-side (loginWithPassword Cloud Function),
-  // which mints a Firebase custom auth token — see AuthContext.login().
-  loginWithPassword: async (email: string, password: string): Promise<{ token: string }> => {
-    const fn = httpsCallable<{ email: string; password: string }, { token: string }>(
+  // Sign-in is WhatsApp-OTP only: request an OTP for a registered phone, then verify it
+  // server-side (Cloud Functions), which mints a Firebase custom token — see AuthContext.login().
+  requestLoginOtp: async (phone: string): Promise<void> => {
+    const fn = httpsCallable(functions, 'requestLoginOtp');
+    await fn({ phone });
+  },
+
+  loginWithOtp: async (phone: string, otp: string): Promise<{ token: string }> => {
+    const fn = httpsCallable<{ phone: string; otp: string }, { token: string }>(
       functions,
-      'loginWithPassword'
+      'loginWithOtp'
     );
-    const res = await fn({ email, password });
+    const res = await fn({ phone, otp });
     return res.data;
   },
 
