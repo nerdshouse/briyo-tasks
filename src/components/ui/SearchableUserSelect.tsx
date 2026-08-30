@@ -108,7 +108,7 @@ export const SearchableUserSelect: React.FC<SearchableUserSelectProps> = ({
             }}
             onFocus={() => setIsOpen(true)}
             placeholder={placeholder}
-            className="w-full h-10 rounded-lg border border-slate-300 pl-9 pr-9 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none"
+            className="w-full h-10 rounded-control border border-slate-200 hover:border-slate-300 bg-white pl-9 pr-9 text-sm focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 focus:outline-none"
           />
           {displayValue ? (
             <button
@@ -124,7 +124,7 @@ export const SearchableUserSelect: React.FC<SearchableUserSelectProps> = ({
           )}
         </div>
         {isOpen && (
-          <ul className="absolute z-70 mt-1 w-full max-h-56 overflow-auto rounded-lg border border-slate-200 bg-white shadow-lg py-1">
+          <ul className="absolute z-40 mt-1 w-full max-h-56 overflow-auto rounded-control border border-slate-200 bg-white shadow-lg py-1">
             {filteredUsers.length === 0 ? (
               <li className="py-2 px-3 text-sm text-slate-500">No member found</li>
             ) : (
@@ -132,9 +132,9 @@ export const SearchableUserSelect: React.FC<SearchableUserSelectProps> = ({
                 <li
                   key={u.id}
                   onClick={() => handleSelect(u)}
-                  className={`cursor-pointer py-2.5 px-3 text-sm hover:bg-teal-50 text-slate-700 ${
+                  className={`cursor-pointer py-2.5 px-3 text-sm hover:bg-brand-50 text-slate-700 ${
                     (nameValue || '').toLowerCase() === (u.name || '').toLowerCase()
-                      ? 'bg-teal-50 font-medium text-teal-800'
+                      ? 'bg-brand-50 font-medium text-brand-800'
                       : ''
                   }`}
                 >
@@ -163,7 +163,7 @@ export const SearchableUserSelect: React.FC<SearchableUserSelectProps> = ({
         />
       )}
       {!isOpen && selectedUser ? (
-        <div className="w-full h-10 rounded-lg border border-slate-300 px-3 text-sm flex items-center justify-between bg-white">
+        <div className="w-full h-10 rounded-control border border-slate-200 px-3 text-sm flex items-center justify-between bg-white">
           <span className="text-slate-800 truncate">{selectedUser.name}</span>
           <div className="flex items-center gap-1 shrink-0">
             <button
@@ -196,13 +196,13 @@ export const SearchableUserSelect: React.FC<SearchableUserSelectProps> = ({
             }}
             onFocus={() => setIsOpen(true)}
             placeholder={placeholder}
-            className="w-full h-10 rounded-lg border border-slate-300 pl-9 pr-9 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none"
+            className="w-full h-10 rounded-control border border-slate-200 hover:border-slate-300 bg-white pl-9 pr-9 text-sm focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 focus:outline-none"
           />
           <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
         </div>
       )}
       {isOpen && (
-        <ul className="absolute z-70 mt-1 w-full max-h-56 overflow-auto rounded-lg border border-slate-200 bg-white shadow-lg py-1">
+        <ul className="absolute z-40 mt-1 w-full max-h-56 overflow-auto rounded-control border border-slate-200 bg-white shadow-lg py-1">
           {filteredUsers.length === 0 ? (
             <li className="py-2 px-3 text-sm text-slate-500">No member found</li>
           ) : (
@@ -210,8 +210,8 @@ export const SearchableUserSelect: React.FC<SearchableUserSelectProps> = ({
               <li
                 key={u.id}
                 onClick={() => handleSelect(u)}
-                className={`cursor-pointer py-2.5 px-3 text-sm hover:bg-teal-50 text-slate-700 ${
-                  u.id === value ? 'bg-teal-50 font-medium text-teal-800' : ''
+                className={`cursor-pointer py-2.5 px-3 text-sm hover:bg-brand-50 text-slate-700 ${
+                  u.id === value ? 'bg-brand-50 font-medium text-brand-800' : ''
                 }`}
               >
                 {u.name}

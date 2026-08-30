@@ -10,6 +10,7 @@ import { Clock, CheckCircle2, ClipboardList, RefreshCw, Pencil, Trash2 } from 'l
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api';
 import { Button } from '../components/ui/Button';
+import { Modal } from '../components/ui/Modal';
 import { SearchableUserSelect } from '../components/ui/SearchableUserSelect';
 import { HelpTicket, HelpTicketStatus, User, UserRole } from '../types';
 import { HelpLogs } from './HelpLogs';
@@ -460,9 +461,20 @@ export const HelpTickets: React.FC = () => {
         </div>
       )}
       {editTicket && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl border border-slate-200 shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 space-y-4">
-            <h2 className="text-lg font-semibold text-slate-800">Edit Ticket</h2>
+        <Modal
+          open
+          onClose={() => { setEditTicket(null); setError(''); }}
+          closeOnBackdrop={false}
+          size="lg"
+          title="Edit Ticket"
+          footer={
+            <>
+              <Button variant="secondary" onClick={() => { setEditTicket(null); setError(''); }}>Cancel</Button>
+              <Button onClick={handleEditSave} isLoading={editSaving}>Save changes</Button>
+            </>
+          }
+        >
+          <div className="space-y-4">
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Title</label>
@@ -535,14 +547,9 @@ export const HelpTickets: React.FC = () => {
               </div>
             </div>
 
-            {error && <div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl p-3">{error}</div>}
-
-            <div className="flex justify-end gap-2 pt-2">
-              <Button variant="secondary" onClick={() => { setEditTicket(null); setError(''); }}>Cancel</Button>
-              <Button onClick={handleEditSave} isLoading={editSaving}>Save changes</Button>
-            </div>
+            {error && <div className="text-sm text-danger-600 bg-danger-50 border border-danger-100 rounded-control p-3">{error}</div>}
           </div>
-        </div>
+        </Modal>
       )}
       </>
       )}

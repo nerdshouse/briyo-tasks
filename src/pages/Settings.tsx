@@ -10,6 +10,7 @@ import { api } from '../services/api';
 import { Holiday, Absence, UserRole } from '../types';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
+import { Modal } from '../components/ui/Modal';
 import { Calendar, ChevronDown, ChevronUp, Plus } from 'lucide-react';
 import { formatDateDDMMYYYY } from '../lib/utils';
 import { Members } from './Members';
@@ -254,9 +255,12 @@ export const Settings: React.FC = () => {
       </section>
 
       {showAddHolidayModal && isManager && (
-        <div className="fixed inset-0 bg-slate-900/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl border border-slate-200 shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold text-slate-800 mb-4">Add Holiday</h3>
+        <Modal
+          open
+          onClose={() => setShowAddHolidayModal(false)}
+          size="md"
+          title="Add Holiday"
+        >
             <form onSubmit={handleAddHoliday} className="space-y-4">
               <Input
                 label="Date"
@@ -281,14 +285,16 @@ export const Settings: React.FC = () => {
                 </Button>
               </div>
             </form>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {showMarkAbsentModal && (
-        <div className="fixed inset-0 bg-slate-900/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl border border-slate-200 shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold text-slate-800 mb-4">Mark myself absent</h3>
+        <Modal
+          open
+          onClose={() => setShowMarkAbsentModal(false)}
+          size="md"
+          title="Mark myself absent"
+        >
             <p className="text-sm text-slate-600 mb-4">Tasks during this period won&apos;t count in KPI.</p>
             <form onSubmit={handleMarkAbsent} className="space-y-4">
               <Input
@@ -320,8 +326,7 @@ export const Settings: React.FC = () => {
                 </Button>
               </div>
             </form>
-          </div>
-        </div>
+        </Modal>
       )}
       </>
       )}

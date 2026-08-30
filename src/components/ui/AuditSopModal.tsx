@@ -6,6 +6,7 @@ import { storage } from '../../lib/firebase';
 import { Button } from './Button';
 import { compressImageForUpload } from '../../lib/utils';
 import { FileText, Paperclip, X, Pencil, Link as LinkIcon } from 'lucide-react';
+import { Modal } from './Modal';
 import { AttachmentViewerModal } from './AttachmentViewerModal';
 
 interface AuditSopModalProps {
@@ -226,19 +227,8 @@ export const AuditSopModal: React.FC<AuditSopModalProps> = ({
   const averageProgress = newFiles.length > 0 ? totalProgress / newFiles.length : 0;
 
   return (
-    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10 rounded-t-xl">
-          <div className="flex items-center gap-2">
-            <FileText className="text-teal-600" size={20} />
-            <h3 className="text-lg font-semibold text-slate-800">Guidelines to Audit</h3>
-          </div>
-          <button onClick={onClose} className="text-slate-400 hover:bg-slate-100 hover:text-slate-600 rounded-full p-1 transition-colors">
-            <X size={20} />
-          </button>
-        </div>
-
-        <div className="p-5 overflow-y-auto">
+    <Modal open onClose={onClose} size="lg" title="Guidelines to Audit">
+      <div>
           {!isEditing && canEdit && hasContent && (
             <div className="flex justify-end mb-4">
               <button
@@ -487,7 +477,6 @@ export const AuditSopModal: React.FC<AuditSopModalProps> = ({
               )}
             </div>
           )}
-        </div>
       </div>
 
       {viewAttachment && (
@@ -497,6 +486,6 @@ export const AuditSopModal: React.FC<AuditSopModalProps> = ({
           onClose={() => setViewAttachment(null)}
         />
       )}
-    </div>
+    </Modal>
   );
 };

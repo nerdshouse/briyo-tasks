@@ -11,6 +11,7 @@ import { Task, UserRole, User, Holiday } from '../types';
 import { useSearchParams } from 'react-router-dom';
 
 import { Button } from '../components/ui/Button';
+import { Modal } from '../components/ui/Modal';
 import { CsvExportButton } from '../components/ui/CsvExportButton';
 import { SearchableUserSelect } from '../components/ui/SearchableUserSelect';
 import { CompleteTaskModal } from '../components/ui/CompleteTaskModal';
@@ -1359,7 +1360,7 @@ export const AssignedByMe: React.FC = () => {
 
 
 
-      <div className="relative z-40 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-3">
+      <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-3">
         {isSelfTasksView ? (
           <div className="flex flex-wrap items-center gap-3">
             <SearchableUserSelect
@@ -1815,20 +1816,17 @@ export const AssignedByMe: React.FC = () => {
       )}
 
       {rejectTask && user && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-60 p-4">
-          <div className="card p-6 max-w-md w-full shadow-xl">
-            <h3 className="text-lg font-semibold mb-2 text-slate-800">Reject verification</h3>
-            <p className="text-sm text-slate-600 mb-3">
-              Add a comment for <strong>{rejectTask.assigned_to_name}</strong>. They will see it on the task.
-            </p>
-            <textarea
-              value={rejectComment}
-              onChange={(e) => setRejectComment(e.target.value)}
-              rows={4}
-              placeholder="Reason for rejection (required)…"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm mb-4"
-            />
-            <div className="flex justify-end gap-2">
+        <Modal
+          open
+          onClose={() => {
+            setRejectTask(null);
+            setRejectComment('');
+          }}
+          closeOnBackdrop={false}
+          size="md"
+          title="Reject verification"
+          footer={
+            <>
               <Button
                 variant="secondary"
                 onClick={() => {
@@ -1861,15 +1859,30 @@ export const AssignedByMe: React.FC = () => {
               >
                 Submit rejection
               </Button>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        >
+          <p className="text-sm text-slate-600 mb-3">
+            Add a comment for <strong>{rejectTask.assigned_to_name}</strong>. They will see it on the task.
+          </p>
+          <textarea
+            value={rejectComment}
+            onChange={(e) => setRejectComment(e.target.value)}
+            rows={4}
+            placeholder="Reason for rejection (required)…"
+            className="w-full rounded-control border border-slate-200 px-3 py-2 text-sm"
+          />
+        </Modal>
       )}
 
       {editingTask && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="card p-6 max-w-lg w-full shadow-xl">
-            <h3 className="text-lg font-semibold mb-4 text-slate-800">Edit Task</h3>
+        <Modal
+          open
+          onClose={() => setEditingTask(null)}
+          closeOnBackdrop={false}
+          size="lg"
+          title="Edit Task"
+        >
             {editError && (
               <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
                 {editError}
@@ -2083,8 +2096,7 @@ export const AssignedByMe: React.FC = () => {
                 </form>
               );
             })()}
-          </div>
-        </div>
+        </Modal>
       )}
 
       {user && (

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api';
 import { Button } from '../components/ui/Button';
+import { Modal } from '../components/ui/Modal';
 import { CsvExportButton } from '../components/ui/CsvExportButton';
 import { SearchableUserSelect } from '../components/ui/SearchableUserSelect';
 import { Task, UserRole, User } from '../types';
@@ -484,7 +485,7 @@ export const RecurringTasks: React.FC = () => {
 
 
       {/* ── Filter Bar ── */}
-      <div className="relative z-40 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex flex-wrap items-center gap-3">
           <SearchableUserSelect
             users={allUsers}
@@ -798,9 +799,13 @@ export const RecurringTasks: React.FC = () => {
       <div>{paginationControls}</div>
 
       {viewTask && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setViewTask(null)}>
-          <div className="card p-6 max-w-2xl w-full max-h-[85vh] overflow-auto shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold text-slate-800 mb-4">Recurring Task Details</h3>
+        <Modal
+          open
+          onClose={() => setViewTask(null)}
+          size="lg"
+          title="Recurring Task Details"
+          footer={<Button variant="secondary" onClick={() => setViewTask(null)}>Close</Button>}
+        >
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               <div className="sm:col-span-2">
                 <p className="text-xs uppercase tracking-wide text-slate-500">Title</p>
@@ -849,17 +854,17 @@ export const RecurringTasks: React.FC = () => {
                 <p className="text-slate-700 mt-1 whitespace-pre-wrap">{viewTask.attachment_description || '-'}</p>
               </div>
             </div>
-            <div className="mt-6 flex justify-end">
-              <Button variant="secondary" onClick={() => setViewTask(null)}>Close</Button>
-            </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {viewAttachment && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setViewAttachment(null)}>
-          <div className="card p-6 max-w-lg w-full max-h-[80vh] overflow-hidden flex flex-col shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold mb-3">Attachment</h3>
+        <Modal
+          open
+          onClose={() => setViewAttachment(null)}
+          size="md"
+          title="Attachment"
+          footer={<Button variant="secondary" onClick={() => setViewAttachment(null)}>Close</Button>}
+        >
             {viewAttachment.url && (
               <div className="mb-4">
                 <a
@@ -879,17 +884,17 @@ export const RecurringTasks: React.FC = () => {
               </pre>
             )}
             {viewAttachment.url && !viewAttachment.text && <p className="text-sm text-slate-500">Media or link attached. Use the link above to view.</p>}
-            <div className="mt-4 flex justify-end">
-              <Button variant="secondary" onClick={() => setViewAttachment(null)}>Close</Button>
-            </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {editingTask && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="card p-6 max-w-lg w-full shadow-xl">
-            <h3 className="text-lg font-semibold mb-4 text-slate-800">Edit Recurring Task</h3>
+        <Modal
+          open
+          onClose={() => setEditingTask(null)}
+          closeOnBackdrop={false}
+          size="lg"
+          title="Edit Recurring Task"
+        >
             {editError && (
               <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
                 {editError}
@@ -1076,8 +1081,7 @@ export const RecurringTasks: React.FC = () => {
                 <Button type="submit" isLoading={editSubmitting}>Save Changes</Button>
               </div>
             </form>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {selectedAuditTask && (

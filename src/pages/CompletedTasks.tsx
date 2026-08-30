@@ -245,7 +245,7 @@ export const CompletedTasks: React.FC = () => {
 
 
             {/* ── Filter Bar ── */}
-            <div className="relative z-40 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex flex-wrap items-center gap-3">
                     <label className="flex items-center gap-2 cursor-pointer bg-white px-3 py-1.5 rounded-lg border border-slate-300 shadow-sm hover:bg-slate-50 transition-colors">
                         <input

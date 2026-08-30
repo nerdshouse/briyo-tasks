@@ -9,6 +9,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api';
 import { RemovalRequest as RemovalRequestType, Task } from '../types';
 import { Button } from '../components/ui/Button';
+import { Modal } from '../components/ui/Modal';
 import { UserRole } from '../types';
 import type { QueryDocumentSnapshot } from 'firebase/firestore';
 import { formatDateDDMMYYYY } from '../lib/utils';
@@ -154,9 +155,12 @@ export const RemovalRequest: React.FC = () => {
       </Button>
 
       {showRequestModal && (
-        <div className="fixed inset-0 bg-slate-900/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl border border-slate-200 shadow-xl max-w-lg w-full p-6">
-            <h2 className="font-semibold text-slate-800 mb-4">Request Task Removal</h2>
+        <Modal
+          open
+          onClose={() => setShowRequestModal(false)}
+          size="md"
+          title="Request Task Removal"
+        >
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Select Task</label>
@@ -194,14 +198,27 @@ export const RemovalRequest: React.FC = () => {
                 </Button>
               </div>
             </form>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {rejectModal && (
-        <div className="fixed inset-0 bg-slate-900/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl border border-slate-200 shadow-xl max-w-lg w-full p-6">
-            <h2 className="font-semibold text-slate-800 mb-2">Reject removal request</h2>
+        <Modal
+          open
+          onClose={() => setRejectModal(null)}
+          closeOnBackdrop={false}
+          size="md"
+          title="Reject removal request"
+          footer={
+            <>
+              <Button type="button" variant="secondary" onClick={() => setRejectModal(null)} disabled={resolving}>
+                Cancel
+              </Button>
+              <Button type="button" variant="danger" onClick={submitReject} isLoading={resolving}>
+                Reject request
+              </Button>
+            </>
+          }
+        >
             <p className="text-sm text-slate-600 mb-4">
               The requester will see this reason. It cannot be empty.
             </p>
@@ -209,19 +226,10 @@ export const RemovalRequest: React.FC = () => {
               value={rejectNote}
               onChange={(e) => setRejectNote(e.target.value)}
               rows={4}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm mb-4"
+              className="w-full rounded-control border border-slate-200 px-3 py-2 text-sm"
               placeholder="Explain why this removal request is denied..."
             />
-            <div className="flex gap-2 justify-end">
-              <Button type="button" variant="secondary" onClick={() => setRejectModal(null)} disabled={resolving}>
-                Cancel
-              </Button>
-              <Button type="button" variant="danger" onClick={submitReject} isLoading={resolving}>
-                Reject request
-              </Button>
-            </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       <div>

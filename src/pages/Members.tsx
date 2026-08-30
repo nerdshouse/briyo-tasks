@@ -10,6 +10,7 @@ import { api } from '../services/api';
 import { User, UserRole } from '../types';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
+import { Modal } from '../components/ui/Modal';
 import { UserPlus, Trash2, Pencil, Upload, Download, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import Papa from 'papaparse';
 
@@ -471,10 +472,13 @@ export const Members: React.FC = () => {
       )}
 
       {showAddForm && (isOwner || isManager) && (
-        <div className="fixed inset-0 bg-slate-900/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl border border-slate-200 shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <h2 className="font-semibold text-slate-800 mb-4">Add New Member</h2>
+        <Modal
+          open
+          onClose={() => { setShowAddForm(false); setError(''); }}
+          closeOnBackdrop={false}
+          size="md"
+          title="Add New Member"
+        >
               {error && (
                 <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">{error}</div>
               )}
@@ -536,9 +540,7 @@ export const Members: React.FC = () => {
                   </Button>
                 </div>
               </form>
-            </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {paginationControls}
@@ -605,10 +607,13 @@ export const Members: React.FC = () => {
       </div>
 
       {editingUser && (
-        <div className="fixed inset-0 bg-slate-900/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl border border-slate-200 shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <h2 className="text-lg font-semibold text-slate-800 mb-4">Edit Member</h2>
+        <Modal
+          open
+          onClose={() => setEditingUser(null)}
+          closeOnBackdrop={false}
+          size="md"
+          title="Edit Member"
+        >
               {editError && (
                 <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">{editError}</div>
               )}
@@ -642,15 +647,32 @@ export const Members: React.FC = () => {
                   <Button type="button" variant="secondary" onClick={() => setEditingUser(null)}>Cancel</Button>
                 </div>
               </form>
-            </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {deleteModal && (
-        <div className="fixed inset-0 bg-slate-900/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl border border-slate-200 shadow-xl max-w-md w-full p-6">
-            <h2 className="text-lg font-semibold text-slate-800 mb-2">Delete member &amp; tasks?</h2>
+        <Modal
+          open
+          onClose={() => setDeleteModal(null)}
+          closeOnBackdrop={false}
+          size="md"
+          title="Delete member &amp; tasks?"
+          footer={
+            <>
+              <Button variant="secondary" onClick={() => setDeleteModal(null)} disabled={deleteSubmitting}>
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                onClick={handleDeleteConfirm}
+                disabled={deleteSubmitting}
+                isLoading={deleteSubmitting}
+              >
+                Delete member &amp; tasks
+              </Button>
+            </>
+          }
+        >
             <p className="text-slate-600 text-sm mb-4">
               Are you sure you want to permanently delete <strong>{deleteModal.user.name}</strong> ({ROLE_LABELS[deleteModal.user.role]})?
             </p>
@@ -668,24 +690,10 @@ export const Members: React.FC = () => {
                 <span className="font-bold text-red-600">{deleteModal.totalUniqueTasksCount}</span>
               </div>
             </div>
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-xs text-red-700 mb-6">
+            <div className="bg-danger-50 border border-danger-100 rounded-control p-3 text-xs text-danger-700">
               <strong>Warning:</strong> Deleting this member will permanently remove all <strong>{deleteModal.totalUniqueTasksCount}</strong> task(s) from the database across all types of tasks. This cannot be undone.
             </div>
-            <div className="flex gap-2 justify-end">
-              <Button variant="secondary" onClick={() => setDeleteModal(null)} disabled={deleteSubmitting}>
-                Cancel
-              </Button>
-              <Button
-                variant="danger"
-                onClick={handleDeleteConfirm}
-                disabled={deleteSubmitting}
-                isLoading={deleteSubmitting}
-              >
-                Delete member &amp; tasks
-              </Button>
-            </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

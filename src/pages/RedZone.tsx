@@ -9,6 +9,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api';
 import { isHoliday, formatDateDDMMYYYY, getDisplayRecurring, formatRecurringLabel } from '../lib/utils';
 import { Button } from '../components/ui/Button';
+import { Modal } from '../components/ui/Modal';
 import { SearchableUserSelect } from '../components/ui/SearchableUserSelect';
 import { CompleteTaskModal } from '../components/ui/CompleteTaskModal';
 import { Holiday, Task, User, UserRole } from '../types';
@@ -624,9 +625,13 @@ export const RedZone: React.FC = () => {
       )}
 
       {editingTask && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="card p-6 max-w-lg w-full shadow-xl">
-            <h3 className="text-lg font-semibold mb-4 text-slate-800">Edit Task</h3>
+        <Modal
+          open
+          onClose={() => setEditingTask(null)}
+          closeOnBackdrop={false}
+          size="lg"
+          title="Edit Task"
+        >
             <form onSubmit={handleEditSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Title</label>
@@ -740,8 +745,7 @@ export const RedZone: React.FC = () => {
                 </Button>
               </div>
             </form>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

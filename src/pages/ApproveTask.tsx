@@ -8,6 +8,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api';
 import { Button } from '../components/ui/Button';
+import { Modal } from '../components/ui/Modal';
+import { DateInput } from '../components/ui/DateInput';
 import { Task, UserRole, User } from '../types';
 import { SearchableUserSelect } from '../components/ui/SearchableUserSelect';
 import { useSearchParams } from 'react-router-dom';
@@ -301,7 +303,7 @@ export const ApproveTask: React.FC = () => {
     return (
         <div>
 
-            <div className="relative z-40 flex flex-col sm:flex-row sm:items-center gap-4 mb-3">
+            <div className="relative flex flex-col sm:flex-row sm:items-center gap-4 mb-3">
                 <div className="w-full sm:w-[250px]">
                     <SearchableUserSelect
                         users={availableUsers}
@@ -497,20 +499,17 @@ export const ApproveTask: React.FC = () => {
             <div className="mt-3 flex justify-end border-t border-slate-100 pt-3">{paginationControls}</div>
 
             {rejectTask && user && (
-                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-                    <div className="card p-6 max-w-md w-full shadow-xl">
-                        <h3 className="text-lg font-semibold mb-2 text-slate-800">Reject verification</h3>
-                        <p className="text-sm text-slate-600 mb-3">
-                            Add a comment for <strong>{rejectTask.assigned_to_name}</strong>. They will see it on the task.
-                        </p>
-                        <textarea
-                            value={rejectComment}
-                            onChange={(e) => setRejectComment(e.target.value)}
-                            rows={4}
-                            placeholder="Reason for rejection (required)…"
-                            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm mb-4"
-                        />
-                        <div className="flex justify-end gap-2">
+                <Modal
+                    open
+                    onClose={() => {
+                        setRejectTask(null);
+                        setRejectComment('');
+                    }}
+                    closeOnBackdrop={false}
+                    size="md"
+                    title="Reject verification"
+                    footer={
+                        <>
                             <Button
                                 variant="secondary"
                                 onClick={() => {
@@ -523,27 +522,34 @@ export const ApproveTask: React.FC = () => {
                             <Button variant="danger" disabled={!rejectComment.trim()} onClick={() => submitReject()}>
                                 Submit rejection
                             </Button>
-                        </div>
-                    </div>
-                </div>
+                        </>
+                    }
+                >
+                    <p className="text-sm text-slate-600 mb-3">
+                        Add a comment for <strong>{rejectTask.assigned_to_name}</strong>. They will see it on the task.
+                    </p>
+                    <textarea
+                        value={rejectComment}
+                        onChange={(e) => setRejectComment(e.target.value)}
+                        rows={4}
+                        placeholder="Reason for rejection (required)…"
+                        className="w-full rounded-control border border-slate-200 px-3 py-2 text-sm"
+                    />
+                </Modal>
             )}
 
             {editTask && user && (
-                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-                    <div className="card p-6 max-w-sm w-full shadow-xl">
-                        <h3 className="text-lg font-semibold mb-2 text-slate-800">Edit Due Date</h3>
-                        <p className="text-sm text-slate-600 mb-4">
-                            Update the due date for <strong>{editTask.title}</strong>
-                        </p>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Due Date</label>
-                        <input
-                            type="date"
-                            value={editDueDate}
-                            onChange={(e) => setEditDueDate(e.target.value)}
-                            min={editTask.start_date || undefined}
-                            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                        />
-                        <div className="flex justify-end gap-2">
+                <Modal
+                    open
+                    onClose={() => {
+                        setEditTask(null);
+                        setEditDueDate('');
+                    }}
+                    closeOnBackdrop={false}
+                    size="sm"
+                    title="Edit Due Date"
+                    footer={
+                        <>
                             <Button
                                 variant="secondary"
                                 onClick={() => {
@@ -560,9 +566,19 @@ export const ApproveTask: React.FC = () => {
                             >
                                 Save
                             </Button>
-                        </div>
-                    </div>
-                </div>
+                        </>
+                    }
+                >
+                    <p className="text-sm text-slate-600 mb-4">
+                        Update the due date for <strong>{editTask.title}</strong>
+                    </p>
+                    <DateInput
+                        label="Due Date"
+                        value={editDueDate}
+                        onChange={(e) => setEditDueDate(e.target.value)}
+                        min={editTask.start_date || undefined}
+                    />
+                </Modal>
             )}
 
             {viewAttachment && (

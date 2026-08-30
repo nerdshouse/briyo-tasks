@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Task } from '../../types';
 import { Button } from './Button';
+import { Modal } from './Modal';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { storage } from '../../lib/firebase';
 import { compressImageForUpload } from '../../lib/utils';
@@ -165,16 +166,31 @@ export const CompleteTaskModal: React.FC<CompleteTaskModalProps> = ({
   const averageProgress = attachmentFiles.length > 0 ? totalProgress / attachmentFiles.length : 0;
 
   return (
-    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
-      <div className="card p-6 max-w-md w-full shadow-xl max-h-[90vh] overflow-y-auto">
-        <h3 className="text-lg font-semibold mb-2">
-          {task.attachment_required
-            ? task.attachment_type === 'text'
-              ? 'Text required to mark complete'
-              : 'Upload media required to mark complete'
-            : 'Mark task complete'}
-        </h3>
-        
+    <Modal
+      open
+      onClose={onClose}
+      size="md"
+      closeOnBackdrop={false}
+      title={
+        task.attachment_required
+          ? task.attachment_type === 'text'
+            ? 'Text required to mark complete'
+            : 'Upload media required to mark complete'
+          : 'Mark task complete'
+      }
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose} disabled={completing || uploading}>
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit} disabled={isCompleteDisabled}>
+            {uploading ? 'Uploading...' : 'Complete'}
+          </Button>
+        </>
+      }
+    >
+      <>
+
         {task.attachment_required && (
           <p className="text-sm text-slate-600 mb-4">
             {task.attachment_description ||
@@ -274,15 +290,7 @@ export const CompleteTaskModal: React.FC<CompleteTaskModalProps> = ({
           </div>
         )}
         
-        <div className="flex flex-wrap gap-2 justify-end mt-2">
-          <Button variant="secondary" onClick={onClose} disabled={completing || uploading}>
-            Cancel
-          </Button>
-          <Button onClick={handleSubmit} disabled={isCompleteDisabled}>
-            {uploading ? 'Uploading...' : 'Complete'}
-          </Button>
-        </div>
-      </div>
-    </div>
+      </>
+    </Modal>
   );
 };
