@@ -220,7 +220,7 @@ export const AssignTask: React.FC = () => {
 
         if (assignee.phone) {
           try {
-            const link = `https://tasks.briyo.xyz/tasks`;
+            const link = `https://app.briyo.xyz/tasks`;
             const formattedDate = created.due_date.split('-').reverse().join('-');
             const desc = created.description || 'N/A';
 
