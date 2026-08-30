@@ -145,8 +145,8 @@ export const Login: React.FC = () => {
 
         {/* Error display */}
         {fpError && (
-          <div className="bg-red-50 border border-red-100 text-red-700 p-3 rounded-xl flex items-start gap-3">
-            <AlertTriangle size={18} className="shrink-0 mt-0.5 text-red-500" />
+          <div className="bg-danger-50 border border-danger-100 text-danger-700 p-3 rounded-xl flex items-start gap-3">
+            <AlertTriangle size={18} className="shrink-0 mt-0.5 text-danger-500" />
             <p className="text-sm font-medium">{fpError}</p>
           </div>
         )}
@@ -155,8 +155,8 @@ export const Login: React.FC = () => {
         {forgotStep === 'phone' && (
           <form onSubmit={handleSendOtp} className="space-y-4">
             <div className="text-center mb-2">
-              <div className="w-14 h-14 rounded-full bg-teal-50 flex items-center justify-center mx-auto mb-3">
-                <Phone size={24} className="text-teal-600" />
+              <div className="w-14 h-14 rounded-full bg-brand-50 flex items-center justify-center mx-auto mb-3">
+                <Phone size={24} className="text-brand-600" />
               </div>
               <h3 className="text-lg font-semibold text-slate-800">Forgot Password?</h3>
               <p className="text-sm text-slate-500 mt-1">
@@ -181,8 +181,8 @@ export const Login: React.FC = () => {
         {forgotStep === 'otp' && (
           <form onSubmit={handleVerifyOtp} className="space-y-4">
             <div className="text-center mb-2">
-              <div className="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-3">
-                <MessageSquare size={24} className="text-blue-600" />
+              <div className="w-14 h-14 rounded-full bg-brand-50 flex items-center justify-center mx-auto mb-3">
+                <MessageSquare size={24} className="text-brand-600" />
               </div>
               <h3 className="text-lg font-semibold text-slate-800">Verify OTP</h3>
               <p className="text-sm text-slate-500 mt-1">
@@ -206,7 +206,7 @@ export const Login: React.FC = () => {
                 type="button"
                 onClick={handleResendOtp}
                 disabled={fpLoading}
-                className="text-sm text-teal-600 hover:text-teal-700 font-medium disabled:opacity-50 cursor-pointer"
+                className="text-sm text-brand-600 hover:text-brand-700 font-medium disabled:opacity-50 cursor-pointer"
               >
                 Resend OTP
               </button>
@@ -218,8 +218,8 @@ export const Login: React.FC = () => {
         {forgotStep === 'reset' && (
           <form onSubmit={handleResetPassword} className="space-y-4">
             <div className="text-center mb-2">
-              <div className="w-14 h-14 rounded-full bg-amber-50 flex items-center justify-center mx-auto mb-3">
-                <KeyRound size={24} className="text-amber-600" />
+              <div className="w-14 h-14 rounded-full bg-warning-50 flex items-center justify-center mx-auto mb-3">
+                <KeyRound size={24} className="text-warning-600" />
               </div>
               <h3 className="text-lg font-semibold text-slate-800">Create New Password</h3>
               <p className="text-sm text-slate-500 mt-1">
@@ -251,8 +251,8 @@ export const Login: React.FC = () => {
         {/* Step 4: Success */}
         {forgotStep === 'success' && (
           <div className="text-center space-y-4 py-4">
-            <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center mx-auto">
-              <CheckCircle2 size={32} className="text-green-600" />
+            <div className="w-16 h-16 rounded-full bg-success-50 flex items-center justify-center mx-auto">
+              <CheckCircle2 size={32} className="text-success-600" />
             </div>
             <h3 className="text-lg font-semibold text-slate-800">Password Reset Successful!</h3>
             <p className="text-sm text-slate-500">
@@ -272,7 +272,7 @@ export const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 via-white to-teal-50/30">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 via-white to-brand-50/30">
       <div className="w-full max-w-md">
         <div className="card shadow-lg shadow-slate-200/50 pt-4 px-8 pb-8">
           <div className="flex justify-center overflow-hidden py-8">
@@ -288,12 +288,12 @@ export const Login: React.FC = () => {
           ) : (
             <>
               {error && (
-                <div className="bg-red-50 border border-red-100 text-red-700 p-4 rounded-xl mb-6 flex items-start gap-3 mt-4">
-                  <AlertTriangle size={20} className="shrink-0 mt-0.5 text-red-500" />
+                <div className="bg-danger-50 border border-danger-100 text-danger-700 p-4 rounded-xl mb-6 flex items-start gap-3 mt-4">
+                  <AlertTriangle size={20} className="shrink-0 mt-0.5 text-danger-500" />
                   <div className="text-sm">
                     <p className="font-medium">{error}</p>
                     {error === 'Invalid email or password' && (
-                      <p className="mt-2 text-red-600/90">
+                      <p className="mt-2 text-danger-600/90">
                         Contact your administrator for access.
                       </p>
                     )}
@@ -325,7 +325,7 @@ export const Login: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => { setShowForgot(true); setError(''); }}
-                  className="text-sm text-teal-600 hover:text-teal-700 font-medium transition-colors cursor-pointer"
+                  className="text-sm text-brand-600 hover:text-brand-700 font-medium transition-colors cursor-pointer"
                 >
                   Forgot Password?
                 </button>

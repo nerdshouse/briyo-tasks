@@ -343,7 +343,7 @@ export const Members: React.FC = () => {
             setRowsPerPage(Number(e.target.value));
             setCurrentPage(1); // Reset to first page when changing row count
           }}
-          className="h-10 rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500"
+          className="h-10 rounded-control border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
         >
           {ROWS_PER_PAGE_OPTIONS.map((size) => (
             <option key={size} value={size}>
@@ -364,7 +364,7 @@ export const Members: React.FC = () => {
             aria-label="First page"
             onClick={() => setCurrentPage(1)}
             disabled={currentPage <= 1}
-            className="h-9 w-9 inline-flex items-center justify-center rounded-xl border border-slate-300 bg-slate-50 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="h-9 w-9 inline-flex items-center justify-center rounded-control border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <ChevronsLeft size={16} />
           </button>
@@ -373,7 +373,7 @@ export const Members: React.FC = () => {
             aria-label="Previous page"
             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
             disabled={currentPage <= 1}
-            className="h-9 w-9 inline-flex items-center justify-center rounded-xl border border-slate-300 bg-slate-50 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="h-9 w-9 inline-flex items-center justify-center rounded-control border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <ChevronLeft size={16} />
           </button>
@@ -382,7 +382,7 @@ export const Members: React.FC = () => {
             aria-label="Next page"
             onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredUsers.length / rowsPerPage)))}
             disabled={currentPage >= Math.ceil(filteredUsers.length / rowsPerPage) || filteredUsers.length === 0}
-            className="h-9 w-9 inline-flex items-center justify-center rounded-xl border border-slate-300 bg-slate-50 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="h-9 w-9 inline-flex items-center justify-center rounded-control border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <ChevronRight size={16} />
           </button>
@@ -391,7 +391,7 @@ export const Members: React.FC = () => {
             aria-label="Last page"
             onClick={() => setCurrentPage(Math.ceil(filteredUsers.length / rowsPerPage))}
             disabled={currentPage >= Math.ceil(filteredUsers.length / rowsPerPage) || filteredUsers.length === 0}
-            className="h-9 w-9 inline-flex items-center justify-center rounded-xl border border-slate-300 bg-slate-50 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="h-9 w-9 inline-flex items-center justify-center rounded-control border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <ChevronsRight size={16} />
           </button>
@@ -442,7 +442,7 @@ export const Members: React.FC = () => {
                 setCityFilter(e.target.value);
                 setCurrentPage(1);
               }}
-              className="h-9 rounded-lg border border-slate-300 px-3 text-sm"
+              className="h-9 rounded-control border border-slate-200 px-3 text-sm"
             >
               <option value="">All Cities</option>
               {uniqueCities.map((city) => (
@@ -453,7 +453,7 @@ export const Members: React.FC = () => {
               <button
                 type="button"
                 onClick={() => { setCityFilter(''); setCurrentPage(1); }}
-                className="text-xs text-teal-600 hover:text-teal-800 font-medium"
+                className="text-xs text-brand-600 hover:text-brand-800 font-medium"
               >
                 Clear
               </button>
@@ -463,9 +463,9 @@ export const Members: React.FC = () => {
       </div>
 
       {bulkMessage && (
-        <div className={`mb-4 p-3 rounded-lg text-sm ${bulkMessage.type === 'success' ? 'bg-teal-50 text-teal-700' :
-          bulkMessage.type === 'error' ? 'bg-red-50 text-red-700' :
-            'bg-yellow-50 text-yellow-700'
+        <div className={`mb-4 p-3 rounded-lg text-sm ${bulkMessage.type === 'success' ? 'bg-brand-50 text-brand-700' :
+          bulkMessage.type === 'error' ? 'bg-danger-50 text-danger-700' :
+            'bg-warning-50 text-warning-700'
           }`}>
           {bulkMessage.text}
         </div>
@@ -480,7 +480,7 @@ export const Members: React.FC = () => {
           title="Add New Member"
         >
               {error && (
-                <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">{error}</div>
+                <div className="mb-4 p-3 bg-danger-50 text-danger-700 rounded-lg text-sm">{error}</div>
               )}
               <form onSubmit={handleAddMember} className="space-y-4">
                 <Input
@@ -511,7 +511,7 @@ export const Members: React.FC = () => {
                   <select
                     value={newUserRole}
                     onChange={(e) => setNewUserRole(e.target.value as UserRole)}
-                    className="w-full h-10 rounded-lg border border-slate-300 px-3 text-sm"
+                    className="w-full h-10 rounded-control border border-slate-200 px-3 text-sm"
                   >
                     <option value={UserRole.OWNER}>Owner</option>
                     <option value={UserRole.MANAGER}>Manager</option>
@@ -546,7 +546,7 @@ export const Members: React.FC = () => {
       {paginationControls}
 
       <div className="overflow-x-auto mt-4">
-        <table className="w-full border-collapse bg-white rounded-xl border border-slate-200 shadow-sm">
+        <table className="w-full border-collapse bg-white rounded-card border border-slate-200 shadow-card">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-200">
               <th className="text-left py-4 px-4 font-semibold text-slate-800">Name</th>
@@ -615,7 +615,7 @@ export const Members: React.FC = () => {
           title="Edit Member"
         >
               {editError && (
-                <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">{editError}</div>
+                <div className="mb-4 p-3 bg-danger-50 text-danger-700 rounded-lg text-sm">{editError}</div>
               )}
               <form onSubmit={handleEditSubmit} className="space-y-4">
                 <Input label="Name" value={editName} onChange={(e) => setEditName(e.target.value)} required />
@@ -632,7 +632,7 @@ export const Members: React.FC = () => {
                   <select
                     value={editRole}
                     onChange={(e) => setEditRole(e.target.value as UserRole)}
-                    className="w-full h-10 rounded-lg border border-slate-300 px-3 text-sm"
+                    className="w-full h-10 rounded-control border border-slate-200 px-3 text-sm"
                   >
                     <option value={UserRole.OWNER}>Owner</option>
                     <option value={UserRole.MANAGER}>Manager</option>
@@ -687,7 +687,7 @@ export const Members: React.FC = () => {
               </div>
               <div className="border-t border-slate-200 pt-1 mt-1 flex justify-between text-slate-700 font-medium">
                 <span>Total tasks to be deleted:</span>
-                <span className="font-bold text-red-600">{deleteModal.totalUniqueTasksCount}</span>
+                <span className="font-bold text-danger-600">{deleteModal.totalUniqueTasksCount}</span>
               </div>
             </div>
             <div className="bg-danger-50 border border-danger-100 rounded-control p-3 text-xs text-danger-700">

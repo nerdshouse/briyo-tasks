@@ -51,9 +51,9 @@ export const HelpKpi: React.FC = () => {
         <Button variant="secondary" onClick={load} disabled={loading}>Refresh</Button>
       </div>
 
-      {error && <div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl p-3">{error}</div>}
+      {error && <div className="text-sm text-danger-600 bg-danger-50 border border-danger-100 rounded-xl p-3">{error}</div>}
 
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 md:p-5">
+      <div className="bg-white rounded-card border border-slate-200 shadow-card p-4 md:p-5">
         <div className="flex flex-col md:flex-row gap-3 items-end">
           <div className="flex-1">
             <label className="block text-sm font-medium text-slate-700 mb-1.5">From</label>
@@ -61,7 +61,7 @@ export const HelpKpi: React.FC = () => {
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              className="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500"
+              className="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 focus:outline-none"
             />
           </div>
           <div className="flex-1">
@@ -70,7 +70,7 @@ export const HelpKpi: React.FC = () => {
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
-              className="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500"
+              className="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 focus:outline-none"
             />
           </div>
           <Button onClick={load} isLoading={loading}>Apply</Button>
@@ -81,7 +81,7 @@ export const HelpKpi: React.FC = () => {
         <div className="text-slate-500">Loading...</div>
       ) : !data ? null : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
+          <div className="bg-white rounded-card border border-slate-200 shadow-card">
             <div className="p-4 border-b border-slate-100">
               <h3 className="font-semibold text-slate-800">Doer-wise</h3>
               <p className="text-sm text-slate-500">Unresolved tickets count</p>
@@ -108,7 +108,7 @@ export const HelpKpi: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
+          <div className="bg-white rounded-card border border-slate-200 shadow-card">
             <div className="p-4 border-b border-slate-100">
               <h3 className="font-semibold text-slate-800">Helper-wise</h3>
               <p className="text-sm text-slate-500">Avg rating, total solved, avg resolution time</p>

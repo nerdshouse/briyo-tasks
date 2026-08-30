@@ -1193,7 +1193,7 @@ export const AssignedByMe: React.FC = () => {
                     t.status !== 'cancelled' &&
                     t.status !== 'closed_permanently'
                     ? 'overdue-row'
-                    : ''} ${highlightId === t.id ? 'ring-2 ring-amber-300' : ''}`}
+                    : ''} ${highlightId === t.id ? 'ring-2 ring-warning-300' : ''}`}
                 >
                   <td className="sticky-col-1">{t.title}</td>
                   <td className="sticky-col-2 whitespace-pre-wrap wrap-break-word text-sm text-slate-700">
@@ -1220,7 +1220,7 @@ export const AssignedByMe: React.FC = () => {
                         View
                       </button>
                     ) : t.attachment_required ? (
-                      <span className="text-amber-600 flex items-center justify-center gap-1">
+                      <span className="text-warning-600 flex items-center justify-center gap-1">
                         <Paperclip size={14} /> Required
                       </span>
                     ) : (
@@ -1230,11 +1230,11 @@ export const AssignedByMe: React.FC = () => {
                   <td className="text-center">
                     <span
                       className={`inline-flex px-2 py-0.5 rounded-lg text-xs font-medium ${t.audit_status === 'audited'
-                        ? 'bg-emerald-100 text-emerald-800'
+                        ? 'bg-success-100 text-success-800'
                         : t.audit_status === 'bogus'
-                          ? 'bg-red-100 text-red-800'
+                          ? 'bg-danger-100 text-danger-800'
                           : t.audit_status === 'unclear'
-                            ? 'bg-amber-100 text-amber-800'
+                            ? 'bg-warning-100 text-warning-800'
                             : 'bg-slate-100 text-slate-600'
                         }`}
                     >
@@ -1309,7 +1309,7 @@ export const AssignedByMe: React.FC = () => {
                     t.status !== 'cancelled' &&
                     t.status !== 'closed_permanently'
                     ? 'overdue-row'
-                    : ''} ${highlightId === t.id ? 'ring-2 ring-amber-300' : ''}`}
+                    : ''} ${highlightId === t.id ? 'ring-2 ring-warning-300' : ''}`}
                 >
                   <td className="sticky-col-1">
                     <span className="font-medium text-slate-800">{t.title}</span>
@@ -1328,9 +1328,9 @@ export const AssignedByMe: React.FC = () => {
                   <td className="text-center">
                     <span
                       className={`inline-flex px-2 py-0.5 rounded-lg text-xs font-medium whitespace-nowrap ${t.priority === 'urgent'
-                        ? 'bg-red-100 text-red-800'
+                        ? 'bg-danger-100 text-danger-800'
                         : t.priority === 'high'
-                          ? 'bg-amber-100 text-amber-800'
+                          ? 'bg-warning-100 text-warning-800'
                           : 'bg-slate-100 text-slate-600'
                         }`}
                     >
@@ -1341,17 +1341,17 @@ export const AssignedByMe: React.FC = () => {
                   <td className="text-center">
                     <span
                       className={`inline-flex px-2 py-0.5 rounded-lg text-xs font-medium whitespace-nowrap ${t.status === 'completed'
-                        ? 'bg-emerald-100 text-emerald-800'
+                        ? 'bg-success-100 text-success-800'
                         : t.status === 'overdue'
-                          ? 'bg-red-100 text-red-800'
+                          ? 'bg-danger-100 text-danger-800'
                           : t.status === 'correction_required'
-                            ? 'bg-amber-100 text-amber-800'
+                            ? 'bg-warning-100 text-warning-800'
                             : t.status === 'pending_verification'
-                              ? 'bg-sky-100 text-sky-800'
+                              ? 'bg-info-100 text-info-800'
                               : t.status === 'closed_permanently'
-                                ? 'bg-purple-100 text-purple-800'
+                                ? 'bg-review-100 text-review-800'
                                 : t.status === 'scheduled'
-                                  ? 'bg-violet-100 text-violet-700'
+                                  ? 'bg-slate-100 text-slate-700'
                                   : 'bg-slate-100 text-slate-600'
                         }`}
                     >
@@ -1380,7 +1380,7 @@ export const AssignedByMe: React.FC = () => {
                         View
                       </button>
                     ) : t.attachment_required ? (
-                      <span className="text-amber-600 text-xs font-medium whitespace-nowrap">Required</span>
+                      <span className="text-warning-600 text-xs font-medium whitespace-nowrap">Required</span>
                     ) : (
                       <span className="text-slate-400">-</span>
                     )}
@@ -1634,12 +1634,12 @@ export const AssignedByMe: React.FC = () => {
                 return (
                   <tr
                     key={t.id}
-                    className={`${isOverdue ? 'overdue-row' : ''} ${!isOverdue && onHoliday ? 'holiday-row' : ''} ${highlightId === t.id ? 'ring-2 ring-amber-300' : ''}`}
+                    className={`${isOverdue ? 'overdue-row' : ''} ${!isOverdue && onHoliday ? 'holiday-row' : ''} ${highlightId === t.id ? 'ring-2 ring-warning-300' : ''}`}
                   >
                     <td className="sticky-col-1">
                       <span className="font-medium text-slate-800">{t.title}</span>
                       {onHoliday && (
-                        <span className="ml-2 text-xs text-orange-600">(Holiday)</span>
+                        <span className="ml-2 text-xs text-warning-600">(Holiday)</span>
                       )}
                       {t.assignee_deleted && (
                         <span className="ml-2 text-xs px-2 py-0.5 rounded bg-slate-200 text-slate-600">Member deleted</span>
@@ -1675,9 +1675,9 @@ export const AssignedByMe: React.FC = () => {
                     <td className="text-center">
                       <span
                         className={`inline-flex px-2 py-0.5 rounded-lg text-xs font-medium whitespace-nowrap ${t.priority === 'urgent'
-                          ? 'bg-red-100 text-red-800'
+                          ? 'bg-danger-100 text-danger-800'
                           : t.priority === 'high'
-                            ? 'bg-amber-100 text-amber-800'
+                            ? 'bg-warning-100 text-warning-800'
                             : 'bg-slate-100 text-slate-600'
                           }`}
                       >
@@ -1694,7 +1694,7 @@ export const AssignedByMe: React.FC = () => {
                       <div className="flex flex-col items-center gap-1 max-w-56 mx-auto">
                         <StatusBadge status={t.status} />
                         {t.status === 'correction_required' && t.verification_rejection_comment && (
-                          <p className="text-xs text-amber-900 text-left w-full wrap-break-word" title={t.verification_rejection_comment}>
+                          <p className="text-xs text-warning-800 text-left w-full wrap-break-word" title={t.verification_rejection_comment}>
                             <span className="font-medium">Verifier: </span>
                             {t.verification_rejection_comment}
                           </p>
@@ -1838,7 +1838,7 @@ export const AssignedByMe: React.FC = () => {
           title="Edit Task"
         >
             {editError && (
-              <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              <div className="mb-3 rounded-lg border border-danger-200 bg-danger-50 px-3 py-2 text-sm text-danger-700">
                 {editError}
               </div>
             )}

@@ -36,7 +36,7 @@ const linkify = (text: string) => {
           href={part}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-teal-600 hover:underline break-all"
+          className="text-brand-600 hover:underline break-all"
         >
           {part}
         </a>
@@ -234,7 +234,7 @@ export const AuditSopModal: React.FC<AuditSopModalProps> = ({
               <button
                 type="button"
                 onClick={() => setIsEditing(true)}
-                className="text-sm text-teal-600 hover:text-teal-800 font-medium px-3 py-1.5 rounded-lg hover:bg-teal-50 transition-colors inline-flex items-center gap-1 border border-teal-200"
+                className="text-sm text-brand-600 hover:text-brand-800 font-medium px-3 py-1.5 rounded-lg hover:bg-brand-50 transition-colors inline-flex items-center gap-1 border border-brand-200"
               >
                 <Pencil size={14} /> Edit Guidelines
               </button>
@@ -251,7 +251,7 @@ export const AuditSopModal: React.FC<AuditSopModalProps> = ({
                   rows={4}
                   placeholder="Describe how this task should be checked — what to look at, what counts as done."
                   disabled={isSaving}
-                  className="w-full text-sm rounded-lg border border-slate-300 px-3 py-3 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white resize-y min-h-[100px]"
+                  className="w-full text-sm rounded-lg border border-slate-300 px-3 py-3 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-white resize-y min-h-[100px]"
                 />
                 <div className="flex justify-end mt-1">
                   <span className="text-xs text-slate-400">{text.length}/2000</span>
@@ -285,14 +285,14 @@ export const AuditSopModal: React.FC<AuditSopModalProps> = ({
                         }}
                         disabled={isSaving}
                         placeholder="https://example.com"
-                        className="flex-1 text-sm rounded-lg border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white"
+                        className="flex-1 text-sm rounded-lg border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-white"
                       />
                       {links.length > 1 && (
                         <button
                           type="button"
                           onClick={() => setLinks(links.filter((_, idx) => idx !== i))}
                           disabled={isSaving}
-                          className="text-slate-400 hover:text-red-500 p-2"
+                          className="text-slate-400 hover:text-danger-500 p-2"
                         >
                           <X size={16} />
                         </button>
@@ -330,18 +330,18 @@ export const AuditSopModal: React.FC<AuditSopModalProps> = ({
                         <Paperclip size={14} className="text-slate-400 flex-shrink-0" />
                         <span className="truncate text-slate-700 font-medium" title={f.file_name || 'Attachment'}>{f.file_name || 'Attachment'}</span>
                       </div>
-                      <button type="button" onClick={() => removeExistingFile(i)} disabled={isSaving} className="text-slate-400 hover:text-red-500 ml-2 flex-shrink-0 p-1 hover:bg-red-50 rounded">
+                      <button type="button" onClick={() => removeExistingFile(i)} disabled={isSaving} className="text-slate-400 hover:text-danger-500 ml-2 flex-shrink-0 p-1 hover:bg-danger-50 rounded">
                         <X size={16} />
                       </button>
                     </div>
                   ))}
                   {newFiles.map((f, i) => (
-                    <div key={`new-${i}`} className="flex items-center justify-between bg-teal-50 border border-teal-200 rounded-lg px-3 py-2 text-sm">
+                    <div key={`new-${i}`} className="flex items-center justify-between bg-brand-50 border border-brand-200 rounded-lg px-3 py-2 text-sm">
                       <div className="flex items-center gap-2 overflow-hidden">
-                        <span className="bg-teal-600 text-white px-1.5 py-0.5 rounded text-[10px] font-bold">NEW</span>
-                        <span className="truncate text-teal-800 font-medium" title={f.name}>{f.name}</span>
+                        <span className="bg-brand-600 text-white px-1.5 py-0.5 rounded text-[10px] font-bold">NEW</span>
+                        <span className="truncate text-brand-800 font-medium" title={f.name}>{f.name}</span>
                       </div>
-                      <button type="button" onClick={() => removeNewFile(i)} disabled={isSaving} className="text-teal-600 hover:text-red-600 ml-2 flex-shrink-0 p-1 hover:bg-red-50 rounded">
+                      <button type="button" onClick={() => removeNewFile(i)} disabled={isSaving} className="text-brand-600 hover:text-danger-600 ml-2 flex-shrink-0 p-1 hover:bg-danger-50 rounded">
                         <X size={16} />
                       </button>
                     </div>
@@ -350,11 +350,11 @@ export const AuditSopModal: React.FC<AuditSopModalProps> = ({
                 
                 {isSaving && newFiles.length > 0 && (
                   <div className="mt-3 w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                    <div className="bg-teal-600 h-2 rounded-full transition-all duration-300" style={{ width: `${averageProgress}%` }}></div>
+                    <div className="bg-brand-600 h-2 rounded-full transition-all duration-300" style={{ width: `${averageProgress}%` }}></div>
                   </div>
                 )}
                 
-                {uploadError && <p className="text-sm text-red-600 mt-2 font-medium bg-red-50 p-2 rounded">{uploadError}</p>}
+                {uploadError && <p className="text-sm text-danger-600 mt-2 font-medium bg-danger-50 p-2 rounded">{uploadError}</p>}
               </div>
 
               <div className="flex justify-between items-center pt-4 border-t border-slate-100 mt-6">
@@ -368,7 +368,7 @@ export const AuditSopModal: React.FC<AuditSopModalProps> = ({
                         setLinks(['']);
                       }}
                       disabled={isSaving}
-                      className="text-sm text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded transition-colors font-medium"
+                      className="text-sm text-danger-500 hover:text-danger-700 hover:bg-danger-50 px-3 py-1.5 rounded transition-colors font-medium"
                     >
                       Clear All
                     </button>
@@ -424,7 +424,7 @@ export const AuditSopModal: React.FC<AuditSopModalProps> = ({
                             href={link.startsWith('http') ? link : `https://${link}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-sm text-teal-600 hover:text-teal-800 hover:underline break-all bg-teal-50 p-3 rounded-lg border border-teal-100 flex items-center gap-2 transition-colors"
+                            className="text-sm text-brand-600 hover:text-brand-800 hover:underline break-all bg-brand-50 p-3 rounded-lg border border-brand-100 flex items-center gap-2 transition-colors"
                           >
                             <LinkIcon size={14} className="flex-shrink-0" />
                             <span className="truncate">{link}</span>
@@ -446,7 +446,7 @@ export const AuditSopModal: React.FC<AuditSopModalProps> = ({
                             className="flex items-center gap-2 px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all text-left shadow-sm group"
                             title={att.file_name}
                           >
-                            <div className="bg-slate-100 p-2 rounded-md group-hover:bg-teal-50 group-hover:text-teal-600 transition-colors">
+                            <div className="bg-slate-100 p-2 rounded-md group-hover:bg-brand-50 group-hover:text-brand-600 transition-colors">
                               <Paperclip size={16} />
                             </div>
                             <span className="truncate flex-1 font-medium">{att.file_name || 'Attachment'}</span>

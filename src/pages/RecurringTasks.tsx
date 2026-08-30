@@ -404,7 +404,7 @@ export const RecurringTasks: React.FC = () => {
               setRowsPerPage(Number(e.target.value));
               setCurrentPage(1);
             }}
-            className="h-10 rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="h-10 rounded-control border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
           >
             {ROWS_PER_PAGE_OPTIONS.map((size) => (
               <option key={size} value={size}>
@@ -424,7 +424,7 @@ export const RecurringTasks: React.FC = () => {
               aria-label="First page"
               onClick={() => setCurrentPage(1)}
               disabled={loading || safePage <= 1}
-              className="h-9 w-9 inline-flex items-center justify-center rounded-xl border border-slate-300 bg-slate-50 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="h-9 w-9 inline-flex items-center justify-center rounded-control border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <ChevronsLeft size={16} />
             </button>
@@ -433,7 +433,7 @@ export const RecurringTasks: React.FC = () => {
               aria-label="Previous page"
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={loading || safePage <= 1}
-              className="h-9 w-9 inline-flex items-center justify-center rounded-xl border border-slate-300 bg-slate-50 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="h-9 w-9 inline-flex items-center justify-center rounded-control border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <ChevronLeft size={16} />
             </button>
@@ -442,7 +442,7 @@ export const RecurringTasks: React.FC = () => {
               aria-label="Next page"
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={loading || safePage >= totalPages}
-              className="h-9 w-9 inline-flex items-center justify-center rounded-xl border border-slate-300 bg-slate-50 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="h-9 w-9 inline-flex items-center justify-center rounded-control border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <ChevronRight size={16} />
             </button>
@@ -451,7 +451,7 @@ export const RecurringTasks: React.FC = () => {
               aria-label="Last page"
               onClick={() => setCurrentPage(totalPages)}
               disabled={loading || safePage >= totalPages}
-              className="h-9 w-9 inline-flex items-center justify-center rounded-xl border border-slate-300 bg-slate-50 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="h-9 w-9 inline-flex items-center justify-center rounded-control border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <ChevronsRight size={16} />
             </button>
@@ -475,8 +475,8 @@ export const RecurringTasks: React.FC = () => {
       return <ArrowUpDown size={14} className="inline ml-1 text-slate-400 opacity-50" />;
     }
     return sortConfig.direction === 'asc' 
-      ? <ArrowUp size={14} className="inline ml-1 text-teal-600" /> 
-      : <ArrowDown size={14} className="inline ml-1 text-teal-600" />;
+      ? <ArrowUp size={14} className="inline ml-1 text-brand-600" /> 
+      : <ArrowDown size={14} className="inline ml-1 text-brand-600" />;
   };
 
   return (
@@ -511,7 +511,7 @@ export const RecurringTasks: React.FC = () => {
           <select
             value={recurringFilter}
             onChange={(e) => setRecurringFilter(e.target.value)}
-            className="h-9 rounded-lg border border-slate-300 px-3 text-sm"
+            className="h-9 rounded-control border border-slate-200 px-3 text-sm"
           >
             <option value="">All Recurring Types</option>
             <option value="daily">Daily</option>
@@ -528,7 +528,7 @@ export const RecurringTasks: React.FC = () => {
               <select
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value)}
-                className="h-9 rounded-lg border border-slate-300 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="h-9 rounded-control border border-slate-200 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30"
               >
                 <option value="all_time">All Time</option>
                 <option value="today">Today</option>
@@ -544,14 +544,14 @@ export const RecurringTasks: React.FC = () => {
                     type="date"
                     value={customStart}
                     onChange={(e) => setCustomStart(e.target.value)}
-                    className="h-9 rounded-lg border border-slate-300 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    className="h-9 rounded-control border border-slate-200 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30"
                   />
                   <span className="text-slate-500 text-sm">to</span>
                   <input
                     type="date"
                     value={customEnd}
                     onChange={(e) => setCustomEnd(e.target.value)}
-                    className="h-9 rounded-lg border border-slate-300 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    className="h-9 rounded-control border border-slate-200 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30"
                   />
                 </div>
               )}
@@ -578,14 +578,14 @@ export const RecurringTasks: React.FC = () => {
             type="date"
             value={createdFromFilter}
             onChange={(e) => setCreatedFromFilter(e.target.value)}
-            className="h-9 rounded-lg border border-slate-300 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="h-9 rounded-control border border-slate-200 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30"
           />
           <span className="text-slate-500 text-sm">to</span>
           <input
             type="date"
             value={createdToFilter}
             onChange={(e) => setCreatedToFilter(e.target.value)}
-            className="h-9 rounded-lg border border-slate-300 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="h-9 rounded-control border border-slate-200 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30"
           />
         </div>
         <div className="flex items-center gap-2">
@@ -596,7 +596,7 @@ export const RecurringTasks: React.FC = () => {
             placeholder="Min Age"
             value={minAgeFilter}
             onChange={(e) => setMinAgeFilter(e.target.value)}
-            className="h-9 w-24 rounded-lg border border-slate-300 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="h-9 w-24 rounded-control border border-slate-200 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30"
           />
           <span className="text-slate-500 text-sm">-</span>
           <input
@@ -605,7 +605,7 @@ export const RecurringTasks: React.FC = () => {
             placeholder="Max Age"
             value={maxAgeFilter}
             onChange={(e) => setMaxAgeFilter(e.target.value)}
-            className="h-9 w-24 rounded-lg border border-slate-300 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="h-9 w-24 rounded-control border border-slate-200 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30"
           />
         </div>
       </div>
@@ -680,7 +680,7 @@ export const RecurringTasks: React.FC = () => {
                               <button
                                 type="button"
                                 onClick={() => setSelectedAuditTask(t)}
-                                className="mt-2 text-xs font-medium text-teal-600 hover:text-teal-800 hover:bg-teal-50 px-2 py-1 rounded inline-flex items-center gap-1 w-fit transition-colors border border-teal-100"
+                                className="mt-2 text-xs font-medium text-brand-600 hover:text-brand-800 hover:bg-brand-50 px-2 py-1 rounded inline-flex items-center gap-1 w-fit transition-colors border border-brand-100"
                               >
                                 <FileText size={12} /> View Guidelines to Audit
                               </button>
@@ -690,7 +690,7 @@ export const RecurringTasks: React.FC = () => {
                               <button
                                 type="button"
                                 onClick={() => setSelectedAuditTask(t)}
-                                className="mt-2 text-xs font-medium text-slate-400 hover:text-teal-600 hover:bg-slate-50 px-2 py-1 rounded inline-flex items-center gap-1 w-fit transition-colors border border-transparent border-dashed hover:border-teal-200"
+                                className="mt-2 text-xs font-medium text-slate-400 hover:text-brand-600 hover:bg-slate-50 px-2 py-1 rounded inline-flex items-center gap-1 w-fit transition-colors border border-transparent border-dashed hover:border-brand-200"
                               >
                                 + Add Guidelines to Audit
                               </button>
@@ -726,7 +726,7 @@ export const RecurringTasks: React.FC = () => {
                         const age = getAgeDays(t.created_at);
                         if (age === null) return 'N/A';
                         return (
-                          <span className={age > 30 ? 'text-rose-600' : age > 14 ? 'text-amber-600' : ''}>
+                          <span className={age > 30 ? 'text-danger-600' : age > 14 ? 'text-warning-600' : ''}>
                             {age}
                           </span>
                         );
@@ -737,13 +737,13 @@ export const RecurringTasks: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => setViewAttachment({ url: t.attachment_url, text: t.attachment_text })}
-                          className="text-teal-600 hover:underline text-sm inline-flex items-center justify-center gap-1 font-medium whitespace-nowrap"
+                          className="text-brand-600 hover:underline text-sm inline-flex items-center justify-center gap-1 font-medium whitespace-nowrap"
                         >
                           {t.attachment_url ? <ExternalLink size={14} /> : <FileText size={14} />}
                           View
                         </button>
                       ) : t.attachment_required ? (
-                        <span className="text-amber-600 text-xs font-medium whitespace-nowrap">Required</span>
+                        <span className="text-warning-600 text-xs font-medium whitespace-nowrap">Required</span>
                       ) : (
                         <span className="text-slate-400">-</span>
                       )}
@@ -871,7 +871,7 @@ export const RecurringTasks: React.FC = () => {
                   href={viewAttachment.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-teal-600 hover:underline font-medium"
+                  className="inline-flex items-center gap-2 text-brand-600 hover:underline font-medium"
                 >
                   <ExternalLink size={18} />
                   Open media / link
@@ -896,7 +896,7 @@ export const RecurringTasks: React.FC = () => {
           title="Edit Recurring Task"
         >
             {editError && (
-              <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              <div className="mb-3 rounded-lg border border-danger-200 bg-danger-50 px-3 py-2 text-sm text-danger-700">
                 {editError}
               </div>
             )}
@@ -908,7 +908,7 @@ export const RecurringTasks: React.FC = () => {
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
                   required
-                  className="w-full h-10 rounded-lg border border-slate-300 px-3 text-sm focus:ring-2 focus:ring-teal-500"
+                  className="w-full h-10 rounded-control border border-slate-200 px-3 text-sm focus:ring-2 focus:ring-brand-500/30"
                 />
               </div>
               <div>
@@ -917,7 +917,7 @@ export const RecurringTasks: React.FC = () => {
                   value={editDesc}
                   onChange={(e) => setEditDesc(e.target.value)}
                   rows={3}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500"
+                  className="w-full rounded-control border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500/30"
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -939,7 +939,7 @@ export const RecurringTasks: React.FC = () => {
                     onChange={(e) => setEditDueDate(e.target.value)}
                     min={editingTask?.start_date || undefined}
                     required
-                    className="w-full h-10 rounded-lg border border-slate-300 px-3 text-sm focus:ring-2 focus:ring-teal-500"
+                    className="w-full h-10 rounded-control border border-slate-200 px-3 text-sm focus:ring-2 focus:ring-brand-500/30"
                   />
                 </div>
               </div>
@@ -950,7 +950,7 @@ export const RecurringTasks: React.FC = () => {
                   <select
                     value={editPriority}
                     onChange={(e) => setEditPriority(e.target.value as Task['priority'])}
-                    className="w-full h-10 rounded-lg border border-slate-300 px-3 text-sm focus:ring-2 focus:ring-teal-500"
+                    className="w-full h-10 rounded-control border border-slate-200 px-3 text-sm focus:ring-2 focus:ring-brand-500/30"
                   >
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
@@ -964,7 +964,7 @@ export const RecurringTasks: React.FC = () => {
                   <select
                     value={editRecurring}
                     disabled
-                    className="w-full h-10 rounded-lg border border-slate-300 px-3 text-sm focus:ring-2 focus:ring-teal-500"
+                    className="w-full h-10 rounded-control border border-slate-200 px-3 text-sm focus:ring-2 focus:ring-brand-500/30"
                   >
                     <option value="daily">Daily</option>
                     <option value="weekly">Weekly</option>
@@ -994,7 +994,7 @@ export const RecurringTasks: React.FC = () => {
                           );
                         }}
                         className={`px-2.5 py-1 rounded text-xs transition-colors ${editRecurringDays.includes(d.value)
-                          ? 'bg-teal-600 text-white'
+                          ? 'bg-brand-600 text-white'
                           : 'bg-white border border-slate-300 text-slate-600 hover:bg-slate-100'
                           }`}
                       >
@@ -1012,7 +1012,7 @@ export const RecurringTasks: React.FC = () => {
                     type="checkbox"
                     checked={editAttachmentRequired}
                     onChange={(e) => setEditAttachmentRequired(e.target.checked)}
-                    className="rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+                    className="rounded border-slate-300 text-brand-600 focus:ring-brand-500"
                   />
                   <label htmlFor="rec-edit-attach-required" className="text-sm font-medium text-slate-700">
                     Attachment Required
@@ -1027,7 +1027,7 @@ export const RecurringTasks: React.FC = () => {
                       setEditVerificationRequired(e.target.checked);
                       if (!e.target.checked) setEditVerifierId('');
                     }}
-                    className="rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+                    className="rounded border-slate-300 text-brand-600 focus:ring-brand-500"
                   />
                   <label htmlFor="rec-edit-verification-required" className="text-sm font-medium text-slate-700">
                     Verification Required
@@ -1042,7 +1042,7 @@ export const RecurringTasks: React.FC = () => {
                     <select
                       value={editAttachmentType}
                       onChange={(e) => setEditAttachmentType(e.target.value as 'media' | 'text')}
-                      className="w-full h-10 rounded-lg border border-slate-300 px-3 text-sm focus:ring-2 focus:ring-teal-500"
+                      className="w-full h-10 rounded-control border border-slate-200 px-3 text-sm focus:ring-2 focus:ring-brand-500/30"
                     >
                       <option value="media">Media</option>
                       <option value="text">Text</option>
@@ -1054,7 +1054,7 @@ export const RecurringTasks: React.FC = () => {
                       type="text"
                       value={editAttachmentDescription}
                       onChange={(e) => setEditAttachmentDescription(e.target.value)}
-                      className="w-full h-10 rounded-lg border border-slate-300 px-3 text-sm focus:ring-2 focus:ring-teal-500"
+                      className="w-full h-10 rounded-control border border-slate-200 px-3 text-sm focus:ring-2 focus:ring-brand-500/30"
                     />
                   </div>
                 </div>

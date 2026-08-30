@@ -1232,7 +1232,7 @@ export const TaskTable: React.FC = () => {
                     t.status !== 'cancelled' &&
                     t.status !== 'closed_permanently'
                     ? 'overdue-row'
-                    : ''} ${highlightId === t.id ? 'ring-2 ring-amber-300' : ''}`}
+                    : ''} ${highlightId === t.id ? 'ring-2 ring-warning-300' : ''}`}
                 >
                   <td className="sticky-col-1">{t.title}</td>
                   <td className="sticky-col-2 whitespace-pre-wrap break-words text-sm text-slate-700 align-top">
@@ -1428,7 +1428,7 @@ export const TaskTable: React.FC = () => {
                     t.status !== 'cancelled' &&
                     t.status !== 'closed_permanently'
                     ? 'overdue-row'
-                    : ''} ${highlightId === t.id ? 'ring-2 ring-amber-300' : ''}`}
+                    : ''} ${highlightId === t.id ? 'ring-2 ring-warning-300' : ''}`}
                 >
                   <td className="sticky-col-1">
                     <span className="font-medium text-slate-800">{t.title}</span>
@@ -1726,12 +1726,12 @@ export const TaskTable: React.FC = () => {
                 return (
                   <tr
                     key={t.id}
-                    className={`${isOverdue ? 'overdue-row' : ''} ${!isOverdue && onHoliday ? 'holiday-row' : ''} ${highlightId === t.id ? 'ring-2 ring-amber-300' : ''}`}
+                    className={`${isOverdue ? 'overdue-row' : ''} ${!isOverdue && onHoliday ? 'holiday-row' : ''} ${highlightId === t.id ? 'ring-2 ring-warning-300' : ''}`}
                   >
                     <td className="sticky-col-1">
                       <span className="font-medium text-slate-800">{t.title}</span>
                       {onHoliday && (
-                        <span className="ml-2 text-xs text-orange-600">(Holiday)</span>
+                        <span className="ml-2 text-xs text-warning-600">(Holiday)</span>
                       )}
                       {t.assignee_deleted && (
                         <span className="ml-2 text-xs px-2 py-0.5 rounded bg-slate-200 text-slate-600">Member deleted</span>
@@ -1772,7 +1772,7 @@ export const TaskTable: React.FC = () => {
                       <div className="flex flex-col items-center gap-1 max-w-[14rem] mx-auto">
                         <StatusBadge status={t.status} />
                         {t.status === 'correction_required' && t.verification_rejection_comment && (
-                          <p className="text-xs text-amber-900 text-left w-full break-words" title={t.verification_rejection_comment}>
+                          <p className="text-xs text-warning-800 text-left w-full break-words" title={t.verification_rejection_comment}>
                             <span className="font-medium">Verifier: </span>
                             {t.verification_rejection_comment}
                           </p>
@@ -1919,7 +1919,7 @@ export const TaskTable: React.FC = () => {
           title="Edit Task"
         >
             {editError && (
-              <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              <div className="mb-3 rounded-lg border border-danger-200 bg-danger-50 px-3 py-2 text-sm text-danger-700">
                 {editError}
               </div>
             )}

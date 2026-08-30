@@ -73,7 +73,7 @@ export const BogusAttachment: React.FC = () => {
                             urls: t.attachment_urls || (t.attachment_url ? [t.attachment_url] : []), 
                             text: t.attachment_text 
                           })}
-                          className="text-teal-600 hover:underline text-sm inline-flex items-center gap-1"
+                          className="text-brand-600 hover:underline text-sm inline-flex items-center gap-1"
                         >
                           <ExternalLink size={14} />
                           View
@@ -85,11 +85,11 @@ export const BogusAttachment: React.FC = () => {
                   <td className="py-3 px-4">
                     <span
                       className={`px-2 py-0.5 rounded text-xs ${t.audit_status === 'audited'
-                          ? 'bg-green-100 text-green-800'
+                          ? 'bg-success-100 text-success-800'
                           : t.audit_status === 'bogus'
-                            ? 'bg-red-100 text-red-800'
+                            ? 'bg-danger-100 text-danger-800'
                             : t.audit_status === 'unclear'
-                              ? 'bg-amber-100 text-amber-800'
+                              ? 'bg-warning-100 text-warning-800'
                               : 'bg-slate-100 text-slate-600'
                         }`}
                     >

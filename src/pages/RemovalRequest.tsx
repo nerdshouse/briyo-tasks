@@ -168,7 +168,7 @@ export const RemovalRequest: React.FC = () => {
                   value={taskId}
                   onChange={(e) => setTaskId(e.target.value)}
                   required
-                  className="w-full h-10 rounded-lg border border-slate-300 px-3 text-sm"
+                  className="w-full h-10 rounded-control border border-slate-200 px-3 text-sm"
                 >
                   <option value="">Choose a task to request removal</option>
                   {myTasks.map((t) => (
@@ -185,7 +185,7 @@ export const RemovalRequest: React.FC = () => {
                   onChange={(e) => setReason(e.target.value)}
                   required
                   rows={3}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                  className="w-full rounded-control border border-slate-200 px-3 py-2 text-sm"
                   placeholder="Why should this task be removed?"
                 />
               </div>
@@ -237,7 +237,7 @@ export const RemovalRequest: React.FC = () => {
           {canReviewRequests ? 'All Removal Requests' : 'My Requests'}
         </h2>
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse bg-white rounded-xl border border-slate-200 shadow-sm">
+          <table className="w-full border-collapse bg-white rounded-card border border-slate-200 shadow-card">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200">
                 <th className="text-left py-4 px-4 font-semibold text-slate-800">Task</th>
@@ -279,10 +279,10 @@ export const RemovalRequest: React.FC = () => {
                       <span
                         className={`px-2 py-0.5 rounded text-xs font-medium ${
                           r.status === 'pending'
-                            ? 'bg-amber-100 text-amber-800'
+                            ? 'bg-warning-100 text-warning-800'
                             : r.status === 'approved'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
+                              ? 'bg-success-100 text-success-800'
+                              : 'bg-danger-100 text-danger-800'
                         }`}
                       >
                         {r.status}

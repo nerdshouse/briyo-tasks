@@ -45,16 +45,16 @@ export const VerifierPending: React.FC = () => {
 
       {loading ? (
         <div className="flex items-center justify-center py-16">
-          <div className="w-6 h-6 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : rows.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 bg-white rounded-xl border border-slate-200 shadow-sm">
+        <div className="flex flex-col items-center justify-center py-16 bg-white rounded-card border border-slate-200 shadow-card">
           <p className="text-slate-500 text-sm font-medium">No pending verifications</p>
           <p className="text-slate-400 text-xs mt-1">All tasks have been verified or no tasks are awaiting verification.</p>
         </div>
       ) : (
         <div className="max-h-[70vh] overflow-auto">
-          <table className="w-full border-collapse bg-white rounded-xl border border-slate-200 shadow-sm">
+          <table className="w-full border-collapse bg-white rounded-card border border-slate-200 shadow-card">
             <thead className="sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-200 select-none">
                 <th className="py-4 px-4 font-semibold text-slate-800 text-left">#</th>
@@ -71,7 +71,7 @@ export const VerifierPending: React.FC = () => {
                   <td className="py-3 px-4 text-sm text-slate-400">{idx + 1}</td>
                   <td className="py-3 px-4 text-sm text-slate-800 font-medium">{row.verifier_name}</td>
                   <td className="py-3 px-4 text-center">
-                    <span className="inline-flex items-center justify-center min-w-8 h-7 px-2.5 rounded-full bg-amber-100 text-amber-800 text-sm font-semibold">
+                    <span className="inline-flex items-center justify-center min-w-8 h-7 px-2.5 rounded-full bg-warning-100 text-warning-800 text-sm font-semibold">
                       {row.count}
                     </span>
                   </td>

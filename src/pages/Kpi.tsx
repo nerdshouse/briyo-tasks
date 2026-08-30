@@ -123,7 +123,7 @@ export const Kpi: React.FC = () => {
 
         {/*
           One fold: Task distribution + summary metrics (preserved for future restore)
-          <div className="mb-8 p-6 bg-white rounded-xl border border-slate-200 shadow-sm">
+          <div className="mb-8 p-6 bg-white rounded-card border border-slate-200 shadow-card">
             <h2 className="text-lg font-semibold text-slate-800 mb-4">Overview</h2>
             <div className="grid grid-cols-1 gap-6 items-start">
               <div>
@@ -176,7 +176,7 @@ export const Kpi: React.FC = () => {
                 <select
                   value={cityFilter}
                   onChange={(e) => setCityFilter(e.target.value)}
-                  className="px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30"
                 >
                   <option value="">All Cities</option>
                   {cities.map((city) => (
@@ -189,7 +189,7 @@ export const Kpi: React.FC = () => {
             <select
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
-              className="px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+              className="px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30"
             >
               <option value="all_time">All Time</option>
               <option value="today">Today</option>
@@ -205,21 +205,21 @@ export const Kpi: React.FC = () => {
                   type="date"
                   value={customStart}
                   onChange={(e) => setCustomStart(e.target.value)}
-                  className="px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30"
                 />
                 <span className="text-slate-500">to</span>
                 <input
                   type="date"
                   value={customEnd}
                   onChange={(e) => setCustomEnd(e.target.value)}
-                  className="px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30"
                 />
               </div>
             )}
           </div>
         </div>
         <div className={`${isOwnerOrManager ? 'max-h-[70vh] overflow-auto' : 'overflow-x-auto'}`}>
-          <table className="w-full border-collapse bg-white rounded-xl border border-slate-200 shadow-sm">
+          <table className="w-full border-collapse bg-white rounded-card border border-slate-200 shadow-card">
             <thead className={isOwnerOrManager ? 'sticky top-0 z-20' : undefined}>
               <tr className="bg-slate-50 border-b border-slate-200 select-none">
                 {[
@@ -252,7 +252,7 @@ export const Kpi: React.FC = () => {
                       <span>{col.label}</span>
                       <span className="shrink-0">
                         {sortConfig?.key === col.key ? (
-                          sortConfig.direction === 'asc' ? <ArrowUp size={14} className="text-teal-600" /> : <ArrowDown size={14} className="text-teal-600" />
+                          sortConfig.direction === 'asc' ? <ArrowUp size={14} className="text-brand-600" /> : <ArrowDown size={14} className="text-brand-600" />
                         ) : (
                           <ArrowUpDown size={14} className="text-slate-300" />
                         )}
@@ -293,10 +293,10 @@ export const Kpi: React.FC = () => {
                     <td className="py-3 px-4 font-medium text-slate-800">{row.userName}</td>
                     {!isDoer && <td className="py-3 px-4 text-slate-600">{row.city || '-'}</td>}
                     {!isDoer && <td className="py-3 px-4 text-center text-slate-700">{row.total_assigned}</td>}
-                    {!isDoer && <td className="py-3 px-4 text-center text-green-600">{row.on_time_completed}</td>}
-                    {!isDoer && <td className="py-3 px-4 text-center text-amber-600">{row.late_completed}</td>}
-                    {!isDoer && <td className="py-3 px-4 text-center text-red-600">{row.overdue_count}</td>}
-                    <td className="py-3 px-4 text-center font-medium text-red-600">{row.overdue_percent}%</td>
+                    {!isDoer && <td className="py-3 px-4 text-center text-success-600">{row.on_time_completed}</td>}
+                    {!isDoer && <td className="py-3 px-4 text-center text-warning-600">{row.late_completed}</td>}
+                    {!isDoer && <td className="py-3 px-4 text-center text-danger-600">{row.overdue_count}</td>}
+                    <td className="py-3 px-4 text-center font-medium text-danger-600">{row.overdue_percent}%</td>
                     <td className="py-3 px-4 text-center font-medium text-slate-800">
                       {row.late_completion_percent}%
                     </td>

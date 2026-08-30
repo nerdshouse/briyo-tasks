@@ -236,7 +236,7 @@ export const CompleteTaskModal: React.FC<CompleteTaskModalProps> = ({
                 accept="image/*,video/*"
                 onChange={handleMediaFileSelect}
                 disabled={completing || uploading}
-                className="block w-full text-sm text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100 disabled:opacity-50"
+                className="block w-full text-sm text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 disabled:opacity-50"
               />
               
               {attachmentFiles.length > 0 && (
@@ -247,7 +247,7 @@ export const CompleteTaskModal: React.FC<CompleteTaskModalProps> = ({
                       <div key={i} className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded px-2 py-1">
                         <span className="text-xs text-slate-600 truncate mr-2" title={f.name}>{f.name}</span>
                         {!uploading && (
-                          <button type="button" onClick={() => removeFile(i)} className="text-slate-400 hover:text-red-500 flex-shrink-0">
+                          <button type="button" onClick={() => removeFile(i)} className="text-slate-400 hover:text-danger-500 flex-shrink-0">
                             <X size={14} />
                           </button>
                         )}
@@ -256,13 +256,13 @@ export const CompleteTaskModal: React.FC<CompleteTaskModalProps> = ({
                   </div>
                   {uploading && (
                     <div className="mt-2 w-full bg-slate-200 rounded-full h-1.5">
-                      <div className="bg-teal-600 h-1.5 rounded-full transition-all duration-300" style={{ width: `${averageProgress}%` }}></div>
+                      <div className="bg-brand-600 h-1.5 rounded-full transition-all duration-300" style={{ width: `${averageProgress}%` }}></div>
                       <p className="text-xs text-slate-500 mt-1 text-right">{Math.round(averageProgress)}%</p>
                     </div>
                   )}
                 </div>
               )}
-              {uploadError && <p className="text-xs text-red-600 mt-1">{uploadError}</p>}
+              {uploadError && <p className="text-xs text-danger-600 mt-1">{uploadError}</p>}
             </div>
             
             <div>

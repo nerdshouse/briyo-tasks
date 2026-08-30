@@ -53,8 +53,8 @@ export const HelpLogs: React.FC = () => {
   const SortIcon = ({ active }: { active: boolean }) => {
     if (!active) return <ArrowUpDown size={14} className="text-slate-300" />;
     return sortDirection === 'asc'
-      ? <ArrowUp size={14} className="text-teal-600" />
-      : <ArrowDown size={14} className="text-teal-600" />;
+      ? <ArrowUp size={14} className="text-brand-600" />
+      : <ArrowDown size={14} className="text-brand-600" />;
   };
 
   const load = async () => {
@@ -103,9 +103,9 @@ export const HelpLogs: React.FC = () => {
         <Button variant="secondary" onClick={load} disabled={loading}>Refresh</Button>
       </div>
 
-      {error && <div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl p-3">{error}</div>}
+      {error && <div className="text-sm text-danger-600 bg-danger-50 border border-danger-100 rounded-xl p-3">{error}</div>}
 
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 md:p-5">
+      <div className="bg-white rounded-card border border-slate-200 shadow-card p-4 md:p-5">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
           <div className="md:col-span-1">
             <label className="block text-sm font-medium text-slate-700 mb-1.5">From</label>
@@ -113,7 +113,7 @@ export const HelpLogs: React.FC = () => {
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              className="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500"
+              className="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 focus:outline-none"
             />
           </div>
           <div className="md:col-span-1">
@@ -122,7 +122,7 @@ export const HelpLogs: React.FC = () => {
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
-              className="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500"
+              className="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 focus:outline-none"
             />
           </div>
           <div className="md:col-span-1">
@@ -130,7 +130,7 @@ export const HelpLogs: React.FC = () => {
             <select
               value={helperId}
               onChange={(e) => setHelperId(e.target.value)}
-              className="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500"
+              className="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 focus:outline-none"
             >
               <option value="">All</option>
               {helperOptions.map((u) => (
@@ -143,7 +143,7 @@ export const HelpLogs: React.FC = () => {
             <select
               value={doerId}
               onChange={(e) => setDoerId(e.target.value)}
-              className="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500"
+              className="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 focus:outline-none"
             >
               <option value="">All</option>
               {doerOptions.map((u) => (
@@ -156,7 +156,7 @@ export const HelpLogs: React.FC = () => {
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as any)}
-              className="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500"
+              className="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 focus:outline-none"
             >
               <option value="">All</option>
               <option value="open">Open</option>
@@ -172,7 +172,7 @@ export const HelpLogs: React.FC = () => {
         <div className="text-slate-500">Loading...</div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse bg-white rounded-xl border border-slate-200 shadow-sm">
+          <table className="w-full border-collapse bg-white rounded-card border border-slate-200 shadow-card">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200 select-none">
                 <th className="py-3 px-4 font-semibold text-slate-800 text-left">

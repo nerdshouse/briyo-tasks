@@ -135,9 +135,9 @@ export const HelpNew: React.FC = () => {
         <Button variant="secondary" onClick={() => navigate('/help')}>Back</Button>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 md:p-6 space-y-4">
-        {error && <div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl p-3">{error}</div>}
-        {success && <div className="text-sm text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-xl p-3">{success}</div>}
+      <form onSubmit={handleSubmit} className="bg-white rounded-card border border-slate-200 shadow-card p-5 md:p-6 space-y-4">
+        {error && <div className="text-sm text-danger-600 bg-danger-50 border border-danger-100 rounded-xl p-3">{error}</div>}
+        {success && <div className="text-sm text-success-700 bg-success-50 border border-success-100 rounded-xl p-3">{success}</div>}
 
         <Input
           label="Title"
@@ -153,7 +153,7 @@ export const HelpNew: React.FC = () => {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={4}
-            className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500"
+            className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 focus:outline-none"
             placeholder="What do you need? Any context, screenshots, steps, links…"
           />
         </div>
@@ -167,7 +167,7 @@ export const HelpNew: React.FC = () => {
               onChange={(e) => { setHelperSearch(e.target.value); setHelperOpen(true); }}
               onFocus={() => setHelperOpen(true)}
               placeholder={loadingUsers ? 'Loading members...' : 'Search member by name, email, or city...'}
-              className="w-full h-10 rounded-xl border border-slate-200 bg-white pl-9 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500"
+              className="w-full h-10 rounded-xl border border-slate-200 bg-white pl-9 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 focus:outline-none"
               disabled={loadingUsers}
             />
             <button
@@ -195,7 +195,7 @@ export const HelpNew: React.FC = () => {
                       setHelperOpen(false);
                     }}
                     className={`w-full text-left px-3.5 py-2.5 text-sm hover:bg-slate-50 ${
-                      helperId === u.id ? 'bg-teal-50' : ''
+                      helperId === u.id ? 'bg-brand-50' : ''
                     }`}
                   >
                     <div className="font-medium text-slate-800">{u.name}</div>
@@ -230,7 +230,7 @@ export const HelpNew: React.FC = () => {
             {proposedSolutions.map((sol, idx) => (
               <div key={idx} className="flex flex-col md:flex-row gap-3 md:items-start">
                 <div className="flex items-center gap-2 md:w-44">
-                  <div className="h-8 w-8 rounded-lg bg-teal-50 border border-teal-100 text-teal-700 flex items-center justify-center font-semibold">
+                  <div className="h-8 w-8 rounded-lg bg-brand-50 border border-brand-100 text-brand-700 flex items-center justify-center font-semibold">
                     {idx + 1}
                   </div>
                   <div className="min-w-0">
@@ -247,7 +247,7 @@ export const HelpNew: React.FC = () => {
                       setProposedSolutions((prev) => prev.map((x, i) => (i === idx ? v : x)));
                     }}
                     rows={3}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 focus:outline-none"
                     placeholder={idx === 0 ? 'Write the main proposed solution…' : 'Optional…'}
                   />
                 </div>

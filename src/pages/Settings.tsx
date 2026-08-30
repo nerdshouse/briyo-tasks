@@ -94,16 +94,16 @@ export const Settings: React.FC = () => {
   return (
     <div className="space-y-4">
       {isManager && (
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-2 overflow-x-auto mb-6">
+        <div className="bg-slate-100 rounded-control p-1 overflow-x-auto mb-6 w-fit max-w-full">
           <div className="flex gap-2 min-w-max">
             <button
-              className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap ${mainTab === 'general' ? 'bg-slate-800 text-white' : 'text-slate-600 hover:bg-slate-50'}`}
+              className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap ${mainTab === 'general' ? 'bg-white shadow-sm text-brand-700' : 'text-slate-600 hover:bg-white/60'}`}
               onClick={() => setMainTab('general')}
             >
               General
             </button>
             <button
-              className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap ${mainTab === 'members' ? 'bg-slate-800 text-white' : 'text-slate-600 hover:bg-slate-50'}`}
+              className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap ${mainTab === 'members' ? 'bg-white shadow-sm text-brand-700' : 'text-slate-600 hover:bg-white/60'}`}
               onClick={() => setMainTab('members')}
             >
               Members

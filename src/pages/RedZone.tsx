@@ -216,7 +216,7 @@ export const RedZone: React.FC = () => {
               setRowsPerPage(Number(e.target.value));
               setCurrentPage(1);
             }}
-            className="h-10 rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="h-10 rounded-control border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
           >
             {ROWS_PER_PAGE_OPTIONS.map((size) => (
               <option key={size} value={size}>{size}</option>
@@ -229,10 +229,10 @@ export const RedZone: React.FC = () => {
             <span className="font-semibold text-slate-800">{totalResults}</span> results
           </p>
           <div className="flex items-center gap-1.5">
-            <button type="button" aria-label="First page" onClick={() => setCurrentPage(1)} disabled={loading || safePage <= 1} className="h-9 w-9 inline-flex items-center justify-center rounded-xl border border-slate-300 bg-slate-50 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"><ChevronsLeft size={16} /></button>
-            <button type="button" aria-label="Previous page" onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={loading || safePage <= 1} className="h-9 w-9 inline-flex items-center justify-center rounded-xl border border-slate-300 bg-slate-50 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"><ChevronLeft size={16} /></button>
-            <button type="button" aria-label="Next page" onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={loading || safePage >= totalPages} className="h-9 w-9 inline-flex items-center justify-center rounded-xl border border-slate-300 bg-slate-50 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"><ChevronRight size={16} /></button>
-            <button type="button" aria-label="Last page" onClick={() => setCurrentPage(totalPages)} disabled={loading || safePage >= totalPages} className="h-9 w-9 inline-flex items-center justify-center rounded-xl border border-slate-300 bg-slate-50 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"><ChevronsRight size={16} /></button>
+            <button type="button" aria-label="First page" onClick={() => setCurrentPage(1)} disabled={loading || safePage <= 1} className="h-9 w-9 inline-flex items-center justify-center rounded-control border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"><ChevronsLeft size={16} /></button>
+            <button type="button" aria-label="Previous page" onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={loading || safePage <= 1} className="h-9 w-9 inline-flex items-center justify-center rounded-control border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"><ChevronLeft size={16} /></button>
+            <button type="button" aria-label="Next page" onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={loading || safePage >= totalPages} className="h-9 w-9 inline-flex items-center justify-center rounded-control border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"><ChevronRight size={16} /></button>
+            <button type="button" aria-label="Last page" onClick={() => setCurrentPage(totalPages)} disabled={loading || safePage >= totalPages} className="h-9 w-9 inline-flex items-center justify-center rounded-control border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"><ChevronsRight size={16} /></button>
           </div>
         </div>
       </div>
@@ -371,7 +371,7 @@ export const RedZone: React.FC = () => {
             <select
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
-              className="h-9 rounded-lg border border-slate-300 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+              className="h-9 rounded-control border border-slate-200 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30"
             >
               <option value="all_time">All Time</option>
               <option value="today">Today</option>
@@ -387,14 +387,14 @@ export const RedZone: React.FC = () => {
                   type="date"
                   value={customStart}
                   onChange={(e) => setCustomStart(e.target.value)}
-                  className="h-9 rounded-lg border border-slate-300 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="h-9 rounded-control border border-slate-200 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30"
                 />
                 <span className="text-slate-500 text-sm">to</span>
                 <input
                   type="date"
                   value={customEnd}
                   onChange={(e) => setCustomEnd(e.target.value)}
-                  className="h-9 rounded-lg border border-slate-300 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="h-9 rounded-control border border-slate-200 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30"
                 />
               </div>
             )}
@@ -402,7 +402,7 @@ export const RedZone: React.FC = () => {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-9 rounded-lg border border-slate-300 px-3 text-sm"
+              className="h-9 rounded-control border border-slate-200 px-3 text-sm"
             >
               <option value="">Status</option>
               <option value="pending">Pending</option>
@@ -415,7 +415,7 @@ export const RedZone: React.FC = () => {
             <select
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
-              className="h-9 rounded-lg border border-slate-300 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+              className="h-9 rounded-control border border-slate-200 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30"
             >
               <option value="all_time">All Time</option>
               <option value="today">Today</option>
@@ -431,14 +431,14 @@ export const RedZone: React.FC = () => {
                   type="date"
                   value={customStart}
                   onChange={(e) => setCustomStart(e.target.value)}
-                  className="h-9 rounded-lg border border-slate-300 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="h-9 rounded-control border border-slate-200 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30"
                 />
                 <span className="text-slate-500 text-sm">to</span>
                 <input
                   type="date"
                   value={customEnd}
                   onChange={(e) => setCustomEnd(e.target.value)}
-                  className="h-9 rounded-lg border border-slate-300 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="h-9 rounded-control border border-slate-200 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30"
                 />
               </div>
             )}
@@ -460,7 +460,7 @@ export const RedZone: React.FC = () => {
             <select
               value={recurringFilter}
               onChange={(e) => setRecurringFilter(e.target.value)}
-              className="h-9 rounded-lg border border-slate-300 px-3 text-sm"
+              className="h-9 rounded-control border border-slate-200 px-3 text-sm"
             >
               <option value="">All Recurring Types</option>
               <option value="none">None</option>
@@ -476,7 +476,7 @@ export const RedZone: React.FC = () => {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-9 rounded-lg border border-slate-300 px-3 text-sm"
+              className="h-9 rounded-control border border-slate-200 px-3 text-sm"
             >
               <option value="">Status</option>
               <option value="pending">Pending</option>
@@ -496,7 +496,7 @@ export const RedZone: React.FC = () => {
                 <select
                   value={cityFilter}
                   onChange={(e) => setCityFilter(e.target.value)}
-                  className="h-9 rounded-lg border border-slate-300 px-3 text-sm"
+                  className="h-9 rounded-control border border-slate-200 px-3 text-sm"
                 >
                   <option value="">All Cities</option>
                   {cities.map((city) => (
@@ -517,11 +517,11 @@ export const RedZone: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div className="rounded-xl border-2 border-red-200 overflow-hidden bg-white shadow-sm mt-4">
-          <h2 className="px-5 py-4 text-lg font-semibold text-white bg-red-600 border-b border-red-700">
+        <div className="rounded-xl border-2 border-danger-200 overflow-hidden bg-white shadow-sm mt-4">
+          <h2 className="px-5 py-4 text-lg font-semibold text-white bg-danger-600 border-b border-danger-700">
             Overdue Follow-up ({filtered.length})
           </h2>
-          <div className="divide-y divide-red-100">
+          <div className="divide-y divide-danger-100">
             {pageItems.map((t) => {
               const daysOverdue = Math.floor(
                 (new Date().getTime() - new Date(t.due_date).getTime()) / (1000 * 60 * 60 * 24)
@@ -531,10 +531,10 @@ export const RedZone: React.FC = () => {
               return (
                 <div
                   key={t.id}
-                  className="flex items-start gap-4 p-4 hover:bg-red-50/50 transition-colors"
+                  className="flex items-start gap-4 p-4 hover:bg-danger-50/50 transition-colors"
                 >
                   <Link to={`/tasks?highlight=${t.id}`} className="flex min-w-0 flex-1 items-start gap-4">
-                    <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600 shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-danger-100 flex items-center justify-center text-danger-600 shrink-0">
                       <UserIcon size={20} />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -553,7 +553,7 @@ export const RedZone: React.FC = () => {
                           <span className="font-medium text-slate-700">Due:</span>{' '}
                           {formatDateDDMMYYYY(t.due_date)}
                         </span>
-                        <span className="text-red-700 font-semibold">{daysOverdue} day(s) overdue</span>
+                        <span className="text-danger-700 font-semibold">{daysOverdue} day(s) overdue</span>
                         <span>
                           <span className="font-medium text-slate-700">Assigned by:</span> {t.assigned_by_name}
                         </span>
@@ -569,7 +569,7 @@ export const RedZone: React.FC = () => {
                   </Link>
                   <div className="flex items-center gap-2 shrink-0 pt-1">
                     {/*
-                    <span className="px-2 py-1 rounded-lg text-xs font-medium bg-red-100 text-red-800 shrink-0 capitalize">
+                    <span className="px-2 py-1 rounded-lg text-xs font-medium bg-danger-100 text-danger-800 shrink-0 capitalize">
                       {t.priority}
                     </span>
                     */}
@@ -640,7 +640,7 @@ export const RedZone: React.FC = () => {
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
                   required
-                  className="w-full h-10 rounded-lg border border-slate-300 px-3 text-sm focus:ring-2 focus:ring-teal-500"
+                  className="w-full h-10 rounded-control border border-slate-200 px-3 text-sm focus:ring-2 focus:ring-brand-500/30"
                 />
               </div>
               <div>
@@ -649,7 +649,7 @@ export const RedZone: React.FC = () => {
                   value={editDesc}
                   onChange={(e) => setEditDesc(e.target.value)}
                   rows={3}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500"
+                  className="w-full rounded-control border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500/30"
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -671,7 +671,7 @@ export const RedZone: React.FC = () => {
                     onChange={(e) => setEditDueDate(e.target.value)}
                     min={editingTask?.start_date || undefined}
                     required
-                    className="w-full h-10 rounded-lg border border-slate-300 px-3 text-sm focus:ring-2 focus:ring-teal-500"
+                    className="w-full h-10 rounded-control border border-slate-200 px-3 text-sm focus:ring-2 focus:ring-brand-500/30"
                   />
                 </div>
               </div>
@@ -682,7 +682,7 @@ export const RedZone: React.FC = () => {
                       <select
                         value={editPriority}
                         onChange={(e) => setEditPriority(e.target.value as Task['priority'])}
-                        className="w-full h-10 rounded-lg border border-slate-300 px-3 text-sm focus:ring-2 focus:ring-teal-500"
+                        className="w-full h-10 rounded-control border border-slate-200 px-3 text-sm focus:ring-2 focus:ring-brand-500/30"
                       >
                         <option value="low">Low</option>
                         <option value="medium">Medium</option>
@@ -696,7 +696,7 @@ export const RedZone: React.FC = () => {
                   <select
                     value={editRecurring}
                     disabled
-                    className="w-full h-10 rounded-lg border border-slate-300 px-3 text-sm focus:ring-2 focus:ring-teal-500"
+                    className="w-full h-10 rounded-control border border-slate-200 px-3 text-sm focus:ring-2 focus:ring-brand-500/30"
                   >
                     <option value="none">None</option>
                     <option value="daily">Daily</option>
@@ -726,7 +726,7 @@ export const RedZone: React.FC = () => {
                           );
                         }}
                         className={`px-2.5 py-1 rounded text-xs transition-colors ${editRecurringDays.includes(day.value)
-                          ? 'bg-teal-600 text-white'
+                          ? 'bg-brand-600 text-white'
                           : 'bg-white border border-slate-300 text-slate-600 hover:bg-slate-100'
                           }`}
                       >

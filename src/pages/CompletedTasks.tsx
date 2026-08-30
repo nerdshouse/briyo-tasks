@@ -216,7 +216,7 @@ export const CompletedTasks: React.FC = () => {
                             setRowsPerPage(Number(e.target.value));
                             setCurrentPage(1);
                         }}
-                        className="h-10 rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        className="h-10 rounded-control border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
                     >
                         {ROWS_PER_PAGE_OPTIONS.map((size) => (
                             <option key={size} value={size}>{size}</option>
@@ -229,10 +229,10 @@ export const CompletedTasks: React.FC = () => {
                         <span className="font-semibold text-slate-800">{totalResults}</span> results
                     </p>
                     <div className="flex items-center gap-1.5">
-                        <button type="button" aria-label="First page" onClick={() => setCurrentPage(1)} disabled={loading || safePage <= 1} className="h-9 w-9 inline-flex items-center justify-center rounded-xl border border-slate-300 bg-slate-50 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"><ChevronsLeft size={16} /></button>
-                        <button type="button" aria-label="Previous page" onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={loading || safePage <= 1} className="h-9 w-9 inline-flex items-center justify-center rounded-xl border border-slate-300 bg-slate-50 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"><ChevronLeft size={16} /></button>
-                        <button type="button" aria-label="Next page" onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={loading || safePage >= totalPages} className="h-9 w-9 inline-flex items-center justify-center rounded-xl border border-slate-300 bg-slate-50 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"><ChevronRight size={16} /></button>
-                        <button type="button" aria-label="Last page" onClick={() => setCurrentPage(totalPages)} disabled={loading || safePage >= totalPages} className="h-9 w-9 inline-flex items-center justify-center rounded-xl border border-slate-300 bg-slate-50 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"><ChevronsRight size={16} /></button>
+                        <button type="button" aria-label="First page" onClick={() => setCurrentPage(1)} disabled={loading || safePage <= 1} className="h-9 w-9 inline-flex items-center justify-center rounded-control border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"><ChevronsLeft size={16} /></button>
+                        <button type="button" aria-label="Previous page" onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={loading || safePage <= 1} className="h-9 w-9 inline-flex items-center justify-center rounded-control border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"><ChevronLeft size={16} /></button>
+                        <button type="button" aria-label="Next page" onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={loading || safePage >= totalPages} className="h-9 w-9 inline-flex items-center justify-center rounded-control border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"><ChevronRight size={16} /></button>
+                        <button type="button" aria-label="Last page" onClick={() => setCurrentPage(totalPages)} disabled={loading || safePage >= totalPages} className="h-9 w-9 inline-flex items-center justify-center rounded-control border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"><ChevronsRight size={16} /></button>
                     </div>
                 </div>
             </div>
@@ -247,12 +247,12 @@ export const CompletedTasks: React.FC = () => {
             {/* ── Filter Bar ── */}
             <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex flex-wrap items-center gap-3">
-                    <label className="flex items-center gap-2 cursor-pointer bg-white px-3 py-1.5 rounded-lg border border-slate-300 shadow-sm hover:bg-slate-50 transition-colors">
+                    <label className="flex items-center gap-2 cursor-pointer bg-white px-3 py-1.5 rounded-control border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors">
                         <input
                             type="checkbox"
                             checked={showRecurringInstances}
                             onChange={(e) => setShowRecurringInstances(e.target.checked)}
-                            className="rounded border-slate-300 text-teal-600 focus:ring-teal-500 w-4 h-4 cursor-pointer"
+                            className="rounded border-slate-300 text-brand-600 focus:ring-brand-500 w-4 h-4 cursor-pointer"
                         />
                         <span className="text-sm font-medium text-slate-700 whitespace-nowrap">Include Recurring Tasks</span>
                     </label>
@@ -260,7 +260,7 @@ export const CompletedTasks: React.FC = () => {
                     <select
                         value={dateFilter}
                         onChange={(e) => setDateFilter(e.target.value)}
-                        className="h-9 rounded-lg border border-slate-300 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        className="h-9 rounded-control border border-slate-200 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30"
                     >
                         <option value="all_time">All Time</option>
                         <option value="today">Today</option>
@@ -276,14 +276,14 @@ export const CompletedTasks: React.FC = () => {
                                 type="date"
                                 value={customStart}
                                 onChange={(e) => setCustomStart(e.target.value)}
-                                className="h-9 rounded-lg border border-slate-300 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                className="h-9 rounded-control border border-slate-200 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30"
                             />
                             <span className="text-slate-500 text-sm">to</span>
                             <input
                                 type="date"
                                 value={customEnd}
                                 onChange={(e) => setCustomEnd(e.target.value)}
-                                className="h-9 rounded-lg border border-slate-300 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                className="h-9 rounded-control border border-slate-200 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30"
                             />
                         </div>
                     )}
@@ -305,7 +305,7 @@ export const CompletedTasks: React.FC = () => {
                     <select
                         value={recurringFilter}
                         onChange={(e) => setRecurringFilter(e.target.value)}
-                        className="h-9 rounded-lg border border-slate-300 px-3 text-sm"
+                        className="h-9 rounded-control border border-slate-200 px-3 text-sm"
                     >
                         <option value="">All Recurring Types</option>
                         <option value="none">None</option>
@@ -382,20 +382,20 @@ export const CompletedTasks: React.FC = () => {
                                                         urls: task.attachment_urls || (task.attachment_url ? [task.attachment_url] : []),
                                                         text: task.attachment_text
                                                     })}
-                                                    className="inline-flex items-center gap-1 text-teal-600 hover:underline"
+                                                    className="inline-flex items-center gap-1 text-brand-600 hover:underline"
                                                 >
                                                     <ExternalLink size={14} />
                                                     View
                                                 </button>
                                             ) : task.attachment_required ? (
-                                                <span className="text-amber-600 text-xs font-medium">Required</span>
+                                                <span className="text-warning-600 text-xs font-medium">Required</span>
                                             ) : (
                                                 '-'
                                             )}
                                         </td>
                                         <td className="px-4 py-3">
-                                            <span className={`inline-flex px-2 py-0.5 rounded-lg text-xs font-medium uppercase ${task.status === 'completed' ? "bg-emerald-50 text-emerald-700" :
-                                                task.status === 'closed_permanently' ? "bg-purple-50 text-purple-700" :
+                                            <span className={`inline-flex px-2 py-0.5 rounded-lg text-xs font-medium uppercase ${task.status === 'completed' ? "bg-success-50 text-success-700" :
+                                                task.status === 'closed_permanently' ? "bg-review-50 text-review-700" :
                                                     "bg-slate-50 text-slate-700"
                                                 }`}>
                                                 {task.status.replace('_', ' ')}
@@ -403,8 +403,8 @@ export const CompletedTasks: React.FC = () => {
                                         </td>
                                         {/*
                                         <td className="px-4 py-3">
-                                            <span className={`inline-flex px-2 py-0.5 rounded-lg text-xs font-medium uppercase ${task.priority === 'high' ? "bg-red-50 text-red-700" :
-                                                    task.priority === 'medium' ? "bg-amber-50 text-amber-700" :
+                                            <span className={`inline-flex px-2 py-0.5 rounded-lg text-xs font-medium uppercase ${task.priority === 'high' ? "bg-danger-50 text-danger-700" :
+                                                    task.priority === 'medium' ? "bg-warning-50 text-warning-700" :
                                                         "bg-slate-50 text-slate-700"
                                                 }`}>
                                                 {task.priority || '-'}
@@ -412,7 +412,7 @@ export const CompletedTasks: React.FC = () => {
                                         </td>
                                         */}
                                         <td className="px-4 py-3">
-                                            <span className="inline-flex px-2 py-0.5 rounded-lg text-xs font-medium bg-indigo-50 text-indigo-700 uppercase">
+                                            <span className="inline-flex px-2 py-0.5 rounded-lg text-xs font-medium bg-slate-50 text-slate-700 uppercase">
                                                 {formatRecurringLabel(getDisplayRecurring(task, taskById), 'None')}
                                             </span>
                                         </td>

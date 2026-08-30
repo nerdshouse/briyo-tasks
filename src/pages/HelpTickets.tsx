@@ -20,9 +20,9 @@ import { formatDateDDMMYYYY } from '../lib/utils';
 const StatusPill = ({ status }: { status: HelpTicketStatus }) => {
   const styles: Record<HelpTicketStatus, string> = {
     open: 'bg-slate-100 text-slate-700 border-slate-200',
-    in_progress: 'bg-amber-50 text-amber-700 border-amber-200',
-    resolved: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    rated: 'bg-teal-50 text-teal-700 border-teal-200',
+    in_progress: 'bg-warning-50 text-warning-700 border-warning-200',
+    resolved: 'bg-success-50 text-success-700 border-success-200',
+    rated: 'bg-brand-50 text-brand-700 border-brand-200',
   };
   const labels: Record<HelpTicketStatus, string> = {
     open: 'Open',
@@ -46,7 +46,7 @@ const minutesBetween = (aIso: string, bIso: string): number | null => {
 
 const Stars = ({ value }: { value: number }) => {
   return (
-    <span className="text-amber-500">
+    <span className="text-warning-500">
       {'★★★★★'.split('').map((ch, i) => (
         <span key={i} className={i < value ? 'opacity-100' : 'opacity-25'}>{ch}</span>
       ))}
@@ -211,22 +211,22 @@ export const HelpTickets: React.FC = () => {
   return (
     <div className="space-y-4">
       {isOwner && (
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-2 overflow-x-auto">
+        <div className="bg-slate-100 rounded-control p-1 overflow-x-auto w-fit max-w-full">
           <div className="flex gap-2 min-w-max">
             <button
-              className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap ${mainTab === 'tickets' ? 'bg-slate-800 text-white' : 'text-slate-600 hover:bg-slate-50'}`}
+              className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap ${mainTab === 'tickets' ? 'bg-white shadow-sm text-brand-700' : 'text-slate-600 hover:bg-white/60'}`}
               onClick={() => setMainTab('tickets')}
             >
               Tickets
             </button>
             <button
-              className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap ${mainTab === 'logs' ? 'bg-slate-800 text-white' : 'text-slate-600 hover:bg-slate-50'}`}
+              className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap ${mainTab === 'logs' ? 'bg-white shadow-sm text-brand-700' : 'text-slate-600 hover:bg-white/60'}`}
               onClick={() => setMainTab('logs')}
             >
               Logs
             </button>
             <button
-              className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap ${mainTab === 'mis' ? 'bg-slate-800 text-white' : 'text-slate-600 hover:bg-slate-50'}`}
+              className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap ${mainTab === 'mis' ? 'bg-white shadow-sm text-brand-700' : 'text-slate-600 hover:bg-white/60'}`}
               onClick={() => setMainTab('mis')}
             >
               MIS
@@ -250,18 +250,18 @@ export const HelpTickets: React.FC = () => {
             </div>
           </div>
 
-      {error && <div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl p-3">{error}</div>}
+      {error && <div className="text-sm text-danger-600 bg-danger-50 border border-danger-100 rounded-xl p-3">{error}</div>}
 
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-2">
+      <div className="bg-white rounded-card border border-slate-200 shadow-card p-2">
         <div className="flex gap-2">
           <button
-            className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium ${activeTab === 'assigned' ? 'bg-slate-800 text-white' : 'text-slate-600 hover:bg-slate-50'}`}
+            className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium ${activeTab === 'assigned' ? 'bg-white shadow-sm text-brand-700' : 'text-slate-600 hover:bg-white/60'}`}
             onClick={() => setActiveTab('assigned')}
           >
             Assigned to me {assignedPendingCount > 0 ? `(${assignedPendingCount})` : ''}
           </button>
           <button
-            className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium ${activeTab === 'created' ? 'bg-slate-800 text-white' : 'text-slate-600 hover:bg-slate-50'}`}
+            className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium ${activeTab === 'created' ? 'bg-white shadow-sm text-brand-700' : 'text-slate-600 hover:bg-white/60'}`}
             onClick={() => setActiveTab('created')}
           >
             Created by me {createdPendingRatingCount > 0 ? `(${createdPendingRatingCount} to rate)` : ''}
@@ -272,7 +272,7 @@ export const HelpTickets: React.FC = () => {
       {loading ? (
         <div className="text-slate-500">Loading...</div>
       ) : list.length === 0 ? (
-        <div className="text-slate-500 bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+        <div className="text-slate-500 bg-white rounded-card border border-slate-200 shadow-card p-6">
           No tickets here yet.
         </div>
       ) : (
@@ -288,7 +288,7 @@ export const HelpTickets: React.FC = () => {
               (t.status === 'open' || t.status === 'in_progress');
 
             return (
-              <div key={t.id} className="bg-white rounded-xl border border-slate-200 shadow-sm">
+              <div key={t.id} className="bg-white rounded-card border border-slate-200 shadow-card">
                 <div className="p-4 md:p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -379,7 +379,7 @@ export const HelpTickets: React.FC = () => {
                           value={noteDraft[t.id] ?? (t.helper_note || '')}
                           onChange={(e) => setNoteDraft((prev) => ({ ...prev, [t.id]: e.target.value }))}
                           rows={3}
-                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500"
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 focus:outline-none"
                           placeholder={canEditHelperNote ? 'Add what you tried / steps / final fix…' : ''}
                           disabled={!canEditHelperNote}
                         />
@@ -422,11 +422,11 @@ export const HelpTickets: React.FC = () => {
                                   key={s}
                                   type="button"
                                   onClick={() => setRateStars((prev) => ({ ...prev, [t.id]: s as 1 | 2 | 3 | 4 | 5 }))}
-                                  className={`h-9 w-9 rounded-lg border text-lg ${active ? 'border-amber-200 bg-white' : 'border-slate-200 bg-white'
+                                  className={`h-9 w-9 rounded-lg border text-lg ${active ? 'border-warning-200 bg-white' : 'border-slate-200 bg-white'
                                     } hover:bg-slate-50`}
                                   aria-label={`Rate ${s} stars`}
                                 >
-                                  <span className={active ? 'text-amber-500' : 'text-slate-300'}>★</span>
+                                  <span className={active ? 'text-warning-500' : 'text-slate-300'}>★</span>
                                 </button>
                               );
                             })}
@@ -437,7 +437,7 @@ export const HelpTickets: React.FC = () => {
                           value={rateComment[t.id] ?? ''}
                           onChange={(e) => setRateComment((prev) => ({ ...prev, [t.id]: e.target.value }))}
                           rows={3}
-                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500"
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 focus:outline-none"
                           placeholder="Optional comment (not visible to helper)"
                         />
                         <div className="flex justify-end mt-2">
@@ -483,7 +483,7 @@ export const HelpTickets: React.FC = () => {
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
                 maxLength={80}
-                className="w-full h-10 rounded-xl border border-slate-200 px-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500"
+                className="w-full h-10 rounded-xl border border-slate-200 px-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 focus:outline-none"
               />
             </div>
 
@@ -493,7 +493,7 @@ export const HelpTickets: React.FC = () => {
                 value={editDescription}
                 onChange={(e) => setEditDescription(e.target.value)}
                 rows={4}
-                className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500"
+                className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 focus:outline-none"
               />
             </div>
 
@@ -529,7 +529,7 @@ export const HelpTickets: React.FC = () => {
                       value={sol}
                       onChange={(e) => setEditSolutions((prev) => prev.map((x, i) => i === idx ? e.target.value : x))}
                       rows={2}
-                      className="flex-1 rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500"
+                      className="flex-1 rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 focus:outline-none"
                       placeholder={idx === 0 ? 'Main proposed solution…' : 'Optional…'}
                     />
                     <Button
