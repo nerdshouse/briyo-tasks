@@ -7,7 +7,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api';
-import { whatsappService } from '../services/whatsapp';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
@@ -32,16 +31,13 @@ export const Login: React.FC = () => {
   const [fpConfirmPassword, setFpConfirmPassword] = useState('');
   const [fpError, setFpError] = useState('');
   const [fpLoading, setFpLoading] = useState(false);
-  const [fpUserId, setFpUserId] = useState('');
-  const [fpUserPhone, setFpUserPhone] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
     try {
-      const user = await api.login(email, password);
-      login(user);
+      await login(email, password);
       navigate('/');
     } catch (err: any) {
       setError(err.message || 'Invalid email or password');
@@ -55,17 +51,9 @@ export const Login: React.FC = () => {
     setFpError('');
     setFpLoading(true);
     try {
-      const found = await api.findUserByPhone(fpPhone);
-      if (!found) {
-        setFpError('No account found with this mobile number.');
-        return;
-      }
-      setFpUserId(found.id);
-      setFpUserPhone(found.phone);
-
-      const otp = await api.createOtp(found.id);
-      await whatsappService.sendOtp({ phone: found.phone, otp });
-
+      // Always advances to the OTP step — the server responds the same way whether or
+      // not the phone is registered, so this can't be used to enumerate accounts.
+      await api.requestPasswordResetOtp(fpPhone);
       setForgotStep('otp');
     } catch (err: any) {
       setFpError(err.message || 'Failed to send OTP. Please try again.');
@@ -79,7 +67,7 @@ export const Login: React.FC = () => {
     setFpError('');
     setFpLoading(true);
     try {
-      const valid = await api.verifyOtp(fpUserId, fpOtp);
+      const valid = await api.verifyPasswordResetOtp(fpPhone, fpOtp);
       if (!valid) {
         setFpError('Invalid or expired OTP. Please try again.');
         return;
@@ -96,8 +84,7 @@ export const Login: React.FC = () => {
     setFpError('');
     setFpLoading(true);
     try {
-      const otp = await api.createOtp(fpUserId);
-      await whatsappService.sendOtp({ phone: fpUserPhone, otp });
+      await api.requestPasswordResetOtp(fpPhone);
       setFpOtp('');
       setFpError('');
     } catch (err: any) {
@@ -122,7 +109,7 @@ export const Login: React.FC = () => {
 
     setFpLoading(true);
     try {
-      await api.resetPassword(fpUserId, fpNewPassword);
+      await api.resetPasswordWithOtp(fpPhone, fpOtp, fpNewPassword);
       setForgotStep('success');
     } catch (err: any) {
       setFpError(err.message || 'Failed to reset password.');
@@ -139,8 +126,6 @@ export const Login: React.FC = () => {
     setFpNewPassword('');
     setFpConfirmPassword('');
     setFpError('');
-    setFpUserId('');
-    setFpUserPhone('');
   };
 
   const renderForgotPassword = () => {

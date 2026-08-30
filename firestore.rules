@@ -1,34 +1,51 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isOwnerOrManager() {
+      return isSignedIn()
+        && (request.auth.token.role == 'owner' || request.auth.token.role == 'manager');
+    }
+
     match /tasks_users/{userId} {
-      allow read, write: if true;
+      allow read: if isSignedIn();
+      allow create: if isOwnerOrManager();
+      // `password` is only ever written by Cloud Functions (Admin SDK bypasses rules) —
+      // loginWithPassword, resetPasswordWithOtp, adminSetUserPassword.
+      allow update: if (request.auth.uid == userId || isOwnerOrManager())
+        && !('password' in request.resource.data.diff(resource.data).affectedKeys());
+      allow delete: if isOwnerOrManager();
     }
     match /tasks/{taskId} {
-      allow read, write: if true;
+      allow read, write: if isSignedIn();
     }
     match /recurring_tasks/{docId} {
-      allow read, write: if true;
+      allow read, write: if isSignedIn();
     }
     match /holidays/{docId} {
-      allow read, write: if true;
+      allow read, write: if isSignedIn();
     }
     match /absences/{docId} {
-      allow read, write: if true;
+      allow read, write: if isSignedIn();
     }
     match /removal_requests/{docId} {
-      allow read, write: if true;
+      allow read, write: if isSignedIn();
     }
     match /password_reset_otps/{docId} {
-      allow read, write: if true;
+      allow read, write: if false; // server-only (Cloud Functions, Admin SDK)
     }
     match /help_tickets/{docId} {
-      allow read, write: if true;
+      allow read, write: if isSignedIn();
     }
     match /task_logs/{logId} {
-      allow create: if true;
-      allow read: if true;
+      allow create: if isSignedIn();
+      allow read: if isSignedIn();
       allow update, delete: if false;
+    }
+    match /rate_limits/{key} {
+      allow read, write: if false; // server-only (Cloud Functions, Admin SDK)
     }
   }
 }

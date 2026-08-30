@@ -1,4 +1,18 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __exportStar = (this && this.__exportStar) || function(m, exports) {
+    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.onRecurringTaskAuditSopUpdated = exports.onTaskAuditSopUpdated = exports.transitionScheduledTasks = exports.generateRecurringTasksDaily = exports.sendDailyReminder = void 0;
 /*
@@ -11,12 +25,9 @@ const admin = require("firebase-admin");
 const firebase_functions_1 = require("firebase-functions");
 const scheduler_1 = require("firebase-functions/v2/scheduler");
 const firestore_1 = require("firebase-functions/v2/firestore");
+const shared_1 = require("./shared");
 admin.initializeApp();
-const COLLECTIONS = {
-    TASKS: 'tasks',
-    USERS: 'tasks_users',
-    RECURRING_TASKS: 'recurring_tasks',
-};
+__exportStar(require("./auth"), exports);
 const RECURRING_TYPES = [
     'daily',
     'weekly',
@@ -116,44 +127,6 @@ function isRecurringMaster(task) {
         return false;
     return task.is_recurring_master === true;
 }
-/** Normalize phone to 11za format: country code + number, no + or spaces */
-function normalizePhone(phone) {
-    const digits = phone.replace(/\D/g, '');
-    if (digits.length === 10 && !digits.startsWith('0'))
-        return '91' + digits;
-    if (digits.startsWith('91') && digits.length === 12)
-        return digits;
-    return digits;
-}
-/** Sanitize origin website for API calls */
-function sanitizeOrigin(origin) {
-    return origin.replace(/[`"' ]/g, '').trim();
-}
-/** Call 11za sendTemplate API */
-async function send11zaTemplate(phone, templateName, bodyParams, config) {
-    const normalizedPhone = normalizePhone(phone);
-    if (!normalizedPhone)
-        return;
-    const body = {
-        sendto: normalizedPhone,
-        authToken: config.authToken,
-        originWebsite: sanitizeOrigin(config.originWebsite),
-        language: 'en',
-        templateName,
-        data: bodyParams,
-    };
-    const res = await fetch(config.apiUrl, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
-    });
-    if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`11za API ${res.status}: ${text}`);
-    }
-}
 /**
  * Scheduled function: runs daily at 8:00 AM IST.
  * Sends a WhatsApp reminder to every member who has at least one
@@ -183,7 +156,7 @@ exports.sendDailyReminder = (0, scheduler_1.onSchedule)({
     const db = admin.firestore();
     // Find all tasks that are active (assigned/pending)
     const activeTasksSnap = await db
-        .collection(COLLECTIONS.TASKS)
+        .collection(shared_1.COLLECTIONS.TASKS)
         .where('status', 'in', ['pending', 'in_progress', 'overdue'])
         .get();
     // Collect unique user IDs who have at least one active task
@@ -198,7 +171,7 @@ exports.sendDailyReminder = (0, scheduler_1.onSchedule)({
         return;
     }
     // Fetch all users to get phone numbers
-    const usersSnap = await db.collection(COLLECTIONS.USERS).get();
+    const usersSnap = await db.collection(shared_1.COLLECTIONS.USERS).get();
     const usersById = new Map();
     for (const doc of usersSnap.docs) {
         const d = doc.data();
@@ -218,7 +191,7 @@ exports.sendDailyReminder = (0, scheduler_1.onSchedule)({
             continue;
         }
         try {
-            await send11zaTemplate(phone, templateDailyReminder, [user.name], elevenzaConfig);
+            await (0, shared_1.send11zaTemplate)(phone, templateDailyReminder, [user.name], elevenzaConfig);
             firebase_functions_1.logger.info(`Daily reminder sent to ${user.name} (${phone})`);
             sentCount++;
         }
@@ -252,7 +225,7 @@ async function runGenerateRecurringTasks(db, opts = {}) {
     const nowIso = new Date().toISOString();
     const today = getTodayIST();
     const recurringSnap = await db
-        .collection(COLLECTIONS.RECURRING_TASKS)
+        .collection(shared_1.COLLECTIONS.RECURRING_TASKS)
         .get();
     if (recurringSnap.empty) {
         firebase_functions_1.logger.info('No recurring tasks found; skipping recurring generation');
@@ -287,9 +260,9 @@ async function runGenerateRecurringTasks(db, opts = {}) {
         if (!RECURRING_TYPES.includes(recurring))
             continue;
         const masterTaskId = String(template.id || '');
-        const masterRef = db.collection(COLLECTIONS.RECURRING_TASKS).doc(masterTaskId);
+        const masterRef = db.collection(shared_1.COLLECTIONS.RECURRING_TASKS).doc(masterTaskId);
         const existingInstanceSnap = await db
-            .collection(COLLECTIONS.TASKS)
+            .collection(shared_1.COLLECTIONS.TASKS)
             .where('parent_task_id', '==', masterTaskId)
             .where('recurring', '==', 'none')
             .get();
@@ -354,7 +327,7 @@ async function runGenerateRecurringTasks(db, opts = {}) {
                     title: String(template.title || ''),
                 });
                 if (!dryRun) {
-                    await db.collection(COLLECTIONS.TASKS).add(newTask);
+                    await db.collection(shared_1.COLLECTIONS.TASKS).add(newTask);
                 }
                 existingInstanceDueDates.add(cursor);
                 createdCount += 1;
@@ -408,7 +381,7 @@ exports.transitionScheduledTasks = (0, scheduler_1.onSchedule)({
     firebase_functions_1.logger.info(`transitionScheduledTasks: running for date ${today}`);
     // Fetch all tasks with 'scheduled' status
     const scheduledSnap = await db
-        .collection(COLLECTIONS.TASKS)
+        .collection(shared_1.COLLECTIONS.TASKS)
         .where('status', '==', 'scheduled')
         .get();
     if (scheduledSnap.empty) {
@@ -451,7 +424,7 @@ exports.transitionScheduledTasks = (0, scheduler_1.onSchedule)({
  * Checks if audit_sop fields changed and sends a WhatsApp notification to the assigned doer and verifier.
  */
 exports.onTaskAuditSopUpdated = (0, firestore_1.onDocumentUpdated)({
-    document: `${COLLECTIONS.TASKS}/{taskId}`,
+    document: `${shared_1.COLLECTIONS.TASKS}/{taskId}`,
 }, async (event) => {
     if (!event.data)
         return;
@@ -493,7 +466,7 @@ exports.onTaskAuditSopUpdated = (0, firestore_1.onDocumentUpdated)({
         originWebsite,
         authToken,
     };
-    const usersSnap = await db.collection(COLLECTIONS.USERS).get();
+    const usersSnap = await db.collection(shared_1.COLLECTIONS.USERS).get();
     const usersById = new Map();
     for (const doc of usersSnap.docs) {
         const d = doc.data();
@@ -505,7 +478,7 @@ exports.onTaskAuditSopUpdated = (0, firestore_1.onDocumentUpdated)({
         if (!phone)
             continue;
         try {
-            await send11zaTemplate(phone, templateAuditSopUpdate, [user.name, taskTitle, updatedByName], elevenzaConfig);
+            await (0, shared_1.send11zaTemplate)(phone, templateAuditSopUpdate, [user.name, taskTitle, updatedByName], elevenzaConfig);
             firebase_functions_1.logger.info(`Audit SOP update notification sent to ${user.name} (${phone})`);
         }
         catch (err) {
@@ -518,7 +491,7 @@ exports.onTaskAuditSopUpdated = (0, firestore_1.onDocumentUpdated)({
  * Checks if audit_sop fields changed and propagates them to active children, and notifies doer/verifier.
  */
 exports.onRecurringTaskAuditSopUpdated = (0, firestore_1.onDocumentUpdated)({
-    document: `${COLLECTIONS.RECURRING_TASKS}/{taskId}`,
+    document: `${shared_1.COLLECTIONS.RECURRING_TASKS}/{taskId}`,
 }, async (event) => {
     if (!event.data)
         return;
@@ -535,7 +508,7 @@ exports.onRecurringTaskAuditSopUpdated = (0, firestore_1.onDocumentUpdated)({
     const taskId = event.data.after.id;
     try {
         const activeChildrenSnap = await db
-            .collection(COLLECTIONS.TASKS)
+            .collection(shared_1.COLLECTIONS.TASKS)
             .where('parent_task_id', '==', taskId)
             .where('recurring', '==', 'none')
             .where('status', 'in', ['pending', 'scheduled', 'in_progress', 'correction_required', 'pending_verification', 'overdue'])
@@ -582,7 +555,7 @@ exports.onRecurringTaskAuditSopUpdated = (0, firestore_1.onDocumentUpdated)({
         originWebsite,
         authToken,
     };
-    const usersSnap = await db.collection(COLLECTIONS.USERS).get();
+    const usersSnap = await db.collection(shared_1.COLLECTIONS.USERS).get();
     const usersById = new Map();
     for (const doc of usersSnap.docs) {
         const d = doc.data();
@@ -594,7 +567,7 @@ exports.onRecurringTaskAuditSopUpdated = (0, firestore_1.onDocumentUpdated)({
         if (!phone)
             continue;
         try {
-            await send11zaTemplate(phone, templateAuditSopUpdate, [user.name, taskTitle, updatedByName], elevenzaConfig);
+            await (0, shared_1.send11zaTemplate)(phone, templateAuditSopUpdate, [user.name, taskTitle, updatedByName], elevenzaConfig);
         }
         catch (err) {
             firebase_functions_1.logger.error(`Failed to send Audit SOP update notification to ${phone}:`, err);

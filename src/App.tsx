@@ -31,7 +31,10 @@ const VerifierPending = lazy(() => import('./pages/VerifierPending').then((m) =>
 const PageFallback = () => <div className="text-slate-500 py-8">Loading...</div>;
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, ready } = useAuth();
+  // Wait for the initial Firebase Auth state to resolve before deciding — otherwise
+  // an already-logged-in user gets bounced to /login on every page refresh.
+  if (!ready) return <PageFallback />;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   return <Layout>{children}</Layout>;
 };

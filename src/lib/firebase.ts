@@ -8,6 +8,7 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { getFirestore, Timestamp } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
+import { getFunctions } from 'firebase/functions';
 import { getAnalytics, isSupported } from 'firebase/analytics';
 
 const firebaseConfig = {
@@ -36,6 +37,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 const storage = getStorage(app);
+const functions = getFunctions(app);
 
 setPersistence(auth, browserLocalPersistence).catch(console.warn);
 
@@ -45,7 +47,7 @@ isSupported().then((yes) => {
   if (yes) analytics = getAnalytics(app);
 });
 
-export { db, auth, app, storage, analytics };
+export { db, auth, app, storage, functions, analytics };
 
 export const timestampToISO = (t: any): string => {
   if (t?.toDate) return t.toDate().toISOString();

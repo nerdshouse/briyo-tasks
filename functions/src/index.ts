@@ -6,17 +6,13 @@
  */
 import * as admin from 'firebase-admin';
 import { logger } from 'firebase-functions';
-import { onRequest } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { onDocumentUpdated } from 'firebase-functions/v2/firestore';
+import { COLLECTIONS, send11zaTemplate } from './shared';
 
 admin.initializeApp();
 
-const COLLECTIONS = {
-  TASKS: 'tasks',
-  USERS: 'tasks_users',
-  RECURRING_TASKS: 'recurring_tasks',
-};
+export * from './auth';
 
 const RECURRING_TYPES = [
   'daily',
@@ -132,53 +128,6 @@ function isRecurringMaster(task: FirebaseFirestore.DocumentData): boolean {
   if (!task) return false;
   return task.is_recurring_master === true;
 }
-
-/** Normalize phone to 11za format: country code + number, no + or spaces */
-function normalizePhone(phone: string): string {
-  const digits = phone.replace(/\D/g, '');
-  if (digits.length === 10 && !digits.startsWith('0')) return '91' + digits;
-  if (digits.startsWith('91') && digits.length === 12) return digits;
-  return digits;
-}
-
-/** Sanitize origin website for API calls */
-function sanitizeOrigin(origin: string): string {
-  return origin.replace(/[`"' ]/g, '').trim();
-}
-
-/** Call 11za sendTemplate API */
-async function send11zaTemplate(
-  phone: string,
-  templateName: string,
-  bodyParams: string[],
-  config: { apiUrl: string; originWebsite: string; authToken: string }
-): Promise<void> {
-  const normalizedPhone = normalizePhone(phone);
-  if (!normalizedPhone) return;
-
-  const body = {
-    sendto: normalizedPhone,
-    authToken: config.authToken,
-    originWebsite: sanitizeOrigin(config.originWebsite),
-    language: 'en',
-    templateName,
-    data: bodyParams,
-  };
-
-  const res = await fetch(config.apiUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(body),
-  });
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`11za API ${res.status}: ${text}`);
-  }
-}
-
 
 /**
  * Scheduled function: runs daily at 8:00 AM IST.

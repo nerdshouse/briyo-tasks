@@ -168,10 +168,10 @@ export const Members: React.FC = () => {
         city: editCity || undefined,
         phone: formattedPhone,
       };
-      if (editPassword.trim()) {
-        updates.password = editPassword;
-      }
       await api.updateUser(editingUser.id, updates);
+      if (editPassword.trim()) {
+        await api.adminSetUserPassword(editingUser.id, editPassword.trim());
+      }
       setUsers(await api.getUsers());
       setEditingUser(null);
     } catch (err: any) {
