@@ -34,7 +34,7 @@ async function send11zaTemplate(phone, templateName, bodyParams, config) {
         sendto: normalizedPhone,
         authToken: config.authToken,
         originWebsite: sanitizeOrigin(config.originWebsite),
-        language: 'en',
+        language: config.language || 'en',
         templateName,
         data: bodyParams,
     };

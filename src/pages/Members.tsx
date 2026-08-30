@@ -186,7 +186,7 @@ export const Members: React.FC = () => {
   };
 
   const handleDownloadTemplate = () => {
-    const csvContent = 'Name,Email,Department,Phone\nJohn Doe,john@example.com,New York,1234567890';
+    const csvContent = 'Name,Email,Department,Phone\nJohn Doe,john@example.com,Marketing,9876543210';
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);

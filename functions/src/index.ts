@@ -13,6 +13,7 @@ import { COLLECTIONS, send11zaTemplate } from './shared';
 admin.initializeApp();
 
 export * from './auth';
+export { onMemberCreated, sendTaskReminder } from './notifications';
 
 const RECURRING_TYPES = [
   'daily',

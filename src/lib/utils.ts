@@ -303,3 +303,25 @@ export function getNextRecurringDueDate(
 
   return next.toISOString().split('T')[0];
 }
+
+/** Cooldown between WhatsApp task reminders per task per assignee (mirrors the backend). */
+export const REMINDER_COOLDOWN_MS = 4 * 60 * 60 * 1000;
+
+/** Milliseconds left before this task's assignee can be reminded again; 0 when allowed. */
+export function reminderCooldownRemainingMs(
+  task: Pick<Task, 'lastRemindedAt' | 'assigned_to_id'>,
+  nowMs: number = Date.now()
+): number {
+  const last = task.lastRemindedAt?.[task.assigned_to_id];
+  if (!last) return 0;
+  const lastMs = new Date(last).getTime();
+  if (!Number.isFinite(lastMs)) return 0;
+  return Math.max(0, lastMs + REMINDER_COOLDOWN_MS - nowMs);
+}
+
+export function formatCooldownRemaining(ms: number): string {
+  const totalMinutes = Math.ceil(ms / 60000);
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}

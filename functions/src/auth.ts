@@ -7,7 +7,7 @@ import { COLLECTIONS, send11zaTemplate, phoneVariants } from './shared';
  * Fixed-window rate limiter backed by a `rate_limits/{key}` doc.
  * Firestore rules deny all client access to this collection — it's Admin-SDK only.
  */
-async function checkRateLimit(key: string, maxAttempts: number, windowMs: number): Promise<void> {
+export async function checkRateLimit(key: string, maxAttempts: number, windowMs: number): Promise<void> {
   const ref = admin.firestore().collection(COLLECTIONS.RATE_LIMITS).doc(key);
   await admin.firestore().runTransaction(async (tx) => {
     const snap = await tx.get(ref);
@@ -25,7 +25,7 @@ async function checkRateLimit(key: string, maxAttempts: number, windowMs: number
   });
 }
 
-function elevenzaConfigFromEnv(): { apiUrl: string; originWebsite: string; authToken: string | undefined } {
+export function elevenzaConfigFromEnv(): { apiUrl: string; originWebsite: string; authToken: string | undefined } {
   return {
     apiUrl: process.env.ELEVENZA_API_URL || 'https://app.11za.in/apis/template/sendTemplate',
     originWebsite: process.env.ELEVENZA_ORIGIN_WEBSITE || 'https://whiterock.co.in/',

@@ -25,7 +25,7 @@ import { CompleteTaskModal } from '../components/ui/CompleteTaskModal';
 import { AttachmentViewerModal } from '../components/ui/AttachmentViewerModal';
 import { AuditSopModal } from '../components/ui/AuditSopModal';
 import { exportRowsToCsv, type CsvColumn } from '../lib/csv';
-import { isHoliday, formatDateDDMMYYYY, getDisplayRecurring, formatRecurringLabel } from '../lib/utils';
+import { isHoliday, formatDateDDMMYYYY, getDisplayRecurring, formatRecurringLabel, reminderCooldownRemainingMs, formatCooldownRemaining } from '../lib/utils';
 import { getTodayIST } from '../lib/dates';
 import {
   ExternalLink,
@@ -42,6 +42,7 @@ import {
 
   Table2,
   FileText,
+  Bell,
 } from 'lucide-react';
 import type { QueryDocumentSnapshot } from 'firebase/firestore';
 
@@ -64,6 +65,7 @@ export const TaskTable: React.FC = () => {
   const [searchParams] = useSearchParams();
   const highlightId = searchParams.get('highlight');
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [remindingId, setRemindingId] = useState<string | null>(null);
   const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot | null>(null);
   const [pageCursors, setPageCursors] = useState<(QueryDocumentSnapshot | null)[]>([null]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -1168,6 +1170,48 @@ export const TaskTable: React.FC = () => {
       <span className="text-slate-400">-</span>
     ) : null;
 
+  const handleRemindTask = async (t: Task) => {
+    if (remindingId) return;
+    setRemindingId(t.id);
+    try {
+      await api.sendTaskReminder(t.id);
+      const nowIso = new Date().toISOString();
+      const applyReminded = (rows: Task[]) =>
+        rows.map((x) =>
+          x.id === t.id
+            ? { ...x, lastRemindedAt: { ...(x.lastRemindedAt || {}), [t.assigned_to_id]: nowIso } }
+            : x
+        );
+      setTasks(applyReminded);
+      setNameFilteredRows((prev) => (prev ? applyReminded(prev) : null));
+    } catch (err: any) {
+      window.alert(err?.message || 'Failed to send the WhatsApp reminder.');
+    } finally {
+      setRemindingId(null);
+    }
+  };
+
+  const renderRemindAction = (t: Task, size = 15) => {
+    const remainingMs = reminderCooldownRemainingMs(t);
+    const onCooldown = remainingMs > 0;
+    return (
+      <Button
+        size="sm"
+        variant="secondary"
+        className="!px-2"
+        disabled={onCooldown || remindingId === t.id}
+        onClick={() => handleRemindTask(t)}
+        title={
+          onCooldown
+            ? `Reminded recently \u00b7 ${formatCooldownRemaining(remainingMs)} left`
+            : 'Send WhatsApp reminder'
+        }
+      >
+        <Bell size={size} />
+      </Button>
+    );
+  };
+
   const getRowActionFlags = (t: Task) => {
     const showComplete =
       t.assigned_to_id === user?.id &&
@@ -1183,7 +1227,14 @@ export const TaskTable: React.FC = () => {
     const canClosePermanently =
       t.recurring !== 'none' && t.status !== 'closed_permanently' && (isAssigner || isAdminRole);
 
-    return { showComplete, canEditTask, canDeleteTask, canClosePermanently };
+    const canRemind =
+      (t.status === 'pending' || t.status === 'in_progress' || t.status === 'overdue') &&
+      !!t.assigned_to_id &&
+      !t.assignee_deleted &&
+      !t.is_recurring_master &&
+      (isAssigner || isAdminRole);
+
+    return { showComplete, canEditTask, canDeleteTask, canClosePermanently, canRemind };
   };
 
 
@@ -1357,6 +1408,7 @@ export const TaskTable: React.FC = () => {
                       <Trash2 size={14} />
                     </Button>
                   )}
+                  {flags.canRemind && renderRemindAction(t, 14)}
                   {renderAttachmentAction(t, false)}
                   {renderSopAction(t)}
                 </>
@@ -1480,7 +1532,7 @@ export const TaskTable: React.FC = () => {
                         {(() => {
                           const flags = getRowActionFlags(t);
                           const hasAnyAction =
-                            flags.showComplete || flags.canEditTask || flags.canDeleteTask || flags.canClosePermanently;
+                            flags.showComplete || flags.canEditTask || flags.canDeleteTask || flags.canClosePermanently || flags.canRemind;
                           return (
                             <>
                               {flags.showComplete && (
@@ -1503,6 +1555,7 @@ export const TaskTable: React.FC = () => {
                                   <Trash2 size={15} />
                                 </Button>
                               )}
+                              {flags.canRemind && renderRemindAction(t)}
                               {!hasAnyAction && <span className="text-slate-400 text-center">-</span>}
                             </>
                           );

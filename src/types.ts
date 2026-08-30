@@ -17,6 +17,8 @@ export interface User {
   role: UserRole;
   phone?: string;
   department?: string;
+  /** Written only by the backend onMemberCreated trigger; rules block client writes. */
+  onboardingMessage?: { status: 'sent' | 'failed'; sentAt?: string; error?: string };
   password?: string;
   approved?: boolean;
   created_at?: string;
@@ -106,6 +108,8 @@ export interface Task {
     uploaded_at: string;
   }[];
   audit_sop_links?: string[];
+  /** assignee uid → ISO time of last WhatsApp reminder. Backend-only writes. */
+  lastRemindedAt?: Record<string, string>;
 }
 
 export interface Holiday {
@@ -191,7 +195,8 @@ export type TaskLogAction =
   | 'audit_set'
   | 'verified'
   | 'verification_rejected'
-  | 'audit_sop_updated';
+  | 'audit_sop_updated'
+  | 'reminder_sent';
 
 export interface TaskLog {
   id: string;

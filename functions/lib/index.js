@@ -14,7 +14,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.onRecurringTaskAuditSopUpdated = exports.onTaskAuditSopUpdated = exports.transitionScheduledTasks = exports.generateRecurringTasksDaily = exports.sendDailyReminder = void 0;
+exports.onRecurringTaskAuditSopUpdated = exports.onTaskAuditSopUpdated = exports.transitionScheduledTasks = exports.generateRecurringTasksDaily = exports.sendDailyReminder = exports.sendTaskReminder = exports.onMemberCreated = void 0;
 /*
  * Developed by Nerdshouse Technologies LLP — https://nerdshouse.com
  * © 2026 WhiteRock (Royal Enterprise). All rights reserved.
@@ -28,6 +28,9 @@ const firestore_1 = require("firebase-functions/v2/firestore");
 const shared_1 = require("./shared");
 admin.initializeApp();
 __exportStar(require("./auth"), exports);
+var notifications_1 = require("./notifications");
+Object.defineProperty(exports, "onMemberCreated", { enumerable: true, get: function () { return notifications_1.onMemberCreated; } });
+Object.defineProperty(exports, "sendTaskReminder", { enumerable: true, get: function () { return notifications_1.sendTaskReminder; } });
 const RECURRING_TYPES = [
     'daily',
     'weekly',

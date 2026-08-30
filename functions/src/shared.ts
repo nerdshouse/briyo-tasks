@@ -24,7 +24,7 @@ export async function send11zaTemplate(
   phone: string,
   templateName: string,
   bodyParams: string[],
-  config: { apiUrl: string; originWebsite: string; authToken: string }
+  config: { apiUrl: string; originWebsite: string; authToken: string; language?: string }
 ): Promise<void> {
   const normalizedPhone = normalizePhone(phone);
   if (!normalizedPhone) return;
@@ -33,7 +33,7 @@ export async function send11zaTemplate(
     sendto: normalizedPhone,
     authToken: config.authToken,
     originWebsite: sanitizeOrigin(config.originWebsite),
-    language: 'en',
+    language: config.language || 'en',
     templateName,
     data: bodyParams,
   };

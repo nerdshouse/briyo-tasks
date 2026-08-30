@@ -132,6 +132,11 @@ const docToTask = (d: any): Task => {
     is_holiday: data.is_holiday,
     is_recurring_master: data.is_recurring_master === true,
     parent_task_id: data.parent_task_id,
+    lastRemindedAt: data.lastRemindedAt
+      ? Object.fromEntries(
+          Object.entries(data.lastRemindedAt).map(([uid, ts]) => [uid, timestampToISO(ts)])
+        )
+      : undefined,
     audit_status: data.audit_status,
     audited_at: data.audited_at ? timestampToISO(data.audited_at) : undefined,
     audited_by: data.audited_by,
@@ -1476,6 +1481,18 @@ export const api = {
   // --- WhatsApp (11za) ---
   // Sent server-side now (sendTaskAssignmentNotification Cloud Function) so the 11za
   // auth token never has to live in the browser bundle.
+  /** Bell-icon reminder: server enforces roles + the 4h per-task-per-member cooldown. */
+  sendTaskReminder: async (
+    taskId: string
+  ): Promise<{ ok: boolean; remindedAt: number; cooldownMs: number }> => {
+    const fn = httpsCallable<{ taskId: string }, { ok: boolean; remindedAt: number; cooldownMs: number }>(
+      functions,
+      'sendTaskReminder'
+    );
+    const res = await fn({ taskId });
+    return res.data;
+  },
+
   sendTaskAssignmentWhatsApp: async (
     phone: string,
     task: { title: string; due_date: string; description: string; link: string; assigned_by_name: string }

@@ -21,17 +21,23 @@ service cloud.firestore {
 
     match /tasks_users/{userId} {
       allow read: if isSignedIn();
-      allow create: if canManageMembers();
+      // onboardingMessage is written only by the backend (Admin SDK bypasses rules).
+      allow create: if canManageMembers()
+        && !('onboardingMessage' in request.resource.data);
       // Role changes are admin-only; other profile edits by admins/sub-admins or self.
       allow update: if (request.auth.uid == userId || canManageMembers())
-        && (!('role' in request.resource.data.diff(resource.data).affectedKeys()) || isAdmin());
+        && (!('role' in request.resource.data.diff(resource.data).affectedKeys()) || isAdmin())
+        && !('onboardingMessage' in request.resource.data.diff(resource.data).affectedKeys());
       allow delete: if isAdmin();
     }
     match /tasks/{taskId} {
       // Admins see everything; others only tasks they're involved in.
       allow read: if isAdmin() || involvedIn(resource.data);
-      allow create: if isSignedIn();
-      allow update: if isAdmin() || involvedIn(resource.data);
+      // lastRemindedAt (reminder cooldowns) is written only by the backend.
+      allow create: if isSignedIn()
+        && !('lastRemindedAt' in request.resource.data);
+      allow update: if (isAdmin() || involvedIn(resource.data))
+        && !('lastRemindedAt' in request.resource.data.diff(resource.data).affectedKeys());
       allow delete: if isAdmin();
     }
     match /recurring_tasks/{docId} {
