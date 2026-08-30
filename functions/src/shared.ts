@@ -24,7 +24,14 @@ export async function send11zaTemplate(
   phone: string,
   templateName: string,
   bodyParams: string[],
-  config: { apiUrl: string; originWebsite: string; authToken: string; language?: string }
+  config: {
+    apiUrl: string;
+    originWebsite: string;
+    authToken: string;
+    language?: string;
+    /** Dynamic URL-button suffix; required by templates with a dynamic button. */
+    buttonValue?: string;
+  }
 ): Promise<void> {
   const normalizedPhone = normalizePhone(phone);
   if (!normalizedPhone) return;
@@ -36,6 +43,7 @@ export async function send11zaTemplate(
     language: config.language || 'en',
     templateName,
     data: bodyParams,
+    ...(config.buttonValue ? { buttonValue: config.buttonValue } : {}),
   };
 
   const res = await fetch(config.apiUrl, {

@@ -61,11 +61,11 @@ function formatDueDateIST(dueDate) {
         return 'Not set';
     return `${get('day')}-${MONTHS_SHORT[monthIdx]}-${get('year')}`;
 }
-/** task_reminder variables IN ORDER: {{name}}, {{task_name}}, {{due_date}}. */
+/** task_reminder body variables IN ORDER: {{name}}, {{task_name}}, {{due_date}}. */
 function buildTaskReminderParams(memberFullName, taskTitle, dueDate) {
     return [firstNameOf(memberFullName), String(taskTitle || ''), formatDueDateIST(dueDate)];
 }
-/** member_onboarding variables IN ORDER: {{name}} only. */
+/** member_onboarding body variables IN ORDER: {{name}} only. */
 function buildOnboardingParams(memberFullName) {
     return [firstNameOf(memberFullName)];
 }
@@ -151,7 +151,13 @@ exports.onMemberCreated = (0, firestore_1.onDocumentCreated)({
     if (waitMs > 0)
         await sleep(waitMs);
     const params = buildOnboardingParams(member.name || '');
-    const config = { apiUrl, originWebsite, authToken, language: whatsappTemplates_1.WHATSAPP_TEMPLATES.language };
+    const config = {
+        apiUrl,
+        originWebsite,
+        authToken,
+        language: whatsappTemplates_1.WHATSAPP_TEMPLATES.language,
+        buttonValue: whatsappTemplates_1.WHATSAPP_BUTTON_VALUES.onboarding,
+    };
     try {
         try {
             await (0, shared_1.send11zaTemplate)(phone, whatsappTemplates_1.WHATSAPP_TEMPLATES.onboarding, params, config);
@@ -236,6 +242,7 @@ exports.sendTaskReminder = (0, https_1.onCall)({ timeoutSeconds: 30 }, async (re
             originWebsite,
             authToken,
             language: whatsappTemplates_1.WHATSAPP_TEMPLATES.language,
+            buttonValue: whatsappTemplates_1.WHATSAPP_BUTTON_VALUES.taskReminder,
         });
     }
     catch (err) {

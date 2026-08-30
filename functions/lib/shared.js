@@ -37,6 +37,7 @@ async function send11zaTemplate(phone, templateName, bodyParams, config) {
         language: config.language || 'en',
         templateName,
         data: bodyParams,
+        ...(config.buttonValue ? { buttonValue: config.buttonValue } : {}),
     };
     const res = await fetch(config.apiUrl, {
         method: 'POST',

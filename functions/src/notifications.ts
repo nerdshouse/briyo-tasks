@@ -9,7 +9,7 @@ import { logger } from 'firebase-functions';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { COLLECTIONS, send11zaTemplate } from './shared';
-import { WHATSAPP_TEMPLATES } from './whatsappTemplates';
+import { WHATSAPP_TEMPLATES, WHATSAPP_BUTTON_VALUES } from './whatsappTemplates';
 import { checkRateLimit, elevenzaConfigFromEnv } from './auth';
 
 export const REMINDER_COOLDOWN_MS = 4 * 60 * 60 * 1000;
@@ -57,7 +57,7 @@ export function formatDueDateIST(dueDate: string | undefined | null): string {
   return `${get('day')}-${MONTHS_SHORT[monthIdx]}-${get('year')}`;
 }
 
-/** task_reminder variables IN ORDER: {{name}}, {{task_name}}, {{due_date}}. */
+/** task_reminder body variables IN ORDER: {{name}}, {{task_name}}, {{due_date}}. */
 export function buildTaskReminderParams(
   memberFullName: string,
   taskTitle: string,
@@ -66,7 +66,7 @@ export function buildTaskReminderParams(
   return [firstNameOf(memberFullName), String(taskTitle || ''), formatDueDateIST(dueDate)];
 }
 
-/** member_onboarding variables IN ORDER: {{name}} only. */
+/** member_onboarding body variables IN ORDER: {{name}} only. */
 export function buildOnboardingParams(memberFullName: string): string[] {
   return [firstNameOf(memberFullName)];
 }
@@ -163,7 +163,13 @@ export const onMemberCreated = onDocumentCreated(
     if (waitMs > 0) await sleep(waitMs);
 
     const params = buildOnboardingParams(member.name || '');
-    const config = { apiUrl, originWebsite, authToken, language: WHATSAPP_TEMPLATES.language };
+    const config = {
+      apiUrl,
+      originWebsite,
+      authToken,
+      language: WHATSAPP_TEMPLATES.language,
+      buttonValue: WHATSAPP_BUTTON_VALUES.onboarding,
+    };
 
     try {
       try {
@@ -263,6 +269,7 @@ export const sendTaskReminder = onCall({ timeoutSeconds: 30 }, async (request) =
       originWebsite,
       authToken,
       language: WHATSAPP_TEMPLATES.language,
+      buttonValue: WHATSAPP_BUTTON_VALUES.taskReminder,
     });
   } catch (err) {
     // Roll back the reserved slot so the sender can retry immediately.

@@ -6,6 +6,7 @@
  */
 import { test } from 'node:test';
 import * as assert from 'node:assert/strict';
+import { WHATSAPP_BUTTON_VALUES } from './whatsappTemplates';
 import {
   firstNameOf,
   formatDueDateIST,
@@ -45,7 +46,7 @@ test('formatDueDateIST renders ISO timestamps in Asia/Kolkata', () => {
   assert.equal(formatDueDateIST('2026-08-31T18:00:00Z'), '31-Aug-2026');
 });
 
-test('task_reminder variables are ordered: name, task_name, due_date', () => {
+test('task_reminder body variables ordered: name, task_name, due_date', () => {
   assert.deepEqual(buildTaskReminderParams('Axit Mehta', 'File GST returns', '2026-08-31'), [
     'Axit',
     'File GST returns',
@@ -58,9 +59,14 @@ test('task_reminder variables are ordered: name, task_name, due_date', () => {
   ]);
 });
 
-test('member_onboarding has exactly one variable: first name', () => {
+test('member_onboarding has exactly one body variable: first name', () => {
   assert.deepEqual(buildOnboardingParams('Axit Mehta'), ['Axit']);
   assert.deepEqual(buildOnboardingParams('Priya'), ['Priya']);
+});
+
+test('both dynamic URL buttons have non-empty values (11za rejects empty)', () => {
+  assert.ok(WHATSAPP_BUTTON_VALUES.onboarding.length > 0);
+  assert.ok(WHATSAPP_BUTTON_VALUES.taskReminder.length > 0);
 });
 
 test('cooldown: zero when never reminded', () => {

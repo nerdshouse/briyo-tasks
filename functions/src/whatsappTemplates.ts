@@ -14,3 +14,17 @@ export const WHATSAPP_TEMPLATES = {
   taskReminder: process.env.ELEVENZA_TEMPLATE_TASK_REMINDER || 'task_reminder',
   language: 'en',
 } as const;
+
+/**
+ * Both templates carry a dynamic URL button. 11za's sendTemplate takes the
+ * dynamic part as a separate `buttonValue` field (verified against the live
+ * API: omitting it or sending it empty returns "Invalid Button value").
+ * The value is the path suffix appended to the base URL configured on the
+ * template's button in 11za.
+ */
+export const WHATSAPP_BUTTON_VALUES = {
+  /** member_onboarding "Open App" button */
+  onboarding: process.env.ELEVENZA_BUTTON_ONBOARDING || 'my-tasks',
+  /** task_reminder "See my pending tasks" button */
+  taskReminder: process.env.ELEVENZA_BUTTON_TASK_REMINDER || 'my-tasks',
+} as const;

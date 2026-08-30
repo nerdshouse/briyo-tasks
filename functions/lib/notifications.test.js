@@ -8,6 +8,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
  */
 const node_test_1 = require("node:test");
 const assert = require("node:assert/strict");
+const whatsappTemplates_1 = require("./whatsappTemplates");
 const notifications_1 = require("./notifications");
 (0, node_test_1.test)('firstNameOf takes the first word, trimmed', () => {
     assert.equal((0, notifications_1.firstNameOf)('Axit Mehta'), 'Axit');
@@ -35,7 +36,7 @@ const notifications_1 = require("./notifications");
     // 2026-08-31T18:00:00Z is 2026-08-31 23:30 IST — same calendar day.
     assert.equal((0, notifications_1.formatDueDateIST)('2026-08-31T18:00:00Z'), '31-Aug-2026');
 });
-(0, node_test_1.test)('task_reminder variables are ordered: name, task_name, due_date', () => {
+(0, node_test_1.test)('task_reminder body variables ordered: name, task_name, due_date', () => {
     assert.deepEqual((0, notifications_1.buildTaskReminderParams)('Axit Mehta', 'File GST returns', '2026-08-31'), [
         'Axit',
         'File GST returns',
@@ -47,9 +48,13 @@ const notifications_1 = require("./notifications");
         'Not set',
     ]);
 });
-(0, node_test_1.test)('member_onboarding has exactly one variable: first name', () => {
+(0, node_test_1.test)('member_onboarding has exactly one body variable: first name', () => {
     assert.deepEqual((0, notifications_1.buildOnboardingParams)('Axit Mehta'), ['Axit']);
     assert.deepEqual((0, notifications_1.buildOnboardingParams)('Priya'), ['Priya']);
+});
+(0, node_test_1.test)('both dynamic URL buttons have non-empty values (11za rejects empty)', () => {
+    assert.ok(whatsappTemplates_1.WHATSAPP_BUTTON_VALUES.onboarding.length > 0);
+    assert.ok(whatsappTemplates_1.WHATSAPP_BUTTON_VALUES.taskReminder.length > 0);
 });
 (0, node_test_1.test)('cooldown: zero when never reminded', () => {
     assert.equal((0, notifications_1.cooldownRemainingMs)(null, Date.now()), 0);
