@@ -23,7 +23,7 @@ export const Kpi: React.FC = () => {
   const [dateFilter, setDateFilter] = useState('last_30_days');
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
-  const [cityFilter, setCityFilter] = useState('');
+  const [departmentFilter, setDepartmentFilter] = useState('');
 
   const isOwnerOrManager = user?.role === UserRole.OWNER || user?.role === UserRole.MANAGER;
   const isDoer = user?.role === UserRole.DOER;
@@ -168,19 +168,19 @@ export const Kpi: React.FC = () => {
               const cities = Array.from(
                 new Set(
                   (staticData?.users || [])
-                    .map((u) => (u.city || '').trim())
+                    .map((u) => (u.department || '').trim())
                     .filter((c) => c.length > 0)
                 )
               ).sort((a, b) => a.localeCompare(b));
               return cities.length > 0 ? (
                 <select
-                  value={cityFilter}
-                  onChange={(e) => setCityFilter(e.target.value)}
+                  value={departmentFilter}
+                  onChange={(e) => setDepartmentFilter(e.target.value)}
                   className="px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30"
                 >
-                  <option value="">All Cities</option>
-                  {cities.map((city) => (
-                    <option key={city} value={city}>{city}</option>
+                  <option value="">All Departments</option>
+                  {cities.map((department) => (
+                    <option key={department} value={department}>{department}</option>
                   ))}
                 </select>
               ) : null;
@@ -230,7 +230,7 @@ export const Kpi: React.FC = () => {
                       { key: 'late_completion_percent', label: 'Late %', align: 'center' },
                     ]
                     : [
-                      { key: 'city', label: 'City', align: 'left' },
+                      { key: 'department', label: 'Department', align: 'left' },
                       { key: 'total_assigned', label: 'Total Assigned', align: 'center' },
                       { key: 'on_time_completed', label: 'On Time', align: 'center' },
                       { key: 'late_completed', label: 'Late', align: 'center' },
@@ -265,7 +265,7 @@ export const Kpi: React.FC = () => {
             <tbody>
               {[...memberRows]
                 .filter((r) => isOwnerOrManager || r.userId === user?.id)
-                .filter((r) => !cityFilter || (r.city || '').toLowerCase() === cityFilter.toLowerCase())
+                .filter((r) => !departmentFilter || (r.department || '').toLowerCase() === departmentFilter.toLowerCase())
                 .sort((a, b) => {
                   const activeSort = sortConfig || (isOwnerOrManager && !isDoer ? { key: 'overdue_percent', direction: 'desc' as const } : null);
                   if (!activeSort) return 0;
@@ -291,7 +291,7 @@ export const Kpi: React.FC = () => {
                     className={`border-b border-slate-100 hover:bg-slate-50 ${!isDoer ? 'cursor-pointer' : ''}`}
                   >
                     <td className="py-3 px-4 font-medium text-slate-800">{row.userName}</td>
-                    {!isDoer && <td className="py-3 px-4 text-slate-600">{row.city || '-'}</td>}
+                    {!isDoer && <td className="py-3 px-4 text-slate-600">{row.department || '-'}</td>}
                     {!isDoer && <td className="py-3 px-4 text-center text-slate-700">{row.total_assigned}</td>}
                     {!isDoer && <td className="py-3 px-4 text-center text-success-600">{row.on_time_completed}</td>}
                     {!isDoer && <td className="py-3 px-4 text-center text-warning-600">{row.late_completed}</td>}

@@ -503,7 +503,7 @@ export const HelpTickets: React.FC = () => {
                 users={users}
                 value={editHelperId}
                 onChange={setEditHelperId}
-                placeholder="Search helper by name, email, or city…"
+                placeholder="Search helper by name, email, or department…"
                 excludeUserId={user.id}
               />
             </div>

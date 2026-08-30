@@ -368,7 +368,7 @@ export const RecurringTasks: React.FC = () => {
         description: editDesc,
         assigned_to_id: editAssignedToId,
         assigned_to_name: assigneeUser?.name || editingTask.assigned_to_name,
-        assigned_to_city: assigneeUser?.city || editingTask.assigned_to_city,
+        assigned_to_department: assigneeUser?.department || editingTask.assigned_to_department,
         due_date: editDueDate,
         recurring: immutableRecurring,
         recurring_days: immutableRecurring === 'daily' && editRecurringDays.length > 0 ? editRecurringDays : undefined,

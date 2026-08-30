@@ -97,7 +97,7 @@ export function computeKpi(
 export interface MemberKpiRow {
   userId: string;
   userName: string;
-  city?: string;
+  department?: string;
   total_assigned: number;
   on_time_completed: number;
   late_completed: number;
@@ -110,7 +110,7 @@ export function computeKpiByMember(
   tasks: Task[],
   holidays: Holiday[],
   absences: Absence[],
-  users: { id: string; name: string; city?: string }[]
+  users: { id: string; name: string; department?: string }[]
 ): MemberKpiRow[] {
   const today = getTodayIST();
   const rows: MemberKpiRow[] = users.map((u) => {
@@ -140,7 +140,7 @@ export function computeKpiByMember(
     return {
       userId: u.id,
       userName: u.name,
-      city: u.city,
+      department: u.department,
       total_assigned: countable.length,
       on_time_completed: onTime,
       late_completed: late,

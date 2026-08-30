@@ -66,8 +66,8 @@ export const HelpNew: React.FC = () => {
     return users.filter((u) => {
       const name = (u.name || '').toLowerCase();
       const email = (u.email || '').toLowerCase();
-      const city = (u.city || '').toLowerCase();
-      return name.includes(s) || email.includes(s) || city.includes(s);
+      const department = (u.department || '').toLowerCase();
+      return name.includes(s) || email.includes(s) || department.includes(s);
     });
   }, [users, helperSearch]);
 
@@ -163,10 +163,10 @@ export const HelpNew: React.FC = () => {
           <div className="relative">
             <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
-              value={helperOpen ? helperSearch : (helper ? `${helper.name}${helper.city ? ` · ${helper.city}` : ''}` : '')}
+              value={helperOpen ? helperSearch : (helper ? `${helper.name}${helper.department ? ` · ${helper.department}` : ''}` : '')}
               onChange={(e) => { setHelperSearch(e.target.value); setHelperOpen(true); }}
               onFocus={() => setHelperOpen(true)}
-              placeholder={loadingUsers ? 'Loading members...' : 'Search member by name, email, or city...'}
+              placeholder={loadingUsers ? 'Loading members...' : 'Search member by name, email, or department...'}
               className="w-full h-10 rounded-xl border border-slate-200 bg-white pl-9 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 focus:outline-none"
               disabled={loadingUsers}
             />
@@ -199,7 +199,7 @@ export const HelpNew: React.FC = () => {
                     }`}
                   >
                     <div className="font-medium text-slate-800">{u.name}</div>
-                    <div className="text-xs text-slate-500">{u.email}{u.city ? ` · ${u.city}` : ''}</div>
+                    <div className="text-xs text-slate-500">{u.email}{u.department ? ` · ${u.department}` : ''}</div>
                   </button>
                 ))
               )}

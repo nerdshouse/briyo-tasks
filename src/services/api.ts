@@ -120,7 +120,7 @@ const docToTask = (d: any): Task => {
     recurring_days: data.recurring_days,
     assigned_to_id: data.assigned_to_id || '',
     assigned_to_name: data.assigned_to_name || '',
-    assigned_to_city: data.assigned_to_city,
+    assigned_to_department: data.assigned_to_department,
     assigned_by_id: data.assigned_by_id || '',
     assigned_by_name: data.assigned_by_name || '',
     verification_required: data.verification_required === true,
@@ -1049,14 +1049,14 @@ export const api = {
   /** Reassign all tasks from one user to another. */
   reassignTasksToUser: async (
     fromUserId: string,
-    toUser: Pick<User, 'id' | 'name' | 'city'>
+    toUser: Pick<User, 'id' | 'name' | 'department'>
   ): Promise<void> => {
     const tasks = await api.getTasksAssignedTo(fromUserId);
     for (const t of tasks) {
       await api.updateTask(t.id, {
         assigned_to_id: toUser.id,
         assigned_to_name: toUser.name,
-        assigned_to_city: toUser.city,
+        assigned_to_department: toUser.department,
         assignee_deleted: false,
       });
     }

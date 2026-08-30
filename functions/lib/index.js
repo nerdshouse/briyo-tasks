@@ -306,7 +306,7 @@ async function runGenerateRecurringTasks(db, opts = {}) {
                     attachment_description: template.attachment_description || null,
                     assigned_to_id: template.assigned_to_id || '',
                     assigned_to_name: template.assigned_to_name || '',
-                    assigned_to_city: template.assigned_to_city || null,
+                    assigned_to_department: template.assigned_to_department || null,
                     assigned_by_id: template.assigned_by_id || '',
                     assigned_by_name: template.assigned_by_name || '',
                     assignee_deleted: template.assignee_deleted === true,

@@ -199,7 +199,7 @@ export const AssignTask: React.FC = () => {
           audit_sop_links: auditSopLinks.filter(l => l.trim() !== '').length > 0 ? auditSopLinks.filter(l => l.trim() !== '') : undefined,
           assigned_to_id: assigneeId,
           assigned_to_name: assignee.name || '',
-          assigned_to_city: assignee.city,
+          assigned_to_department: assignee.department,
           assigned_by_id: user.id,
           assigned_by_name: user.name,
           verification_required: verificationRequired,
@@ -280,9 +280,9 @@ export const AssignTask: React.FC = () => {
     if (!s) return true;
     const name = (u.name || '').toLowerCase();
     const email = (u.email || '').toLowerCase();
-    const city = (u.city || '').toLowerCase();
+    const department = (u.department || '').toLowerCase();
     const role = (ROLE_LABELS[u.role] || '').toLowerCase();
-    return name.includes(s) || email.includes(s) || city.includes(s) || role.includes(s);
+    return name.includes(s) || email.includes(s) || department.includes(s) || role.includes(s);
   }).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
   const verifierFiltered = users
@@ -292,9 +292,9 @@ export const AssignTask: React.FC = () => {
       if (!s) return true;
       const name = (u.name || '').toLowerCase();
       const email = (u.email || '').toLowerCase();
-      const city = (u.city || '').toLowerCase();
+      const department = (u.department || '').toLowerCase();
       const role = (ROLE_LABELS[u.role] || '').toLowerCase();
-      return name.includes(s) || email.includes(s) || city.includes(s) || role.includes(s);
+      return name.includes(s) || email.includes(s) || department.includes(s) || role.includes(s);
     })
     .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
@@ -461,7 +461,7 @@ export const AssignTask: React.FC = () => {
                 <div className="flex flex-wrap gap-2 my-2">
                   {selectedUsers.map((u) => (
                     <span key={u.id} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-brand-50 border border-brand-200 text-brand-800 text-xs font-medium">
-                      {u.name} {u.city ? `(${u.city})` : ''}
+                      {u.name} {u.department ? `(${u.department})` : ''}
                       <button
                         type="button"
                         onClick={() => setAssignedToIds(prev => prev.filter(id => id !== u.id))}
@@ -485,7 +485,7 @@ export const AssignTask: React.FC = () => {
                     if (formError) setFormError('');
                   }}
                   onFocus={() => setAssignDropdownOpen(true)}
-                  placeholder="Search by name, email, role, or city..."
+                  placeholder="Search by name, email, role, or department..."
                   className="w-full h-10 pl-10 pr-10 rounded-control border border-slate-200 hover:border-slate-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500"
                 />
                 {assignToSearch ? (
@@ -531,7 +531,7 @@ export const AssignTask: React.FC = () => {
                             <span className="font-medium">{u.name}</span>
                             <span className="text-slate-500">
                               {' · '}{ROLE_LABELS[u.role]}
-                              {u.city ? ` · ${u.city}` : ''}
+                              {u.department ? ` · ${u.department}` : ''}
                             </span>
                           </div>
                           {isSelected && <span className="text-brand-600 text-sm font-bold ml-2">✓</span>}
@@ -572,7 +572,7 @@ export const AssignTask: React.FC = () => {
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                   <input
                     type="text"
-                    value={verifierDropdownOpen ? verifierSearch : (selectedVerifier ? `${selectedVerifier.name} · ${ROLE_LABELS[selectedVerifier.role]}${selectedVerifier.city ? ` · ${selectedVerifier.city}` : ''}` : '')}
+                    value={verifierDropdownOpen ? verifierSearch : (selectedVerifier ? `${selectedVerifier.name} · ${ROLE_LABELS[selectedVerifier.role]}${selectedVerifier.department ? ` · ${selectedVerifier.department}` : ''}` : '')}
                     onChange={(e) => {
                       setVerifierSearch(e.target.value);
                       setVerifierDropdownOpen(true);
@@ -580,7 +580,7 @@ export const AssignTask: React.FC = () => {
                       if (formError) setFormError('');
                     }}
                     onFocus={() => setVerifierDropdownOpen(true)}
-                    placeholder="Search verifier by name, email, role, or city..."
+                    placeholder="Search verifier by name, email, role, or department..."
                     className="w-full h-10 pl-10 pr-10 rounded-control border border-slate-200 hover:border-slate-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500"
                   />
                   <ChevronDown
@@ -609,7 +609,7 @@ export const AssignTask: React.FC = () => {
                           <span className="font-medium">{u.name}</span>
                           <span className="text-slate-500">
                             {' · '}{ROLE_LABELS[u.role]}
-                            {u.city ? ` · ${u.city}` : ''}
+                            {u.department ? ` · ${u.department}` : ''}
                           </span>
                         </li>
                       ))

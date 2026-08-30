@@ -53,7 +53,7 @@ export const RedZone: React.FC = () => {
   const [assignedByFilter, setAssignedByFilter] = useState('');
   const [recurringFilter, setRecurringFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [cityFilter, setCityFilter] = useState('');
+  const [departmentFilter, setDepartmentFilter] = useState('');
   const [completeTask, setCompleteTask] = useState<Task | null>(null);
   const [completing, setCompleting] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -188,16 +188,16 @@ export const RedZone: React.FC = () => {
       if (assignedToFilter && task.assigned_to_id !== assignedToFilter) return false;
       if (assignedByFilter && task.assigned_by_id !== assignedByFilter) return false;
       if (recurringFilter && getDisplayRecurring(task, taskById) !== recurringFilter) return false;
-      if (cityFilter && (task.assigned_to_city || '').toLowerCase() !== cityFilter.toLowerCase()) return false;
+      if (departmentFilter && (task.assigned_to_department || '').toLowerCase() !== departmentFilter.toLowerCase()) return false;
       if (statusFilter && task.status !== statusFilter) return false;
       return true;
     });
-  }, [cityFilter, assignedByFilter, assignedToFilter, isDoer, isManager, isOwner, recurringFilter, statusFilter, resolveDateRange, taskById, tasks, user?.id]);
+  }, [departmentFilter, assignedByFilter, assignedToFilter, isDoer, isManager, isOwner, recurringFilter, statusFilter, resolveDateRange, taskById, tasks, user?.id]);
 
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [cityFilter, assignedToFilter, assignedByFilter, recurringFilter, statusFilter, dateFilter, customStart, customEnd, tasks]);
+  }, [departmentFilter, assignedToFilter, assignedByFilter, recurringFilter, statusFilter, dateFilter, customStart, customEnd, tasks]);
 
   // Pagination
   const totalResults = filtered.length;
@@ -323,7 +323,7 @@ export const RedZone: React.FC = () => {
         description: editDesc,
         assigned_to_id: editAssignedToId,
         assigned_to_name: assigneeUser?.name || editingTask.assigned_to_name,
-        assigned_to_city: assigneeUser?.city || editingTask.assigned_to_city,
+        assigned_to_department: assigneeUser?.department || editingTask.assigned_to_department,
         due_date: editDueDate,
         recurring: immutableRecurring,
         recurring_days: immutableRecurring === 'daily' && editRecurringDays.length > 0 ? editRecurringDays : (null as any),
@@ -491,19 +491,19 @@ export const RedZone: React.FC = () => {
               const cities = Array.from(
                 new Set(
                   allUsers
-                    .map((u) => (u.city || '').trim())
+                    .map((u) => (u.department || '').trim())
                     .filter((c) => c.length > 0)
                 )
               ).sort((a, b) => a.localeCompare(b));
               return cities.length > 0 ? (
                 <select
-                  value={cityFilter}
-                  onChange={(e) => setCityFilter(e.target.value)}
+                  value={departmentFilter}
+                  onChange={(e) => setDepartmentFilter(e.target.value)}
                   className="h-9 rounded-control border border-slate-200 px-3 text-sm"
                 >
-                  <option value="">All Cities</option>
-                  {cities.map((city) => (
-                    <option key={city} value={city}>{city}</option>
+                  <option value="">All Departments</option>
+                  {cities.map((department) => (
+                    <option key={department} value={department}>{department}</option>
                   ))}
                 </select>
               ) : null;

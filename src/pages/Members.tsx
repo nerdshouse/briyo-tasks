@@ -12,6 +12,7 @@ import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { Select } from '../components/ui/Select';
+import { DepartmentSelect } from '../components/ui/DepartmentSelect';
 import { EmptyState } from '../components/ui/EmptyState';
 import { UserPlus, Trash2, Pencil, Upload, Download, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import Papa from 'papaparse';
@@ -34,7 +35,7 @@ export const Members: React.FC = () => {
   const [newUserName, setNewUserName] = useState('');
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserRole, setNewUserRole] = useState<UserRole>(UserRole.DOER);
-  const [newUserCity, setNewUserCity] = useState('');
+  const [newUserDepartment, setNewUserDepartment] = useState('');
   const [newUserPhone, setNewUserPhone] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -43,13 +44,13 @@ export const Members: React.FC = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState<number>(ROWS_PER_PAGE_OPTIONS[0]);
-  const [cityFilter, setCityFilter] = useState('');
+  const [departmentFilter, setDepartmentFilter] = useState('');
 
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [editName, setEditName] = useState('');
   const [editEmail, setEditEmail] = useState('');
   const [editRole, setEditRole] = useState<UserRole>(UserRole.DOER);
-  const [editCity, setEditCity] = useState('');
+  const [editDepartment, setEditDepartment] = useState('');
   const [editPhone, setEditPhone] = useState('');
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [editError, setEditError] = useState('');
@@ -86,14 +87,14 @@ export const Members: React.FC = () => {
         name: newUserName,
         email: newUserEmail,
         role: newUserRole,
-        city: newUserCity || undefined,
+        department: newUserDepartment || undefined,
         phone: formattedPhone,
       });
       setUsers(await api.getUsers());
       setShowAddForm(false);
       setNewUserName('');
       setNewUserEmail('');
-      setNewUserCity('');
+      setNewUserDepartment('');
       setNewUserPhone('');
     } catch (err: any) {
       setError(err.message || 'Failed to add member');
@@ -142,7 +143,7 @@ export const Members: React.FC = () => {
     setEditName(u.name);
     setEditEmail(u.email);
     setEditRole(u.role);
-    setEditCity(u.city || '');
+    setEditDepartment(u.department || '');
     setEditPhone(u.phone || '');
     setEditError('');
   };
@@ -163,7 +164,7 @@ export const Members: React.FC = () => {
         name: editName,
         email: editEmail,
         role: editRole,
-        city: editCity || undefined,
+        department: editDepartment || undefined,
         phone: formattedPhone,
       };
       await api.updateUser(editingUser.id, updates);
@@ -177,7 +178,7 @@ export const Members: React.FC = () => {
   };
 
   const handleDownloadTemplate = () => {
-    const csvContent = 'Name,Email,City,Phone\nJohn Doe,john@example.com,New York,1234567890';
+    const csvContent = 'Name,Email,Department,Phone\nJohn Doe,john@example.com,New York,1234567890';
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
@@ -269,7 +270,7 @@ export const Members: React.FC = () => {
                 name: row.Name.trim(),
                 email: row.Email.trim(), // Kept email, but isn't part of dupe check now
                 role: UserRole.DOER, // Enforce DOER role for bulk imports
-                city: row.City?.trim() || undefined,
+                department: row.Department?.trim() || undefined,
                 phone: phoneCell || undefined,
               });
               successCount++;
@@ -314,15 +315,15 @@ export const Members: React.FC = () => {
   if (!isOwner && !isManager) return <div className="text-slate-500">Access denied. Only Owner and Managers can view Members.</div>;
 
   // Unique cities for the filter dropdown
-  const uniqueCities = Array.from(
-    new Set(users.map((u) => (u.city || '').trim()).filter((c) => c.length > 0))
+  const uniqueDepartments = Array.from(
+    new Set(users.map((u) => (u.department || '').trim()).filter((c) => c.length > 0))
   ).sort((a, b) => a.localeCompare(b));
 
-  // Apply city filter, then sort alphabetically by name
+  // Apply department filter, then sort alphabetically by name
   const filteredUsers = users
     .filter((u) => {
-      if (!cityFilter) return true;
-      return (u.city || '').trim().toLowerCase() === cityFilter.toLowerCase();
+      if (!departmentFilter) return true;
+      return (u.department || '').trim().toLowerCase() === departmentFilter.toLowerCase();
     })
     .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
@@ -427,26 +428,26 @@ export const Members: React.FC = () => {
             </Button>
           </div>
         )}
-        {uniqueCities.length > 0 && (
+        {uniqueDepartments.length > 0 && (
           <div className="flex items-center gap-2 sm:ml-auto">
             <div className="w-44">
               <Select
-                value={cityFilter}
+                value={departmentFilter}
                 onChange={(e) => {
-                  setCityFilter(e.target.value);
+                  setDepartmentFilter(e.target.value);
                   setCurrentPage(1);
                 }}
               >
-                <option value="">All Cities</option>
-                {uniqueCities.map((city) => (
-                  <option key={city} value={city}>{city}</option>
+                <option value="">All Departments</option>
+                {uniqueDepartments.map((department) => (
+                  <option key={department} value={department}>{department}</option>
                 ))}
               </Select>
             </div>
-            {cityFilter && (
+            {departmentFilter && (
               <button
                 type="button"
-                onClick={() => { setCityFilter(''); setCurrentPage(1); }}
+                onClick={() => { setDepartmentFilter(''); setCurrentPage(1); }}
                 className="text-xs text-brand-600 hover:text-brand-800 font-medium"
               >
                 Clear
@@ -505,11 +506,9 @@ export const Members: React.FC = () => {
                     <option value={UserRole.AUDITOR}>Auditor</option>
                   </select>
                 </div>
-                <Input
-                  label="City"
-                  value={newUserCity}
-                  onChange={(e) => setNewUserCity(e.target.value)}
-                  placeholder="City"
+                <DepartmentSelect
+                  value={newUserDepartment}
+                  onChange={setNewUserDepartment}
                 />
                 <Input
                   label="Phone (for WhatsApp)"
@@ -521,7 +520,7 @@ export const Members: React.FC = () => {
                   <Button type="submit" isLoading={submitting}>
                     Add Member
                   </Button>
-                  <Button type="button" variant="secondary" onClick={() => { setShowAddForm(false); setError(''); setNewUserName(''); setNewUserEmail(''); setNewUserCity(''); setNewUserPhone(''); setNewUserRole(UserRole.DOER); }}>
+                  <Button type="button" variant="secondary" onClick={() => { setShowAddForm(false); setError(''); setNewUserName(''); setNewUserEmail(''); setNewUserDepartment(''); setNewUserPhone(''); setNewUserRole(UserRole.DOER); }}>
                     Cancel
                   </Button>
                 </div>
@@ -534,7 +533,7 @@ export const Members: React.FC = () => {
           <EmptyState
             icon={UserPlus}
             title="No members found"
-            description={cityFilter ? 'No members match this city filter.' : 'Add your first team member to get started.'}
+            description={departmentFilter ? 'No members match this department filter.' : 'Add your first team member to get started.'}
           />
         </div>
       ) : (
@@ -558,7 +557,7 @@ export const Members: React.FC = () => {
                   </span>
                 </div>
                 <div className="mt-3 space-y-1 text-xs text-slate-500">
-                  {u.city && <p><span className="font-medium text-slate-400">City:</span> {u.city}</p>}
+                  {u.department && <p><span className="font-medium text-slate-400">Department:</span> {u.department}</p>}
                   {u.phone && <p><span className="font-medium text-slate-400">Phone:</span> {u.phone}</p>}
                 </div>
                 <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-end gap-1">
@@ -593,7 +592,7 @@ export const Members: React.FC = () => {
                   <th className="text-left py-3 px-5 text-xs font-semibold uppercase tracking-wide text-slate-400">Name</th>
                   <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wide text-slate-400">Email</th>
                   <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wide text-slate-400">Role</th>
-                  <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wide text-slate-400">City</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wide text-slate-400">Department</th>
                   <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wide text-slate-400">Phone</th>
                   <th className="w-24" aria-label="Actions" />
                 </tr>
@@ -615,7 +614,7 @@ export const Members: React.FC = () => {
                         {ROLE_LABELS[u.role]}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-slate-600">{u.city || '-'}</td>
+                    <td className="py-3 px-4 text-slate-600">{u.department || '-'}</td>
                     <td className="py-3 px-4 text-slate-600">{u.phone || '-'}</td>
                     <td className="py-2 px-4">
                       <div className="flex items-center justify-end gap-1">
@@ -676,7 +675,7 @@ export const Members: React.FC = () => {
                     <option value={UserRole.AUDITOR}>Auditor</option>
                   </select>
                 </div>
-                <Input label="City" value={editCity} onChange={(e) => setEditCity(e.target.value)} placeholder="City" />
+                <DepartmentSelect value={editDepartment} onChange={setEditDepartment} />
                 <Input label="Phone (for WhatsApp)" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} placeholder="+91..." />
                 <div className="flex gap-2 pt-2">
                   <Button type="submit" isLoading={editSubmitting}>Save changes</Button>

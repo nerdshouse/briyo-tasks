@@ -675,7 +675,7 @@ export const TaskTable: React.FC = () => {
         { header: 'Title', accessor: (t) => t.title },
         { header: 'Description', accessor: (t) => t.description || '' },
         { header: 'Assigned To', accessor: (t) => t.assigned_to_name || '' },
-        { header: 'Assigned To City', accessor: (t) => t.assigned_to_city || '' },
+        { header: 'Assigned To Department', accessor: (t) => t.assigned_to_department || '' },
         { header: 'Assigned By', accessor: (t) => t.assigned_by_name || '' },
         { header: 'Start Date', accessor: (t) => formatDateValue(t.start_date, { emptyValue: '###' }) },
         { header: 'Due Date', accessor: (t) => formatDateValue(t.due_date, { emptyValue: '###' }) },
@@ -978,7 +978,7 @@ export const TaskTable: React.FC = () => {
           status: finalStatus,
           assigned_to_id: editAssignedToId,
           assigned_to_name: assigneeUser?.name || editingTask.assigned_to_name,
-          assigned_to_city: assigneeUser?.city || editingTask.assigned_to_city,
+          assigned_to_department: assigneeUser?.department || editingTask.assigned_to_department,
           due_date: editDueDate,
           recurring: immutableRecurring,
           recurring_days: immutableRecurring === 'daily' && editRecurringDays.length > 0 ? editRecurringDays : (null as any),
@@ -1216,7 +1216,7 @@ export const TaskTable: React.FC = () => {
                 <th className="sticky-col-1 text-center">Task</th>
                 <th className="sticky-col-2 text-center">Description</th>
                 <th className="whitespace-nowrap text-center">Name</th>
-                <th className="whitespace-nowrap text-center">City</th>
+                <th className="whitespace-nowrap text-center">Department</th>
                 <th className="whitespace-nowrap text-center">Attachment</th>
                 <th className="whitespace-nowrap text-center">Status</th>
                 <th className="whitespace-nowrap text-center">Pending Days</th>
@@ -1247,7 +1247,7 @@ export const TaskTable: React.FC = () => {
                       <span className="ml-2 text-xs px-2 py-0.5 rounded bg-slate-200 text-slate-600">Member deleted</span>
                     )}
                   </td>
-                  <td>{t.assigned_to_city || (t.assignee_deleted ? '—' : '-')}</td>
+                  <td>{t.assigned_to_department || (t.assignee_deleted ? '—' : '-')}</td>
                   <td className="text-center">{renderAttachmentAction(t)}</td>
                   <td className="text-center">
                     <span
@@ -1312,7 +1312,7 @@ export const TaskTable: React.FC = () => {
                 meta={
                   <>
                     <TaskCardMeta label="Doer">{t.assigned_to_name}</TaskCardMeta>
-                    {t.assigned_to_city && <TaskCardMeta label="City">{t.assigned_to_city}</TaskCardMeta>}
+                    {t.assigned_to_department && <TaskCardMeta label="Department">{t.assigned_to_department}</TaskCardMeta>}
                     <TaskCardMeta label="Pending days">{getPendingDays(t.due_date)}</TaskCardMeta>
                     <TaskCardMeta label="Audit">{t.audit_status || 'pending'}</TaskCardMeta>
                   </>

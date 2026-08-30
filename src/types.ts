@@ -18,7 +18,7 @@ export interface User {
   email: string;
   role: UserRole;
   phone?: string;
-  city?: string;
+  department?: string;
   password?: string;
   approved?: boolean;
   created_at?: string;
@@ -71,7 +71,7 @@ export interface Task {
   recurring_days?: number[];
   assigned_to_id: string;
   assigned_to_name: string;
-  assigned_to_city?: string;
+  assigned_to_department?: string;
   assigned_by_id: string;
   assigned_by_name: string;
   created_at: string;
