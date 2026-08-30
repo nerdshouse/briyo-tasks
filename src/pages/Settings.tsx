@@ -11,7 +11,8 @@ import { Holiday, Absence, UserRole } from '../types';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
-import { Calendar, ChevronDown, ChevronUp, Plus } from 'lucide-react';
+import { Calendar, ChevronDown, ChevronUp, Plus, Trash2, UserMinus } from 'lucide-react';
+import { EmptyState } from '../components/ui/EmptyState';
 import { formatDateDDMMYYYY } from '../lib/utils';
 import { Members } from './Members';
 
@@ -116,141 +117,154 @@ export const Settings: React.FC = () => {
         <Members />
       ) : (
       <>
-      <section className="max-w-4xl space-y-6">
-        <div className="card overflow-hidden">
-          <div className="bg-slate-50/80 border-b border-slate-200 px-6 py-4">
-            <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
-              <Calendar size={20} className="text-slate-500" />
-              Holidays & Absence
-            </h2>
-            <p className="text-sm text-slate-600 mt-1">
-              Company holidays and personal absences. Tasks on these dates are excluded from KPI.
-            </p>
-          </div>
+      <section className="max-w-4xl space-y-5">
+        <p className="text-sm text-slate-500 -mt-1">
+          Company holidays and personal absences. Tasks on these dates are excluded from KPI.
+        </p>
 
-          <div className="p-6">
-            {/* Holidays */}
-            <div className="mb-8">
-              <button
-                type="button"
-                onClick={() => setHolidaysOpen((o) => !o)}
-                className="w-full flex items-center justify-between text-left py-2 rounded-lg hover:bg-slate-50 transition-colors"
-              >
-                <h3 className="font-semibold text-slate-800">
-                  Holidays
-                  <span className="text-sm font-normal text-slate-500 ml-2">({holidays.length})</span>
-                </h3>
-                {holidaysOpen ? <ChevronUp size={20} className="text-slate-400" /> : <ChevronDown size={20} className="text-slate-400" />}
-              </button>
-              {holidaysOpen && (
-                <>
-                  {isManager && (
-                    <div className="mb-4">
-                      <Button type="button" onClick={() => setShowAddHolidayModal(true)} size="sm">
-                        <Plus size={16} className="mr-1.5" />
-                        Add Holiday
-                      </Button>
-                    </div>
-                  )}
-                  <div
-                    className="overflow-y-auto border border-slate-200 rounded-lg bg-white"
-                    style={{ maxHeight: LIST_MAX_HEIGHT }}
-                  >
-                    <table className="w-full text-sm">
-                      <thead className="sticky top-0 bg-slate-50 z-10 border-b border-slate-200">
-                        <tr>
-                          <th className="text-left py-3 px-4 font-semibold text-slate-700">Date</th>
-                          <th className="text-left py-3 px-4 font-semibold text-slate-700">Name</th>
-                          {isManager && <th className="text-right py-3 px-4 font-semibold text-slate-700">Actions</th>}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {holidays.length === 0 ? (
-                          <tr>
-                            <td colSpan={isManager ? 3 : 2} className="py-8 px-4 text-center text-slate-500">
-                              No holidays added yet.
-                            </td>
-                          </tr>
-                        ) : (
-                          holidays.map((h) => (
-                            <tr key={h.id} className="border-b border-slate-100 hover:bg-slate-50/50">
-                              <td className="py-2.5 px-4 text-slate-700">{formatDateDDMMYYYY(h.date)}</td>
-                              <td className="py-2.5 px-4 font-medium text-slate-800">{h.name}</td>
-                              {isManager && (
-                                <td className="py-2.5 px-4 text-right">
-                                  <Button size="sm" variant="danger" onClick={() => handleDeleteHoliday(h.id)}>
-                                    Delete
-                                  </Button>
-                                </td>
-                              )}
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* Absence */}
-            <div>
-              <button
-                type="button"
-                onClick={() => setAbsencesOpen((o) => !o)}
-                className="w-full flex items-center justify-between text-left py-2 rounded-lg hover:bg-slate-50 transition-colors"
-              >
-                <h3 className="font-semibold text-slate-800">
-                  Absence records
-                  <span className="text-sm font-normal text-slate-500 ml-2">({absences.length})</span>
-                </h3>
-                {absencesOpen ? <ChevronUp size={20} className="text-slate-400" /> : <ChevronDown size={20} className="text-slate-400" />}
-              </button>
-              {absencesOpen && (
-                <>
-                  <div className="mb-4">
-                    <Button type="button" onClick={() => setShowMarkAbsentModal(true)} size="sm">
-                      <Plus size={16} className="mr-1.5" />
-                      Mark myself absent
-                    </Button>
-                  </div>
-                  <div
-                    className="overflow-y-auto border border-slate-200 rounded-lg bg-white"
-                    style={{ maxHeight: LIST_MAX_HEIGHT }}
-                  >
-                    <table className="w-full text-sm">
-                      <thead className="sticky top-0 bg-slate-50 z-10 border-b border-slate-200">
-                        <tr>
-                          <th className="text-left py-3 px-4 font-semibold text-slate-700">Member</th>
-                          <th className="text-left py-3 px-4 font-semibold text-slate-700">From</th>
-                          <th className="text-left py-3 px-4 font-semibold text-slate-700">To</th>
-                          <th className="text-left py-3 px-4 font-semibold text-slate-700">Reason</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {absences.length === 0 ? (
-                          <tr>
-                            <td colSpan={4} className="py-8 px-4 text-center text-slate-500">
-                              No absence records yet.
-                            </td>
-                          </tr>
-                        ) : (
-                          absences.map((a) => (
-                            <tr key={a.id} className="border-b border-slate-100 hover:bg-slate-50/50">
-                              <td className="py-2.5 px-4 font-medium text-slate-800">{a.user_name}</td>
-                              <td className="py-2.5 px-4 text-slate-700">{formatDateDDMMYYYY(a.from_date)}</td>
-                              <td className="py-2.5 px-4 text-slate-700">{formatDateDDMMYYYY(a.to_date)}</td>
-                              <td className="py-2.5 px-4 text-slate-600">{a.reason || '-'}</td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </>
-              )}
-            </div>
+        {/* Holidays */}
+        <div className="bg-white rounded-card border border-slate-200 shadow-card overflow-hidden">
+          <div className="flex items-center justify-between gap-3 px-4 sm:px-5 py-4">
+            <button
+              type="button"
+              onClick={() => setHolidaysOpen((o) => !o)}
+              className="flex items-center gap-3 text-left min-w-0"
+            >
+              <span className="w-9 h-9 shrink-0 rounded-control bg-brand-50 flex items-center justify-center">
+                <Calendar size={18} className="text-brand-600" />
+              </span>
+              <span className="flex items-center gap-2 min-w-0">
+                <span className="font-semibold text-slate-900 truncate">Holidays</span>
+                <span className="inline-flex min-w-5 h-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold bg-slate-100 text-slate-600">
+                  {holidays.length}
+                </span>
+                {holidaysOpen ? (
+                  <ChevronUp size={16} className="text-slate-400 shrink-0" />
+                ) : (
+                  <ChevronDown size={16} className="text-slate-400 shrink-0" />
+                )}
+              </span>
+            </button>
+            {isManager && (
+              <Button type="button" onClick={() => setShowAddHolidayModal(true)} size="sm">
+                <Plus size={14} className="mr-1.5" />
+                Add Holiday
+              </Button>
+            )}
           </div>
+          {holidaysOpen && (
+            holidays.length === 0 ? (
+              <div className="border-t border-slate-100">
+                <EmptyState
+                  icon={Calendar}
+                  title="No holidays yet"
+                  description="Company holidays you add here are excluded from KPI calculations."
+                />
+              </div>
+            ) : (
+              <div
+                className="border-t border-slate-100 overflow-y-auto overflow-x-auto"
+                style={{ maxHeight: LIST_MAX_HEIGHT }}
+              >
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 bg-white z-10">
+                    <tr className="border-b border-slate-100">
+                      <th className="text-left py-2.5 px-4 sm:px-5 text-xs font-semibold uppercase tracking-wide text-slate-400">Date</th>
+                      <th className="text-left py-2.5 px-4 text-xs font-semibold uppercase tracking-wide text-slate-400">Name</th>
+                      {isManager && <th className="w-16" aria-label="Actions" />}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {holidays.map((h) => (
+                      <tr key={h.id} className="hover:bg-slate-50/60 transition-colors">
+                        <td className="py-3 px-4 sm:px-5 text-slate-600 whitespace-nowrap">{formatDateDDMMYYYY(h.date)}</td>
+                        <td className="py-3 px-4 font-medium text-slate-800">{h.name}</td>
+                        {isManager && (
+                          <td className="py-2 px-4 text-right">
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteHoliday(h.id)}
+                              className="p-2 rounded-control text-slate-400 hover:text-danger-600 hover:bg-danger-50 transition-colors"
+                              title="Delete holiday"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )
+          )}
+        </div>
+
+        {/* Absence */}
+        <div className="bg-white rounded-card border border-slate-200 shadow-card overflow-hidden">
+          <div className="flex items-center justify-between gap-3 px-4 sm:px-5 py-4">
+            <button
+              type="button"
+              onClick={() => setAbsencesOpen((o) => !o)}
+              className="flex items-center gap-3 text-left min-w-0"
+            >
+              <span className="w-9 h-9 shrink-0 rounded-control bg-warning-50 flex items-center justify-center">
+                <UserMinus size={18} className="text-warning-600" />
+              </span>
+              <span className="flex items-center gap-2 min-w-0">
+                <span className="font-semibold text-slate-900 truncate">Absence records</span>
+                <span className="inline-flex min-w-5 h-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold bg-slate-100 text-slate-600">
+                  {absences.length}
+                </span>
+                {absencesOpen ? (
+                  <ChevronUp size={16} className="text-slate-400 shrink-0" />
+                ) : (
+                  <ChevronDown size={16} className="text-slate-400 shrink-0" />
+                )}
+              </span>
+            </button>
+            <Button type="button" variant="secondary" onClick={() => setShowMarkAbsentModal(true)} size="sm">
+              <Plus size={14} className="mr-1.5" />
+              Mark myself absent
+            </Button>
+          </div>
+          {absencesOpen && (
+            absences.length === 0 ? (
+              <div className="border-t border-slate-100">
+                <EmptyState
+                  icon={UserMinus}
+                  title="No absence records"
+                  description="Mark yourself absent so tasks during that period don't count against your KPI."
+                />
+              </div>
+            ) : (
+              <div
+                className="border-t border-slate-100 overflow-y-auto overflow-x-auto"
+                style={{ maxHeight: LIST_MAX_HEIGHT }}
+              >
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 bg-white z-10">
+                    <tr className="border-b border-slate-100">
+                      <th className="text-left py-2.5 px-4 sm:px-5 text-xs font-semibold uppercase tracking-wide text-slate-400">Member</th>
+                      <th className="text-left py-2.5 px-4 text-xs font-semibold uppercase tracking-wide text-slate-400">From</th>
+                      <th className="text-left py-2.5 px-4 text-xs font-semibold uppercase tracking-wide text-slate-400">To</th>
+                      <th className="text-left py-2.5 px-4 text-xs font-semibold uppercase tracking-wide text-slate-400">Reason</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {absences.map((a) => (
+                      <tr key={a.id} className="hover:bg-slate-50/60 transition-colors">
+                        <td className="py-3 px-4 sm:px-5 font-medium text-slate-800 whitespace-nowrap">{a.user_name}</td>
+                        <td className="py-3 px-4 text-slate-600 whitespace-nowrap">{formatDateDDMMYYYY(a.from_date)}</td>
+                        <td className="py-3 px-4 text-slate-600 whitespace-nowrap">{formatDateDDMMYYYY(a.to_date)}</td>
+                        <td className="py-3 px-4 text-slate-500">{a.reason || '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )
+          )}
         </div>
       </section>
 

@@ -11,6 +11,8 @@ import { User, UserRole } from '../types';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
+import { Select } from '../components/ui/Select';
+import { EmptyState } from '../components/ui/EmptyState';
 import { UserPlus, Trash2, Pencil, Upload, Download, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import Papa from 'papaparse';
 
@@ -334,7 +336,7 @@ export const Members: React.FC = () => {
     .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
   const paginationControls = (
-    <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3 border border-slate-200 rounded-xl mb-4">
+    <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex items-center gap-3">
         <span className="text-sm font-medium text-slate-600">Rows per page</span>
         <select
@@ -436,19 +438,20 @@ export const Members: React.FC = () => {
         )}
         {uniqueCities.length > 0 && (
           <div className="flex items-center gap-2 sm:ml-auto">
-            <select
-              value={cityFilter}
-              onChange={(e) => {
-                setCityFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="h-9 rounded-control border border-slate-200 px-3 text-sm"
-            >
-              <option value="">All Cities</option>
-              {uniqueCities.map((city) => (
-                <option key={city} value={city}>{city}</option>
-              ))}
-            </select>
+            <div className="w-44">
+              <Select
+                value={cityFilter}
+                onChange={(e) => {
+                  setCityFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+              >
+                <option value="">All Cities</option>
+                {uniqueCities.map((city) => (
+                  <option key={city} value={city}>{city}</option>
+                ))}
+              </Select>
+            </div>
             {cityFilter && (
               <button
                 type="button"
@@ -543,68 +546,125 @@ export const Members: React.FC = () => {
         </Modal>
       )}
 
-      {paginationControls}
-
-      <div className="overflow-x-auto mt-4">
-        <table className="w-full border-collapse bg-white rounded-card border border-slate-200 shadow-card">
-          <thead>
-            <tr className="bg-slate-50 border-b border-slate-200">
-              <th className="text-left py-4 px-4 font-semibold text-slate-800">Name</th>
-              <th className="text-left py-4 px-4 font-semibold text-slate-800">Email</th>
-              <th className="text-left py-4 px-4 font-semibold text-slate-800">Role</th>
-              <th className="text-left py-4 px-4 font-semibold text-slate-800">City</th>
-              <th className="text-left py-4 px-4 font-semibold text-slate-800">Phone</th>
-              <th className="text-right py-4 px-4 font-semibold text-slate-800">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
+      {filteredUsers.length === 0 ? (
+        <div className="bg-white rounded-card border border-slate-200 shadow-card">
+          <EmptyState
+            icon={UserPlus}
+            title="No members found"
+            description={cityFilter ? 'No members match this city filter.' : 'Add your first team member to get started.'}
+          />
+        </div>
+      ) : (
+        <>
+          {/* Mobile: member cards */}
+          <div className="sm:hidden space-y-3">
             {filteredUsers.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage).map((u) => (
-              <tr key={u.id} className="border-b border-slate-100 hover:bg-slate-50">
-                <td className="py-3 px-4 font-medium text-slate-800">{u.name}</td>
-                <td className="py-3 px-4 text-slate-600">{u.email}</td>
-                <td className="py-3 px-4">
-                  <span className="px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700">
-                    {u.role}
+              <div key={u.id} className="bg-white rounded-card border border-slate-200 shadow-card p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-9 h-9 shrink-0 rounded-control bg-brand-100 flex items-center justify-center text-brand-700 font-semibold text-sm">
+                      {u.name.charAt(0)}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-slate-900 truncate">{u.name}</p>
+                      <p className="text-xs text-slate-500 truncate">{u.email}</p>
+                    </div>
+                  </div>
+                  <span className="shrink-0 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 capitalize">
+                    {ROLE_LABELS[u.role]}
                   </span>
-                </td>
-                <td className="py-3 px-4 text-slate-600">{u.city || '-'}</td>
-                <td className="py-3 px-4 text-slate-600">{u.phone || '-'}</td>
-                <td className="py-3 px-4 text-right flex gap-2 justify-end">
-                  <Button
-                    size="sm"
-                    variant="secondary"
+                </div>
+                <div className="mt-3 space-y-1 text-xs text-slate-500">
+                  {u.city && <p><span className="font-medium text-slate-400">City:</span> {u.city}</p>}
+                  {u.phone && <p><span className="font-medium text-slate-400">Phone:</span> {u.phone}</p>}
+                </div>
+                <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-end gap-1">
+                  <button
+                    type="button"
                     onClick={() => openEditModal(u)}
                     disabled={u.id === user?.id}
+                    className="p-2 rounded-control text-slate-400 hover:text-brand-700 hover:bg-brand-50 transition-colors disabled:opacity-40 disabled:pointer-events-none"
                     title="Edit member"
                   >
-                    <Pencil size={14} />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="danger"
+                    <Pencil size={15} />
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => handleDeleteMember(u)}
                     disabled={u.id === user?.id || deleteLoading}
+                    className="p-2 rounded-control text-slate-400 hover:text-danger-600 hover:bg-danger-50 transition-colors disabled:opacity-40 disabled:pointer-events-none"
                     title="Remove member"
                   >
-                    <Trash2 size={14} />
-                  </Button>
-                </td>
-              </tr>
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              </div>
             ))}
-            {filteredUsers.length === 0 && (
-              <tr>
-                <td colSpan={6} className="py-6 text-center text-slate-500">
-                  No members found.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+          </div>
 
-      <div className="mt-4">
-        {paginationControls}
-      </div>
+          {/* Desktop: table */}
+          <div className="hidden sm:block bg-white rounded-card border border-slate-200 shadow-card overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-100">
+                  <th className="text-left py-3 px-5 text-xs font-semibold uppercase tracking-wide text-slate-400">Name</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wide text-slate-400">Email</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wide text-slate-400">Role</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wide text-slate-400">City</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wide text-slate-400">Phone</th>
+                  <th className="w-24" aria-label="Actions" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredUsers.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage).map((u) => (
+                  <tr key={u.id} className="hover:bg-slate-50/60 transition-colors">
+                    <td className="py-3 px-5">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 shrink-0 rounded-control bg-brand-100 flex items-center justify-center text-brand-700 font-semibold text-xs">
+                          {u.name.charAt(0)}
+                        </div>
+                        <span className="font-medium text-slate-800">{u.name}</span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 text-slate-600">{u.email}</td>
+                    <td className="py-3 px-4">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 capitalize">
+                        {ROLE_LABELS[u.role]}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-slate-600">{u.city || '-'}</td>
+                    <td className="py-3 px-4 text-slate-600">{u.phone || '-'}</td>
+                    <td className="py-2 px-4">
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          type="button"
+                          onClick={() => openEditModal(u)}
+                          disabled={u.id === user?.id}
+                          className="p-2 rounded-control text-slate-400 hover:text-brand-700 hover:bg-brand-50 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                          title="Edit member"
+                        >
+                          <Pencil size={15} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteMember(u)}
+                          disabled={u.id === user?.id || deleteLoading}
+                          className="p-2 rounded-control text-slate-400 hover:text-danger-600 hover:bg-danger-50 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                          title="Remove member"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-4">{paginationControls}</div>
+        </>
+      )}
 
       {editingUser && (
         <Modal
