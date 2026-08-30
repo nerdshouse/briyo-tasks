@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { AlertTriangle, ArrowLeft, MessageSquare, Phone } from 'lucide-react';
+import { BrandLogo, DeveloperCredit } from '../components/ui/BrandLogo';
 
 const RESEND_COOLDOWN_SECONDS = 30;
 
@@ -90,8 +91,8 @@ export const Login: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-card border border-slate-200 shadow-card px-6 sm:px-8 py-8">
-          <div className="flex justify-center pb-8 pt-2">
-            <h1 className="text-4xl font-extrabold tracking-tight text-brand-600">BRIYO</h1>
+          <div className="flex justify-center pb-8 pt-2 text-brand-600">
+            <BrandLogo size="lg" />
           </div>
 
           {error && (
@@ -186,6 +187,7 @@ export const Login: React.FC = () => {
         <p className="text-center text-xs text-slate-400 mt-4">
           No account? Contact your administrator to get added.
         </p>
+        <DeveloperCredit className="text-center mt-6" />
       </div>
     </div>
   );

@@ -9,6 +9,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { UserRole } from '../types';
 import { api } from '../services/api';
+import { BrandLogo } from './ui/BrandLogo';
 import {
   Info,
   ClipboardList,
@@ -268,6 +269,9 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           <LogOut size={18} />
           <span>Log out</span>
         </button>
+        <p className="px-3 pt-2 pb-1 text-[10px] leading-snug text-slate-400">
+          Developed by Nerdshouse Technologies LLP
+        </p>
       </div>
     </>
   );
@@ -301,15 +305,15 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     <div className="min-h-screen md:h-screen md:overflow-hidden bg-slate-50 flex flex-col md:flex-row">
       {/* Desktop sidebar */}
       <aside className="hidden md:flex md:h-screen shrink-0 flex-col w-64 bg-white border-r border-slate-200">
-        <div className="flex h-20 items-center justify-center border-b border-slate-100 px-6">
-          <span className="text-2xl font-extrabold tracking-tight text-brand-600">BRIYO</span>
+        <div className="flex h-20 items-center justify-center border-b border-slate-100 px-6 text-brand-600">
+          <BrandLogo />
         </div>
         <SidebarContent />
       </aside>
 
       {/* Mobile header */}
       <div className="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex justify-between items-center sticky top-0 z-30 shadow-sm">
-        <span className="text-lg font-extrabold tracking-tight text-brand-600">BRIYO</span>
+        <span className="text-brand-600"><BrandLogo /></span>
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
           className="p-2 rounded-control hover:bg-slate-100 text-slate-600"
@@ -332,7 +336,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           className={`absolute left-0 top-0 bottom-0 w-72 bg-white shadow-xl flex flex-col transition-transform duration-200 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}
         >
           <div className="flex justify-between items-center px-4 py-3 border-b border-slate-100">
-            <span className="text-lg font-extrabold tracking-tight text-brand-600">BRIYO</span>
+            <span className="text-brand-600"><BrandLogo /></span>
             <button onClick={() => setMobileOpen(false)} className="p-2 rounded-control hover:bg-slate-100">
               <X size={20} />
             </button>

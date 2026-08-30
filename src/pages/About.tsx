@@ -7,6 +7,7 @@
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { UserRole } from '../types';
+import { BrandLogo } from '../components/ui/BrandLogo';
 import {
   ClipboardList,
   ClipboardCheck,
@@ -18,6 +19,7 @@ import {
   LifeBuoy,
   Settings,
   MessageSquare,
+  ShieldCheck,
   LucideIcon,
 } from 'lucide-react';
 
@@ -34,13 +36,13 @@ const FEATURES: FeatureRow[] = [
     icon: ClipboardList,
     title: 'Assign Task',
     description:
-      'Create a task and assign it to one or more members — with start/due dates, recurrence (daily to yearly), a verifier if sign-off is needed, required attachments, and audit guidelines.',
+      'Create a task and assign it to one or more members — with dates, recurrence, a verifier, required attachments, and audit guidelines.',
   },
   {
     icon: Table2,
     title: 'Task Table',
     description:
-      'Your task workspace. Admins see every task in the company; everyone else sees their own tasks. Filter by member, status, recurrence, or date, and complete tasks right from the list.',
+      'Your task workspace. Admins see every task in the company; everyone else sees their own. Filter, sort, and complete tasks right from the list.',
   },
   {
     icon: ClipboardCheck,
@@ -57,8 +59,7 @@ const FEATURES: FeatureRow[] = [
   {
     icon: AlertTriangle,
     title: 'Overdue',
-    description:
-      'The red zone — every task past its due date, so nothing slips through unnoticed.',
+    description: 'The red zone — every task past its due date, so nothing slips through unnoticed.',
   },
   {
     icon: ClipboardList,
@@ -70,36 +71,36 @@ const FEATURES: FeatureRow[] = [
     icon: Repeat,
     title: 'Recurring Tasks',
     description:
-      'Manage repeating task templates. Each cycle automatically creates a fresh task for the doer on schedule.',
+      'Repeating task templates — each cycle automatically creates a fresh task for the doer on schedule.',
   },
   {
     icon: CheckCircle2,
     title: 'Completed Tasks',
-    description: 'The full history of completed and permanently closed tasks, with attachments and verification records.',
+    description: 'Full history of completed and closed tasks, with attachments and verification records.',
   },
   {
     icon: BarChart3,
     title: 'KPI',
     description:
-      'Performance at a glance — tasks assigned, done on time, late, and overdue. Admins see the whole team; everyone else sees their own scorecard. Holidays and marked absences are excluded.',
+      'On-time vs late performance, with holidays and absences excluded. Admins see the whole team; everyone else sees their own scorecard.',
   },
   {
     icon: LifeBuoy,
     title: 'Helper Dashboard',
     description:
-      'Stuck on something? Raise a help ticket to a teammate with your proposed solutions, track it to resolution, and rate the help you received.',
+      'Raise a help ticket to a teammate with proposed solutions, track it to resolution, and rate the help received.',
   },
   {
     icon: Settings,
     title: 'Settings',
     description:
-      'Company holidays, absence records, and (for admins and sub-admins) member management with departments and roles.',
+      'Company holidays, absence records, and member management with departments and roles.',
   },
   {
     icon: MessageSquare,
     title: 'WhatsApp updates',
     description:
-      'You sign in with a WhatsApp OTP — no passwords. New task assignments arrive instantly on WhatsApp, and a daily reminder nudges anyone with open tasks.',
+      'Sign in with a WhatsApp OTP — no passwords. Assignments arrive instantly, and a daily reminder nudges anyone with open tasks.',
   },
 ];
 
@@ -112,39 +113,61 @@ export const About: React.FC = () => {
   );
 
   return (
-    <div className="max-w-3xl space-y-5">
-      <div className="bg-white rounded-card border border-slate-200 shadow-card p-6 sm:p-8">
-        <h2 className="text-3xl font-extrabold tracking-tight text-brand-600">BRIYO Tasks</h2>
-        <p className="mt-3 text-sm text-slate-600 leading-relaxed">
-          Briyo Tasks is the team&apos;s task management system: assign work, track it to
-          completion, verify the result, and keep everyone accountable — with WhatsApp keeping
-          each member informed along the way.
+    <div className="max-w-4xl space-y-5">
+      {/* Hero */}
+      <div className="bg-brand-600 rounded-card shadow-card p-8 sm:p-10 text-center">
+        <div className="text-white flex justify-center">
+          <BrandLogo size="lg" />
+        </div>
+        <p className="mt-5 text-sm text-white/70 leading-relaxed max-w-xl mx-auto">
+          The team&apos;s task management system — assign work, track it to completion, verify the
+          result, and keep everyone accountable, with WhatsApp keeping each member informed along
+          the way.
         </p>
+        <div className="mt-6 flex items-center justify-center gap-2 text-xs font-medium text-white/60">
+          <ShieldCheck size={14} />
+          Secured with passwordless WhatsApp sign-in
+        </div>
       </div>
 
-      <div className="bg-white rounded-card border border-slate-200 shadow-card overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100">
-          <h3 className="font-semibold text-slate-900">What each section does</h3>
-        </div>
-        <ul className="divide-y divide-slate-100">
+      {/* Feature grid */}
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-3 px-1">
+          What each section does
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {rows.map((f) => (
-            <li key={f.title} className="flex gap-4 px-6 py-4">
-              <span className="w-9 h-9 shrink-0 rounded-control bg-brand-50 flex items-center justify-center">
+            <div
+              key={f.title}
+              className="bg-white rounded-card border border-slate-200 shadow-card p-5 flex gap-4"
+            >
+              <span className="w-10 h-10 shrink-0 rounded-control bg-brand-50 flex items-center justify-center">
                 <f.icon size={18} className="text-brand-600" />
               </span>
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-slate-900">{f.title}</p>
-                <p className="mt-0.5 text-sm text-slate-500 leading-relaxed">{f.description}</p>
+                <p className="mt-1 text-[13px] text-slate-500 leading-relaxed">{f.description}</p>
               </div>
-            </li>
+            </div>
           ))}
-        </ul>
+        </div>
       </div>
 
-      <p className="text-center text-xs text-slate-400 pb-2">
-        Developed by <span className="font-medium text-slate-500">Nerdshouse Technologies LLP</span> for{' '}
-        <span className="font-medium text-slate-500">Briyo Supplements LLP</span>
-      </p>
+      {/* Credit */}
+      <div className="bg-white rounded-card border border-slate-200 shadow-card px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
+        <p className="text-sm text-slate-600">
+          Developed by <span className="font-semibold text-slate-900">Nerdshouse Technologies LLP</span>
+          {' '}for <span className="font-semibold text-slate-900">Briyo Supplements</span>
+        </p>
+        <a
+          href="https://nerdshouse.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs font-medium text-brand-600 hover:text-brand-800"
+        >
+          nerdshouse.com
+        </a>
+      </div>
     </div>
   );
 };
