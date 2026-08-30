@@ -12,7 +12,6 @@ import {
   isoToTimestamp,
 } from '../lib/firebase';
 import { httpsCallable } from 'firebase/functions';
-import bcrypt from 'bcryptjs';
 import {
   collection,
   doc,
@@ -219,16 +218,13 @@ export const api = {
     });
   },
 
-  createUser: async (u: Omit<User, 'id'> & { password: string }): Promise<User> => {
-    const hashedPassword = bcrypt.hashSync(u.password, 10);
+  createUser: async (u: Omit<User, 'id'>): Promise<User> => {
     const ref = await addDoc(collection(db, COLLECTIONS.USERS), {
       ...u,
-      password: hashedPassword,
       approved: true,
       created_at: isoToTimestamp(new Date().toISOString()),
     });
-    const { password, ...safe } = u;
-    return { ...safe, id: ref.id } as User;
+    return { ...u, id: ref.id } as User;
   },
 
   deleteUser: async (id: string): Promise<void> => {
@@ -344,11 +340,6 @@ export const api = {
     });
   },
 
-  /** Owner/manager-only: reset another member's password. Runs server-side (bcrypt-hashed there). */
-  adminSetUserPassword: async (targetUserId: string, newPassword: string): Promise<void> => {
-    const fn = httpsCallable(functions, 'adminSetUserPassword');
-    await fn({ targetUserId, newPassword });
-  },
 
   // --- Tasks ---
   getTasks: async (filters?: {

@@ -33,7 +33,6 @@ export const Members: React.FC = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newUserName, setNewUserName] = useState('');
   const [newUserEmail, setNewUserEmail] = useState('');
-  const [newUserPassword, setNewUserPassword] = useState('');
   const [newUserRole, setNewUserRole] = useState<UserRole>(UserRole.DOER);
   const [newUserCity, setNewUserCity] = useState('');
   const [newUserPhone, setNewUserPhone] = useState('');
@@ -49,7 +48,6 @@ export const Members: React.FC = () => {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [editName, setEditName] = useState('');
   const [editEmail, setEditEmail] = useState('');
-  const [editPassword, setEditPassword] = useState('');
   const [editRole, setEditRole] = useState<UserRole>(UserRole.DOER);
   const [editCity, setEditCity] = useState('');
   const [editPhone, setEditPhone] = useState('');
@@ -74,7 +72,7 @@ export const Members: React.FC = () => {
 
   const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newUserName || !newUserEmail || !newUserPassword) return;
+    if (!newUserName || !newUserEmail) return;
     setSubmitting(true);
     setError('');
     try {
@@ -87,7 +85,6 @@ export const Members: React.FC = () => {
       await api.createUser({
         name: newUserName,
         email: newUserEmail,
-        password: newUserPassword,
         role: newUserRole,
         city: newUserCity || undefined,
         phone: formattedPhone,
@@ -96,7 +93,6 @@ export const Members: React.FC = () => {
       setShowAddForm(false);
       setNewUserName('');
       setNewUserEmail('');
-      setNewUserPassword('');
       setNewUserCity('');
       setNewUserPhone('');
     } catch (err: any) {
@@ -145,7 +141,6 @@ export const Members: React.FC = () => {
     setEditingUser(u);
     setEditName(u.name);
     setEditEmail(u.email);
-    setEditPassword('');
     setEditRole(u.role);
     setEditCity(u.city || '');
     setEditPhone(u.phone || '');
@@ -172,9 +167,6 @@ export const Members: React.FC = () => {
         phone: formattedPhone,
       };
       await api.updateUser(editingUser.id, updates);
-      if (editPassword.trim()) {
-        await api.adminSetUserPassword(editingUser.id, editPassword.trim());
-      }
       setUsers(await api.getUsers());
       setEditingUser(null);
     } catch (err: any) {
@@ -185,7 +177,7 @@ export const Members: React.FC = () => {
   };
 
   const handleDownloadTemplate = () => {
-    const csvContent = 'Name,Email,Password,City,Phone\nJohn Doe,john@example.com,pass123,New York,1234567890';
+    const csvContent = 'Name,Email,City,Phone\nJohn Doe,john@example.com,New York,1234567890';
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
@@ -238,7 +230,7 @@ export const Members: React.FC = () => {
           };
 
           const processedRows = rows
-            .filter(row => row.Name?.trim() && row.Email?.trim() && row.Password?.trim() && row.Phone?.trim())
+            .filter(row => row.Name?.trim() && row.Email?.trim() && row.Phone?.trim())
             .map(row => ({
               ...row,
               formattedPhone: formatPhone(row.Phone || '')
@@ -246,7 +238,7 @@ export const Members: React.FC = () => {
 
           // Check for empty rows or missing required columns first
           if (processedRows.length === 0) {
-            setBulkMessage({ text: 'CSV is empty or missing required columns (Name, Email, Password, Phone).', type: 'error' });
+            setBulkMessage({ text: 'CSV is empty or missing required columns (Name, Email, Phone).', type: 'error' });
             setBulkUploading(false);
             if (event.target) event.target.value = '';
             return;
@@ -276,7 +268,6 @@ export const Members: React.FC = () => {
               const createdUser = await api.createUser({
                 name: row.Name.trim(),
                 email: row.Email.trim(), // Kept email, but isn't part of dupe check now
-                password: row.Password.trim(),
                 role: UserRole.DOER, // Enforce DOER role for bulk imports
                 city: row.City?.trim() || undefined,
                 phone: phoneCell || undefined,
@@ -501,14 +492,6 @@ export const Members: React.FC = () => {
                   required
                   placeholder="email@company.com"
                 />
-                <Input
-                  label="Password"
-                  type="password"
-                  value={newUserPassword}
-                  onChange={(e) => setNewUserPassword(e.target.value)}
-                  required
-                  placeholder="••••••••"
-                />
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Role</label>
                   <select
@@ -538,7 +521,7 @@ export const Members: React.FC = () => {
                   <Button type="submit" isLoading={submitting}>
                     Add Member
                   </Button>
-                  <Button type="button" variant="secondary" onClick={() => { setShowAddForm(false); setError(''); setNewUserName(''); setNewUserEmail(''); setNewUserPassword(''); setNewUserCity(''); setNewUserPhone(''); setNewUserRole(UserRole.DOER); }}>
+                  <Button type="button" variant="secondary" onClick={() => { setShowAddForm(false); setError(''); setNewUserName(''); setNewUserEmail(''); setNewUserCity(''); setNewUserPhone(''); setNewUserRole(UserRole.DOER); }}>
                     Cancel
                   </Button>
                 </div>
@@ -680,13 +663,6 @@ export const Members: React.FC = () => {
               <form onSubmit={handleEditSubmit} className="space-y-4">
                 <Input label="Name" value={editName} onChange={(e) => setEditName(e.target.value)} required />
                 <Input label="Email" type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} required />
-                <Input
-                  label="New password (leave blank to keep current)"
-                  type="password"
-                  value={editPassword}
-                  onChange={(e) => setEditPassword(e.target.value)}
-                  placeholder="••••••••"
-                />
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Role</label>
                   <select
