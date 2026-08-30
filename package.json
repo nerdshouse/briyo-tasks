@@ -13,12 +13,14 @@
     "@types/papaparse": "^5.5.2",
     "axios": "^1.13.5",
     "bcryptjs": "^3.0.3",
+    "clsx": "^2.1.1",
     "firebase": "^10.14.1",
     "lucide-react": "^0.460.0",
     "papaparse": "^5.5.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.22.3"
+    "react-router-dom": "^6.22.3",
+    "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.18",

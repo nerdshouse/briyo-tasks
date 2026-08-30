@@ -6,14 +6,63 @@
  */
 @import "tailwindcss";
 
+/*
+ * Z-scale convention:
+ *   table internals (sticky cells/thead) 10-30 · sticky mobile header 30
+ *   dropdowns 40 · portaled drawer/modals 50
+ */
 @theme {
-  --color-primary: #0d9488;
-  --color-primary-light: #14b8a6;
-  --color-primary-dark: #0f766e;
-  --color-danger: #dc2626;
-  --color-warning: #f59e0b;
-  --color-success: #059669;
   --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+
+  /* Brand — dark ink; -600 (#1e2935) is the primary action shade */
+  --color-brand-50: #f4f6f8;
+  --color-brand-100: #e7ebef;
+  --color-brand-200: #cbd4dc;
+  --color-brand-400: #64748b;
+  --color-brand-500: #38495c;
+  --color-brand-600: #1e2935;
+  --color-brand-700: #16202a;
+  --color-brand-800: #0f161e;
+
+  /* Semantic status ramps */
+  --color-success-50: var(--color-emerald-50);
+  --color-success-100: var(--color-emerald-100);
+  --color-success-500: var(--color-emerald-500);
+  --color-success-600: var(--color-emerald-600);
+  --color-success-700: var(--color-emerald-700);
+  --color-success-800: var(--color-emerald-800);
+  --color-danger-50: var(--color-red-50);
+  --color-danger-100: var(--color-red-100);
+  --color-danger-500: var(--color-red-500);
+  --color-danger-600: var(--color-red-600);
+  --color-danger-700: var(--color-red-700);
+  --color-danger-800: var(--color-red-800);
+  --color-warning-50: var(--color-amber-50);
+  --color-warning-100: var(--color-amber-100);
+  --color-warning-500: var(--color-amber-500);
+  --color-warning-600: var(--color-amber-600);
+  --color-warning-700: var(--color-amber-700);
+  --color-warning-800: var(--color-amber-800);
+  --color-info-50: var(--color-sky-50);
+  --color-info-100: var(--color-sky-100);
+  --color-info-500: var(--color-sky-500);
+  --color-info-600: var(--color-sky-600);
+  --color-info-700: var(--color-sky-700);
+  --color-info-800: var(--color-sky-800);
+  --color-review-50: var(--color-purple-50);
+  --color-review-100: var(--color-purple-100);
+  --color-review-500: var(--color-purple-500);
+  --color-review-600: var(--color-purple-600);
+  --color-review-700: var(--color-purple-700);
+  --color-review-800: var(--color-purple-800);
+
+  /* Radius scale */
+  --radius-control: 0.75rem;
+  --radius-card: 1rem;
+
+  /* Shadows */
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.04), 0 1px 3px rgb(15 23 42 / 0.06);
+  --shadow-overlay: 0 20px 40px -12px rgb(15 23 42 / 0.25);
 }
 
 html {
@@ -57,10 +106,6 @@ textarea {
 /* Card / panel style used across pages */
 .card {
   @apply bg-white rounded-xl border border-slate-200/80 shadow-sm;
-}
-
-.card-header {
-  @apply border-b border-slate-100 px-5 py-4;
 }
 
 /* Table styling */
@@ -148,13 +193,4 @@ textarea {
     z-index: 40;
     background-color: theme("colors.slate.50");
   }
-}
-
-/* Page title consistency */
-.page-title {
-  @apply text-2xl font-bold text-slate-800 tracking-tight mb-6;
-}
-
-.page-subtitle {
-  @apply text-slate-600 mb-6;
 }
