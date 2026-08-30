@@ -120,7 +120,7 @@ export const Login: React.FC = () => {
                 onChange={(e) => setPhone(e.target.value)}
                 required
                 autoFocus
-                placeholder="+91 98765 43210"
+                placeholder="98765 43210"
               />
               <Button type="submit" className="w-full h-11 text-sm font-semibold" isLoading={loading}>
                 Send OTP
