@@ -10,6 +10,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { UserRole } from '../types';
 import { api } from '../services/api';
 import {
+  Info,
   ClipboardList,
   AlertTriangle,
   BarChart3,
@@ -181,7 +182,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const isAdminRole = user.role === UserRole.ADMIN;
   const isManagerOrOwnerRole = isAdminRole;
 
-  type SectionType = 'Tasks' | 'Help' | 'Settings';
+  type SectionType = 'Tasks' | 'Help' | 'Settings' | 'About';
   type NavItemType = { to: string; icon: any; label: string; section: SectionType };
 
   const navItems: NavItemType[] = [
@@ -197,6 +198,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         { to: '/kpi', icon: BarChart3, label: 'KPI', section: 'Tasks' as const },
         { to: '/help', icon: LifeBuoy, label: 'Helper Dashboard', section: 'Help' as const },
         { to: '/settings', icon: Settings, label: 'Settings', section: 'Settings' as const },
+        { to: '/about', icon: Info, label: 'About', section: 'About' as const },
       ];
 
   const badgeFor = (item: NavItemType): number | undefined =>
@@ -222,7 +224,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const SidebarContent = ({ onNavigate }: { onNavigate?: () => void }) => (
     <>
       <nav className="flex-1 min-h-0 px-4 py-2 overflow-y-auto">
-        {(['Tasks', 'Help', 'Settings'] as SectionType[]).map((sectionName) => {
+        {(['Tasks', 'Help', 'Settings', 'About'] as SectionType[]).map((sectionName) => {
           const items = navItems.filter((i) => i.section === sectionName);
           if (items.length === 0) return null;
           return (
@@ -290,6 +292,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     '/help/kpi': 'Help KPI',
     '/bogus-attachment': 'Audit Attachments',
     '/settings': 'Settings',
+    '/about': 'About',
     '/verifier-pending': 'Verification Pending',
   };
   const pageTitle = pathTitles[location.pathname] || 'Dashboard';
