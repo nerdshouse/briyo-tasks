@@ -141,10 +141,19 @@ textarea {
   @apply py-3 px-4 text-slate-700;
 }
 
-/* Specific to Task Table for sticky headers and columns */
+/* Specific to Task Table for sticky headers and columns.
+   Height cap + inner vertical scroll only on desktop — on mobile the
+   container flows naturally so short tables leave no dead space. */
 .task-table-container {
-  @apply overflow-x-auto overflow-y-auto relative;
-  max-height: calc(100vh - 250px);
+  @apply overflow-x-auto relative;
+  isolation: isolate;
+}
+
+@media (min-width: 1024px) {
+  .task-table-container {
+    @apply overflow-y-auto;
+    max-height: calc(100dvh - 220px);
+  }
 }
 
 .task-table-container thead {

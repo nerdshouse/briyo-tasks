@@ -52,26 +52,23 @@ const NavItem = ({
   <Link
     to={to}
     onClick={onClick}
-    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${active
-      ? 'bg-slate-700 text-white'
+    className={`flex items-center gap-3 px-3 py-2 rounded-control text-sm font-medium transition-all duration-200 ${active
+      ? 'bg-brand-600 text-white'
       : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
       }`}
   >
-    <Icon size={19} className={active ? 'text-white' : 'text-slate-500'} />
+    <Icon size={18} className={active ? 'text-white' : 'text-slate-500'} />
     <span className="flex-1">{label}</span>
     {typeof badgeCount === 'number' && (
       <span
-        className={`inline-flex min-w-5 h-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold ${active ? 'bg-white text-slate-800' : 'bg-teal-100 text-teal-800'
+        className={`inline-flex min-w-5 h-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold ${active ? 'bg-white/15 text-white' : 'bg-brand-100 text-brand-800'
           }`}
       >
         {badgeCount > 99 ? '99+' : badgeCount}
       </span>
     )}
     {typeof secondBadgeCount === 'number' && (
-      <span
-        className={`inline-flex min-w-5 h-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold ${active ? 'bg-red-100 text-red-700' : 'bg-red-100 text-red-700'
-          }`}
-      >
+      <span className="inline-flex min-w-5 h-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold bg-danger-100 text-danger-700">
         {secondBadgeCount > 99 ? '99+' : secondBadgeCount}
       </span>
     )}
@@ -224,83 +221,119 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         { to: '/settings', icon: Settings, label: 'Settings', section: 'Settings' as const },
       ];
 
+  const badgeFor = (item: NavItemType): number | undefined =>
+    item.to === '/approve'
+      ? pendingApprovalCount
+      : item.to === '/verifier-pending'
+        ? totalVerificationPendingCount
+        : item.to === '/redzone'
+          ? overdueCount
+          : item.to === '/tasks' && isManagerOrOwnerRole
+            ? allTasksCount
+            : item.to === '/assigned-by-me'
+              ? assignedByMeCount
+              : item.to === '/help'
+                ? helpPendingCount
+                : item.to === '/my-tasks'
+                  ? myTasksCount
+                  : undefined;
+
+  const secondBadgeFor = (item: NavItemType): number | undefined =>
+    item.to === '/redzone' && isManagerOrOwnerRole ? totalOverdueCount : undefined;
+
+  const SidebarContent = ({ onNavigate }: { onNavigate?: () => void }) => (
+    <>
+      <nav className="flex-1 min-h-0 px-4 py-2 overflow-y-auto">
+        {(['Tasks', 'Help', 'Settings'] as SectionType[]).map((sectionName) => {
+          const items = navItems.filter((i) => i.section === sectionName);
+          if (items.length === 0) return null;
+          return (
+            <div key={sectionName} className="mb-2">
+              <h2 className="px-3 mb-1.5 text-[11px] font-semibold text-slate-400 uppercase tracking-widest">{sectionName}</h2>
+              <div className="space-y-0.5">
+                {items.map((item) => (
+                  <NavItem
+                    key={item.to}
+                    to={item.to}
+                    icon={item.icon}
+                    label={item.label}
+                    badgeCount={badgeFor(item)}
+                    secondBadgeCount={secondBadgeFor(item)}
+                    active={location.pathname === item.to}
+                    onClick={onNavigate}
+                  />
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </nav>
+      <div className="px-3 py-2 border-t border-slate-100">
+        <div className="my-2 flex items-center gap-2.5 px-1">
+          <div className="w-8 h-8 rounded-control bg-brand-100 flex items-center justify-center text-brand-700 font-semibold text-sm">
+            {user.name.charAt(0)}
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-slate-800 truncate">{user.name}</p>
+            <p className="text-xs text-slate-500">{roleLabels[user.role]}</p>
+          </div>
+        </div>
+        <button
+          onClick={() => {
+            logout();
+            onNavigate?.();
+          }}
+          className="flex items-center gap-3 px-3 py-2 w-full text-slate-600 hover:text-danger-600 hover:bg-danger-50 rounded-control transition-colors text-sm font-medium"
+        >
+          <LogOut size={18} />
+          <span>Log out</span>
+        </button>
+      </div>
+    </>
+  );
+
+  const pathTitles: Record<string, string> = {
+    '/': 'Dashboard',
+    '/tasks': 'Task Table',
+    '/recurring-tasks': 'Recurring Tasks',
+    '/assign': 'Assign Task',
+    '/removal': 'Removal Request',
+    '/redzone': 'Overdue',
+    '/reports': 'Reports',
+    '/my-tasks': 'My Tasks',
+    '/assigned-by-me': 'Assigned By Me',
+    '/members': 'Members',
+    '/completed-tasks': 'Completed & Closed Tasks',
+    '/approve': 'Approve Task',
+    '/kpi': 'KPI',
+    '/help': 'Helper Dashboard',
+    '/help/new': 'Create Help Ticket',
+    '/help/logs': 'Help Logs',
+    '/help/kpi': 'Help KPI',
+    '/bogus-attachment': 'Audit Attachments',
+    '/settings': 'Settings',
+    '/verifier-pending': 'Verification Pending',
+  };
+  const pageTitle = isAuditor && location.pathname === '/tasks'
+    ? 'Audit Tasks'
+    : (pathTitles[location.pathname] || 'Dashboard');
+
   return (
-    <div className="min-h-screen md:h-screen md:overflow-hidden bg-slate-100/80 flex flex-col md:flex-row">
+    <div className="min-h-screen md:h-screen md:overflow-hidden bg-slate-50 flex flex-col md:flex-row">
       {/* Desktop sidebar */}
       <aside className="hidden md:flex md:h-screen shrink-0 flex-col w-64 bg-white border-r border-slate-200">
-        <div className="flex h-24 items-center justify-center border-b border-slate-100 px-6 py-4">
-          <span className="text-3xl font-black tracking-tight text-slate-800">BRIYO</span>
+        <div className="flex h-20 items-center justify-center border-b border-slate-100 px-6">
+          <span className="text-2xl font-extrabold tracking-tight text-brand-600">BRIYO</span>
         </div>
-        <nav className="flex-1 min-h-0 px-4 py-2 overflow-y-auto">
-          {(['Tasks', 'Help', 'Settings'] as SectionType[]).map((sectionName) => {
-            const items = navItems.filter((i) => i.section === sectionName);
-            if (items.length === 0) return null;
-            return (
-              <div key={sectionName} className="mb-1.5">
-                <h2 className="px-3 mb-1.5 text-[12px] font-bold text-slate-400 uppercase tracking-widest">{sectionName}</h2>
-                <div className="space-y-0.5">
-                  {items.map((item) => (
-                    <NavItem
-                      key={item.to}
-                      to={item.to}
-                      icon={item.icon}
-                      label={item.label}
-                      badgeCount={
-                        item.to === '/approve'
-                          ? pendingApprovalCount
-                          : item.to === '/verifier-pending'
-                            ? totalVerificationPendingCount
-                            : item.to === '/redzone'
-                              ? overdueCount
-                              : item.to === '/tasks' && isManagerOrOwnerRole
-                                ? allTasksCount
-                                : item.to === '/assigned-by-me'
-                                  ? assignedByMeCount
-                                  : item.to === '/help'
-                                    ? helpPendingCount
-                                    : item.to === '/my-tasks'
-                                      ? myTasksCount
-                                      : undefined
-                      }
-                      secondBadgeCount={
-                        item.to === '/redzone' && isManagerOrOwnerRole
-                          ? totalOverdueCount
-                          : undefined
-                      }
-                      active={location.pathname === item.to}
-                    />
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </nav>
-        <div className="px-3 py-1 border-t border-slate-100">
-          <div className="my-2 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-teal-100 flex items-center justify-center text-teal-700 font-semibold text-sm">
-              {user.name.charAt(0)}
-            </div>
-            <div>
-              <p className="text-sm font-medium text-slate-800 truncate max-w-35">{user.name}</p>
-              <p className="text-xs text-slate-500">{roleLabels[user.role]}</p>
-            </div>
-          </div>
-          <button
-            onClick={logout}
-            className="flex items-center gap-3 px-3.5 py-2 w-full text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors text-sm font-medium"
-          >
-            <LogOut size={20} />
-            <span>Log out</span>
-          </button>
-        </div>
+        <SidebarContent />
       </aside>
 
       {/* Mobile header */}
-      <div className="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex justify-between items-center sticky top-0 z-20 shadow-sm">
-        <h1 className="text-lg font-bold text-slate-800">Briyo Tasks</h1>
+      <div className="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex justify-between items-center sticky top-0 z-30 shadow-sm">
+        <span className="text-lg font-extrabold tracking-tight text-brand-600">BRIYO</span>
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="p-2 rounded-lg hover:bg-slate-100 text-slate-600"
+          className="p-2 rounded-control hover:bg-slate-100 text-slate-600"
           aria-label="Toggle menu"
         >
           {mobileOpen ? <X size={24} /> : <Menu size={24} />}
@@ -308,117 +341,32 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       </div>
 
       {/* Mobile drawer */}
-      {mobileOpen && (
-        <div className="fixed inset-0 z-50 md:hidden">
-          <div className="absolute inset-0 bg-slate-900/20 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
-          <div className="absolute left-0 top-0 bottom-0 w-72 bg-white shadow-xl flex flex-col">
-            <div className="flex justify-between items-center p-4 border-b border-slate-100">
-              <span className="font-semibold text-slate-800">Menu</span>
-              <button onClick={() => setMobileOpen(false)} className="p-2 rounded-lg hover:bg-slate-100">
-                <X size={20} />
-              </button>
-            </div>
-            <nav className="flex-1 px-4 py-5 overflow-y-auto">
-              {(['Tasks', 'Help', 'Settings'] as SectionType[]).map((sectionName) => {
-                const items = navItems.filter((i) => i.section === sectionName);
-                if (items.length === 0) return null;
-                return (
-                  <div key={sectionName} className="mb-4">
-                    <h2 className="px-3 mb-1.5 text-[15px] font-bold text-slate-400 uppercase tracking-widest">{sectionName}</h2>
-                    <div className="space-y-0.5">
-                      {items.map((item) => (
-                        <NavItem
-                          key={item.to}
-                          to={item.to}
-                          icon={item.icon}
-                          label={item.label}
-                          badgeCount={
-                            item.to === '/approve'
-                              ? pendingApprovalCount
-                              : item.to === '/verifier-pending'
-                                ? totalVerificationPendingCount
-                                : item.to === '/redzone'
-                                  ? overdueCount
-                                  : item.to === '/tasks' && isManagerOrOwnerRole
-                                    ? allTasksCount
-                                    : item.to === '/assigned-by-me'
-                                      ? assignedByMeCount
-                                      : item.to === '/help'
-                                        ? helpPendingCount
-                                        : item.to === '/my-tasks'
-                                          ? myTasksCount
-                                          : undefined
-                          }
-                          secondBadgeCount={
-                            item.to === '/redzone' && isManagerOrOwnerRole
-                              ? totalOverdueCount
-                              : undefined
-                          }
-                          active={location.pathname === item.to}
-                          onClick={() => setMobileOpen(false)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </nav>
-            <div className="px-3 py-1 border-t border-slate-100">
-              <div className="mt-2 flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-lg bg-teal-100 flex items-center justify-center text-teal-700 font-semibold text-sm">
-                  {user.name.charAt(0)}
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-slate-800 truncate max-w-35">{user.name}</p>
-                  <p className="text-xs text-slate-500">{roleLabels[user.role]}</p>
-                </div>
-              </div>
-              <button
-                onClick={() => { logout(); setMobileOpen(false); }}
-                className="flex items-center gap-3 px-3.5 py-2 w-full text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors text-sm font-medium"
-              >
-                <LogOut size={20} />
-                <span>Log out</span>
-              </button>
-            </div>
+      <div
+        className={`fixed inset-0 z-50 md:hidden ${mobileOpen ? '' : 'pointer-events-none'}`}
+        aria-hidden={!mobileOpen}
+      >
+        <div
+          className={`absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-200 ${mobileOpen ? 'opacity-100' : 'opacity-0'}`}
+          onClick={() => setMobileOpen(false)}
+        />
+        <div
+          className={`absolute left-0 top-0 bottom-0 w-72 bg-white shadow-xl flex flex-col transition-transform duration-200 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        >
+          <div className="flex justify-between items-center px-4 py-3 border-b border-slate-100">
+            <span className="text-lg font-extrabold tracking-tight text-brand-600">BRIYO</span>
+            <button onClick={() => setMobileOpen(false)} className="p-2 rounded-control hover:bg-slate-100">
+              <X size={20} />
+            </button>
           </div>
+          <SidebarContent onNavigate={() => setMobileOpen(false)} />
         </div>
-      )}
+      </div>
 
       {/* Main content */}
-      <main className="flex-1 min-h-screen md:min-h-0 md:h-screen md:overflow-y-auto bg-slate-50/50">
-        <div className={`w-full ${location.pathname.startsWith('/help') ? 'max-w-none' : 'max-w-450 mx-auto'} p-4 md:p-8`}>
-          {(() => {
-            const pathTitles: Record<string, string> = {
-              '/': 'Dashboard',
-              '/tasks': 'Task Table',
-              '/recurring-tasks': 'Recurring Tasks',
-              '/assign': 'Assign Task',
-              '/removal': 'Removal Request',
-              '/redzone': 'Overdue',
-              '/reports': 'Reports',
-              '/my-tasks': 'My Tasks',
-              '/assigned-by-me': 'Assigned By Me',
-              '/members': 'Members',
-              '/completed-tasks': 'Completed & Closed Tasks',
-              '/approve': 'Approve Task',
-              '/help': 'Helper Dashboard',
-              '/help/new': 'Create Help Ticket',
-              '/help/logs': 'Help Logs',
-              '/settings': 'Settings',
-              '/verifier-pending': 'Verification Pending',
-            };
-            const pageTitle = isAuditor && location.pathname === '/tasks'
-              ? 'Audit Tasks'
-              : (pathTitles[location.pathname] || 'Dashboard');
-            return (
-              <>
-                <h1 className="text-2xl font-bold text-slate-800 tracking-tight">{pageTitle}</h1>
-                <p className="text-slate-500 text-sm mt-1 mb-6">Welcome back, {user.name}</p>
-                {children}
-              </>
-            );
-          })()}
+      <main className="flex-1 min-h-screen md:min-h-0 md:h-screen md:overflow-y-auto bg-slate-50">
+        <div className={`w-full ${location.pathname.startsWith('/help') ? 'max-w-none' : 'max-w-450 mx-auto'} p-4 sm:p-6 lg:p-8`}>
+          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight mb-6">{pageTitle}</h1>
+          {children}
         </div>
       </main>
     </div>
