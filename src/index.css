@@ -130,11 +130,11 @@ textarea {
 }
 
 .table-container tbody tr.overdue-row {
-  @apply bg-red-50 hover:bg-red-50;
+  @apply bg-danger-50 hover:bg-danger-50;
 }
 
 .table-container tbody tr.holiday-row {
-  @apply bg-orange-50 hover:bg-orange-50;
+  @apply bg-warning-50 hover:bg-warning-50;
 }
 
 .table-container tbody td {

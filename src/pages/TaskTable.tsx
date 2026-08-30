@@ -12,6 +12,13 @@ import { useLocation, useSearchParams } from 'react-router-dom';
 
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
+import { Select } from '../components/ui/Select';
+import { DateInput } from '../components/ui/DateInput';
+import { StatusBadge } from '../components/ui/StatusBadge';
+import { TableSkeleton } from '../components/ui/Skeleton';
+import { EmptyState } from '../components/ui/EmptyState';
+import { FilterBar } from '../components/ui/FilterBar';
+import { TaskCard, TaskCardMeta } from '../components/TaskCard';
 import { CsvExportButton } from '../components/ui/CsvExportButton';
 import { SearchableUserSelect } from '../components/ui/SearchableUserSelect';
 import { CompleteTaskModal } from '../components/ui/CompleteTaskModal';
@@ -21,7 +28,6 @@ import { exportRowsToCsv, type CsvColumn } from '../lib/csv';
 import { isHoliday, getPendingDays, formatDateDDMMYYYY, getDisplayRecurring, formatRecurringLabel } from '../lib/utils';
 import { getTodayIST } from '../lib/dates';
 import {
-  Paperclip,
   Check,
   X,
   HelpCircle,
@@ -626,7 +632,6 @@ export const TaskTable: React.FC = () => {
   });
 
   const isClientMode = isSelfTasksView || isStartDateSort;
-  const tableColumnCount = 12;
 
   const effectiveTotalResults = isClientMode
     ? (nameFilteredRows?.length ?? 0)
@@ -643,9 +648,9 @@ export const TaskTable: React.FC = () => {
   const renderSortIcon = (key: TaskSortKey) => {
     if (sortConfig?.key !== key) return <ArrowUpDown size={14} className="text-slate-400" />;
     return sortConfig.direction === 'asc' ? (
-      <ArrowUp size={14} className="text-teal-600" />
+      <ArrowUp size={14} className="text-brand-600" />
     ) : (
-      <ArrowDown size={14} className="text-teal-600" />
+      <ArrowDown size={14} className="text-brand-600" />
     );
   };
 
@@ -1066,7 +1071,7 @@ export const TaskTable: React.FC = () => {
           <select
             value={rowsPerPage}
             onChange={handleRowsPerPageChange}
-            className="h-10 rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="h-9 rounded-control border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
           >
             {ROWS_PER_PAGE_OPTIONS.map((size) => (
               <option key={size} value={size}>
@@ -1086,7 +1091,7 @@ export const TaskTable: React.FC = () => {
               aria-label="First page"
               onClick={handleFirstPage}
               disabled={loading || currentPage <= 1}
-              className="h-9 w-9 inline-flex items-center justify-center rounded-xl border border-slate-300 bg-slate-50 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="h-9 w-9 inline-flex items-center justify-center rounded-control border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <ChevronsLeft size={16} />
             </button>
@@ -1095,7 +1100,7 @@ export const TaskTable: React.FC = () => {
               aria-label="Previous page"
               onClick={handlePreviousPage}
               disabled={loading || currentPage <= 1}
-              className="h-9 w-9 inline-flex items-center justify-center rounded-xl border border-slate-300 bg-slate-50 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="h-9 w-9 inline-flex items-center justify-center rounded-control border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <ChevronLeft size={16} />
             </button>
@@ -1104,7 +1109,7 @@ export const TaskTable: React.FC = () => {
               aria-label="Next page"
               onClick={handleNextPage}
               disabled={loading || !hasNextPage || currentPage >= totalPages}
-              className="h-9 w-9 inline-flex items-center justify-center rounded-xl border border-slate-300 bg-slate-50 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="h-9 w-9 inline-flex items-center justify-center rounded-control border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <ChevronRight size={16} />
             </button>
@@ -1113,7 +1118,7 @@ export const TaskTable: React.FC = () => {
               aria-label="Last page"
               onClick={handleLastPage}
               disabled={loading || currentPage >= totalPages || !hasNextPage}
-              className="h-9 w-9 inline-flex items-center justify-center rounded-xl border border-slate-300 bg-slate-50 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="h-9 w-9 inline-flex items-center justify-center rounded-control border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <ChevronsRight size={16} />
             </button>
@@ -1123,14 +1128,88 @@ export const TaskTable: React.FC = () => {
     </div>
   );
 
+  const renderSopAction = (t: Task, requireLinks = true) => {
+    const hasSop =
+      !!t.audit_sop_text ||
+      (t.audit_sop_attachments && t.audit_sop_attachments.length > 0) ||
+      (requireLinks && t.audit_sop_links && t.audit_sop_links.length > 0);
+    const isAssigner = user?.id === t.assigned_by_id;
+    const isAdmin = user?.role === UserRole.OWNER || user?.role === UserRole.MANAGER;
+    const canEditSop = (isAssigner || isAdmin) && !t.verified_at;
+
+    if (hasSop) {
+      return (
+        <button
+          type="button"
+          onClick={() => setSelectedAuditTask(t)}
+          className="mt-2 text-xs font-medium text-brand-600 hover:text-brand-800 hover:bg-brand-50 px-2 py-1 rounded inline-flex items-center gap-1 w-fit transition-colors border border-brand-100"
+        >
+          <FileText size={12} /> View Guidelines to Audit
+        </button>
+      );
+    }
+    if (canEditSop) {
+      return (
+        <button
+          type="button"
+          onClick={() => setSelectedAuditTask(t)}
+          className="mt-2 text-xs font-medium text-slate-400 hover:text-brand-600 hover:bg-slate-50 px-2 py-1 rounded inline-flex items-center gap-1 w-fit transition-colors border border-transparent border-dashed hover:border-brand-200"
+        >
+          + Add Guidelines to Audit
+        </button>
+      );
+    }
+    return null;
+  };
+
+  const renderAttachmentAction = (t: Task, dashWhenEmpty = true) =>
+    ((t.attachment_urls && t.attachment_urls.length > 0) || t.attachment_url || t.attachment_text) ? (
+      <button
+        type="button"
+        onClick={() =>
+          setViewAttachment({
+            urls: t.attachment_urls || (t.attachment_url ? [t.attachment_url] : []),
+            text: t.attachment_text,
+          })
+        }
+        className="text-brand-600 hover:underline text-sm inline-flex items-center justify-center gap-1 font-medium whitespace-nowrap"
+      >
+        <ExternalLink size={14} />
+        View
+      </button>
+    ) : t.attachment_required ? (
+      <span className="text-warning-600 text-xs font-medium whitespace-nowrap">Required</span>
+    ) : dashWhenEmpty ? (
+      <span className="text-slate-400">-</span>
+    ) : null;
+
+  const getRowActionFlags = (t: Task) => {
+    const showComplete =
+      t.assigned_to_id === user?.id &&
+      t.status !== 'completed' &&
+      t.status !== 'pending_verification';
+    const isAssigner = t.assigned_by_id === user?.id;
+    const isManagerOrOwner = isOwner || isManager;
+    const assignerUser = allUsers.find((u) => u.id === t.assigned_by_id);
+    const isAssignedByDoer = assignerUser?.role === UserRole.DOER;
+
+    const canEditTask = isAssigner || (isManagerOrOwner && !isAssignedByDoer);
+    const canDeleteTask =
+      isAssigner ||
+      (!isSelfTasksView && isManagerOrOwner) ||
+      (isManagerOrOwner && (t.status === 'pending_verification' || t.status === 'correction_required'));
+    const canClosePermanently =
+      t.recurring !== 'none' &&
+      t.status !== 'closed_permanently' &&
+      (isAssigner || (isManagerOrOwner && !isAssignedByDoer));
+
+    return { showComplete, canEditTask, canDeleteTask, canClosePermanently };
+  };
+
   if (isAuditor) {
     return (
       <div>
-
-        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-          {paginationControls}
-        </div>
-        <div className="table-container task-table-container">
+        <div className="table-container task-table-container hidden sm:block">
           <table>
             <thead>
               <tr>
@@ -1159,35 +1238,7 @@ export const TaskTable: React.FC = () => {
                   <td className="sticky-col-2 whitespace-pre-wrap break-words text-sm text-slate-700 align-top">
                     <div className="flex flex-col">
                       <span>{t.description || '-'}</span>
-                      {(() => {
-                        const hasSop = !!t.audit_sop_text || (t.audit_sop_attachments && t.audit_sop_attachments.length > 0);
-                        const isAssigner = user?.id === t.assigned_by_id;
-                        const isAdmin = user?.role === UserRole.OWNER || user?.role === UserRole.MANAGER;
-                        const canEditSop = (isAssigner || isAdmin) && !t.verified_at;
-
-                        if (hasSop) {
-                          return (
-                            <button
-                              type="button"
-                              onClick={() => setSelectedAuditTask(t)}
-                              className="mt-2 text-xs font-medium text-teal-600 hover:text-teal-800 hover:bg-teal-50 px-2 py-1 rounded inline-flex items-center gap-1 w-fit transition-colors border border-teal-100"
-                            >
-                              <FileText size={12} /> View Guidelines to Audit
-                            </button>
-                          );
-                        } else if (canEditSop) {
-                          return (
-                            <button
-                              type="button"
-                              onClick={() => setSelectedAuditTask(t)}
-                              className="mt-2 text-xs font-medium text-slate-400 hover:text-teal-600 hover:bg-slate-50 px-2 py-1 rounded inline-flex items-center gap-1 w-fit transition-colors border border-transparent border-dashed hover:border-teal-200"
-                            >
-                              + Add Guidelines to Audit
-                            </button>
-                          );
-                        }
-                        return null;
-                      })()}
+                      {renderSopAction(t, false)}
                     </div>
                   </td>
                   <td>
@@ -1197,35 +1248,15 @@ export const TaskTable: React.FC = () => {
                     )}
                   </td>
                   <td>{t.assigned_to_city || (t.assignee_deleted ? '—' : '-')}</td>
-                  <td className="text-center">
-                    {((t.attachment_urls && t.attachment_urls.length > 0) || t.attachment_url || t.attachment_text) ? (
-                      <button
-                        type="button"
-                        onClick={() => setViewAttachment({
-                          urls: t.attachment_urls || (t.attachment_url ? [t.attachment_url] : []),
-                          text: t.attachment_text
-                        })}
-                        className="text-teal-600 hover:underline text-sm inline-flex items-center justify-center gap-1 font-medium"
-                      >
-                        <ExternalLink size={14} />
-                        View
-                      </button>
-                    ) : t.attachment_required ? (
-                      <span className="text-amber-600 flex items-center justify-center gap-1">
-                        <Paperclip size={14} /> Required
-                      </span>
-                    ) : (
-                      '-'
-                    )}
-                  </td>
+                  <td className="text-center">{renderAttachmentAction(t)}</td>
                   <td className="text-center">
                     <span
                       className={`inline-flex px-2 py-0.5 rounded-lg text-xs font-medium ${t.audit_status === 'audited'
-                        ? 'bg-emerald-100 text-emerald-800'
+                        ? 'bg-success-100 text-success-800'
                         : t.audit_status === 'bogus'
-                          ? 'bg-red-100 text-red-800'
+                          ? 'bg-danger-100 text-danger-800'
                           : t.audit_status === 'unclear'
-                            ? 'bg-amber-100 text-amber-800'
+                            ? 'bg-warning-100 text-warning-800'
                             : 'bg-slate-100 text-slate-600'
                         }`}
                     >
@@ -1265,7 +1296,51 @@ export const TaskTable: React.FC = () => {
             </tbody>
           </table>
         </div>
-        <div className="mt-3 flex justify-end border-t border-slate-100 pt-3">{paginationControls}</div>
+        <div className="sm:hidden space-y-3">
+          {filteredTasks.map((t) => {
+            const isOverdue =
+              (t.status === 'overdue' || t.due_date < getTodayIST()) &&
+              t.status !== 'completed' &&
+              t.status !== 'cancelled' &&
+              t.status !== 'closed_permanently';
+            return (
+              <TaskCard
+                key={t.id}
+                title={t.title}
+                description={t.description}
+                tone={isOverdue ? 'overdue' : undefined}
+                meta={
+                  <>
+                    <TaskCardMeta label="Doer">{t.assigned_to_name}</TaskCardMeta>
+                    {t.assigned_to_city && <TaskCardMeta label="City">{t.assigned_to_city}</TaskCardMeta>}
+                    <TaskCardMeta label="Pending days">{getPendingDays(t.due_date)}</TaskCardMeta>
+                    <TaskCardMeta label="Audit">{t.audit_status || 'pending'}</TaskCardMeta>
+                  </>
+                }
+                actions={
+                  <>
+                    {(!t.audit_status || t.audit_status === 'pending') && (
+                      <>
+                        <Button size="sm" variant="success" onClick={() => handleAudit(t.id, 'audited')}>
+                          <Check size={14} />
+                        </Button>
+                        <Button size="sm" variant="danger" onClick={() => handleAudit(t.id, 'bogus')}>
+                          <X size={14} />
+                        </Button>
+                        <Button size="sm" variant="secondary" onClick={() => handleAudit(t.id, 'unclear')}>
+                          <HelpCircle size={14} />
+                        </Button>
+                      </>
+                    )}
+                    {renderAttachmentAction(t, false)}
+                    {renderSopAction(t, false)}
+                  </>
+                }
+              />
+            );
+          })}
+        </div>
+        <div className="mt-4">{paginationControls}</div>
       </div>
     );
   }
@@ -1273,11 +1348,65 @@ export const TaskTable: React.FC = () => {
   if (isVerifier) {
     return (
       <div>
-
-        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-          {paginationControls}
+        <div className="sm:hidden space-y-3 mb-4">
+          {filteredTasks.map((t) => (
+            <TaskCard
+              key={t.id}
+              title={t.title}
+              description={t.description}
+              status={t.status}
+              meta={
+                <>
+                  <TaskCardMeta label="Doer">{t.assigned_to_name}</TaskCardMeta>
+                  <TaskCardMeta label="Due">{formatDateValue(t.due_date)}</TaskCardMeta>
+                </>
+              }
+              actions={
+                <>
+                  {t.status === 'pending_verification' && (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="success"
+                        onClick={async () => {
+                          if (!user) return;
+                          try {
+                            const completedAt = new Date().toISOString();
+                            await api.updateTask(t.id, {
+                              status: 'completed',
+                              completed_at: completedAt,
+                              verified_by: user.name,
+                              verified_at: completedAt,
+                            }, { id: user.id, name: user.name, role: user.role }, 'Verified by verifier');
+                            setLoading(true);
+                            await loadPage(pageCursors[currentPage - 1] ?? null, currentPage);
+                          } catch (err) {
+                            console.error(err);
+                          }
+                        }}
+                      >
+                        Approve
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        onClick={() => {
+                          setRejectTask(t);
+                          setRejectComment('');
+                        }}
+                      >
+                        Reject
+                      </Button>
+                    </>
+                  )}
+                  {renderAttachmentAction(t, false)}
+                  {renderSopAction(t)}
+                </>
+              }
+            />
+          ))}
         </div>
-        <div className="table-container task-table-container">
+        <div className="table-container task-table-container hidden sm:block">
           <table>
             <thead>
               <tr>
@@ -1307,35 +1436,7 @@ export const TaskTable: React.FC = () => {
                   <td className="sticky-col-2 whitespace-pre-wrap break-words text-sm text-slate-700 align-top">
                     <div className="flex flex-col">
                       <span>{t.description || '-'}</span>
-                      {(() => {
-                        const hasSop = !!t.audit_sop_text || (t.audit_sop_attachments && t.audit_sop_attachments.length > 0) || (t.audit_sop_links && t.audit_sop_links.length > 0);
-                        const isAssigner = user?.id === t.assigned_by_id;
-                        const isAdmin = user?.role === UserRole.OWNER || user?.role === UserRole.MANAGER;
-                        const canEditSop = (isAssigner || isAdmin) && !t.verified_at;
-
-                        if (hasSop) {
-                          return (
-                            <button
-                              type="button"
-                              onClick={() => setSelectedAuditTask(t)}
-                              className="mt-2 text-xs font-medium text-teal-600 hover:text-teal-800 hover:bg-teal-50 px-2 py-1 rounded inline-flex items-center gap-1 w-fit transition-colors border border-teal-100"
-                            >
-                              <FileText size={12} /> View Guidelines to Audit
-                            </button>
-                          );
-                        } else if (canEditSop) {
-                          return (
-                            <button
-                              type="button"
-                              onClick={() => setSelectedAuditTask(t)}
-                              className="mt-2 text-xs font-medium text-slate-400 hover:text-teal-600 hover:bg-slate-50 px-2 py-1 rounded inline-flex items-center gap-1 w-fit transition-colors border border-transparent border-dashed hover:border-teal-200"
-                            >
-                              + Add Guidelines to Audit
-                            </button>
-                          );
-                        }
-                        return null;
-                      })()}
+                      {renderSopAction(t)}
                     </div>
                   </td>
                   <td>
@@ -1345,53 +1446,8 @@ export const TaskTable: React.FC = () => {
                     )}
                   </td>
                   <td className="text-center whitespace-nowrap text-slate-600 font-medium">{formatDateValue(t.due_date)}</td>
-                  <td className="text-center">
-                    <span
-                      className={`inline-flex px-2 py-0.5 rounded-lg text-xs font-medium whitespace-nowrap ${t.status === 'completed'
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : t.status === 'overdue'
-                          ? 'bg-red-100 text-red-800'
-                          : t.status === 'correction_required'
-                            ? 'bg-amber-100 text-amber-800'
-                            : t.status === 'pending_verification'
-                              ? 'bg-sky-100 text-sky-800'
-                              : t.status === 'closed_permanently'
-                                ? 'bg-purple-100 text-purple-800'
-                                : t.status === 'scheduled'
-                                  ? 'bg-violet-100 text-violet-700'
-                                  : 'bg-slate-100 text-slate-600'
-                        }`}
-                    >
-                      {t.status === 'pending_verification'
-                        ? 'Pending Verification'
-                        : t.status === 'correction_required'
-                          ? 'Correction Required'
-                          : t.status === 'closed_permanently'
-                            ? 'Closed Permanently'
-                            : t.status === 'scheduled'
-                              ? 'Scheduled'
-                              : t.status}
-                    </span>
-                  </td>
-                  <td className="text-center">
-                    {((t.attachment_urls && t.attachment_urls.length > 0) || t.attachment_url || t.attachment_text) ? (
-                      <button
-                        type="button"
-                        onClick={() => setViewAttachment({
-                          urls: t.attachment_urls || (t.attachment_url ? [t.attachment_url] : []),
-                          text: t.attachment_text
-                        })}
-                        className="text-teal-600 hover:underline text-sm inline-flex items-center justify-center gap-1 font-medium whitespace-nowrap"
-                      >
-                        <ExternalLink size={14} />
-                        View
-                      </button>
-                    ) : t.attachment_required ? (
-                      <span className="text-amber-600 text-xs font-medium whitespace-nowrap">Required</span>
-                    ) : (
-                      <span className="text-slate-400">-</span>
-                    )}
-                  </td>
+                  <td className="text-center"><StatusBadge status={t.status} /></td>
+                  <td className="text-center">{renderAttachmentAction(t)}</td>
                   <td className="py-3 px-2 text-right pr-4">
                     {t.status === 'pending_verification' ? (
                       <div className="flex flex-col gap-1 sm:flex-row sm:items-center justify-end py-2 h-full">
@@ -1439,7 +1495,7 @@ export const TaskTable: React.FC = () => {
             </tbody>
           </table>
         </div>
-        <div className="mt-3 flex justify-end border-t border-slate-100 pt-3">{paginationControls}</div>
+        <div className="mt-4">{paginationControls}</div>
       </div>
     );
   }
@@ -1447,109 +1503,182 @@ export const TaskTable: React.FC = () => {
   return (
     <div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-        <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        <div className="rounded-card border border-slate-200 bg-white px-4 py-3 shadow-card">
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Due Today</p>
-          <p className="mt-1 text-2xl font-bold text-slate-800">
+          <p className="mt-1 text-2xl font-bold text-slate-900">
             {summaryLoading ? '...' : taskSummary.dueToday}
           </p>
         </div>
-        <div className="rounded-xl border border-red-200 bg-red-50/70 px-4 py-3 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-wide text-red-700">Overdue (Till Today)</p>
-          <p className="mt-1 text-2xl font-bold text-red-700">
+        <div className="rounded-card border border-danger-100 bg-danger-50/70 px-4 py-3 shadow-card">
+          <p className="text-xs font-semibold uppercase tracking-wide text-danger-700">Overdue (Till Today)</p>
+          <p className="mt-1 text-2xl font-bold text-danger-700">
             {summaryLoading ? '...' : taskSummary.overdue}
           </p>
         </div>
       </div>
 
-      <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-3">
-        <div className="flex flex-wrap items-center gap-3">
+      <FilterBar
+        activeCount={
+          [assignedToFilter, assignedByFilter, statusFilter, recurringFilter].filter(Boolean).length +
+          (dateFilter !== 'all_time' ? 1 : 0)
+        }
+        actions={
+          isManager && !isSelfTasksView ? (
+            <CsvExportButton onClick={handleExportCsv} loading={exportingCsv} />
+          ) : undefined
+        }
+      >
+        <div className="w-full sm:w-56">
           <SearchableUserSelect
             users={allUsers}
             value={assignedToFilter}
             onChange={setAssignedToFilter}
             placeholder="Search Doer Name"
           />
+        </div>
 
+        <div className="w-full sm:w-56">
           <SearchableUserSelect
             users={allUsers}
             value={assignedByFilter}
             onChange={setAssignedByFilter}
             placeholder="Search Assigned By"
           />
-
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="h-9 rounded-lg border border-slate-300 px-3 text-sm"
-          >
-            <option value="">Status</option>
-            <option value="pending">Pending</option>
-            <option value="completed">Completed</option>
-            <option value="overdue">Overdue</option>
-            <option value="cancelled">Cancelled</option>
-            <option value="closed_permanently">Closed Permanently</option>
-            <option value="pending_verification">Pending Verification</option>
-            <option value="correction_required">Correction Required</option>
-          </select>
-
-          <select
-            value={recurringFilter}
-            onChange={(e) => setRecurringFilter(e.target.value)}
-            className="h-9 rounded-lg border border-slate-300 px-3 text-sm"
-          >
-            <option value="">All Recurring Types</option>
-            <option value="none">None</option>
-            <option value="daily">Daily</option>
-            <option value="weekly">Weekly</option>
-            <option value="fortnightly">Fortnightly</option>
-            <option value="monthly">Monthly</option>
-            <option value="quarterly">Quarterly</option>
-            <option value="half_yearly">Half Yearly</option>
-            <option value="yearly">Yearly</option>
-          </select>
-
-          <select
-            value={dateFilter}
-            onChange={(e) => setDateFilter(e.target.value)}
-            className="h-9 rounded-lg border border-slate-300 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-          >
-            <option value="all_time">All Time</option>
-            <option value="today">Today</option>
-            <option value="yesterday">Yesterday</option>
-            <option value="last_7_days">Last 7 Days</option>
-            <option value="last_30_days">Last 30 Days</option>
-            <option value="custom">Custom Range</option>
-          </select>
-
-          {dateFilter === 'custom' && (
-            <div className="flex items-center gap-2">
-              <input
-                type="date"
-                value={customStart}
-                onChange={(e) => setCustomStart(e.target.value)}
-                className="h-9 rounded-lg border border-slate-300 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-              />
-              <span className="text-slate-500 text-sm">to</span>
-              <input
-                type="date"
-                value={customEnd}
-                onChange={(e) => setCustomEnd(e.target.value)}
-                className="h-9 rounded-lg border border-slate-300 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-              />
-            </div>
-          )}
         </div>
-        {isManager && !isSelfTasksView && (
-          <CsvExportButton
-            onClick={handleExportCsv}
-            loading={exportingCsv}
-            className="w-full sm:w-auto text-sm px-3 py-2 h-9 flex items-center justify-center gap-2"
-          />
+
+        <div className="w-full sm:w-44">
+        <Select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+        >
+          <option value="">Status</option>
+          <option value="pending">Pending</option>
+          <option value="completed">Completed</option>
+          <option value="overdue">Overdue</option>
+          <option value="cancelled">Cancelled</option>
+          <option value="closed_permanently">Closed Permanently</option>
+          <option value="pending_verification">Pending Verification</option>
+          <option value="correction_required">Correction Required</option>
+        </Select>
+        </div>
+
+        <div className="w-full sm:w-44">
+        <Select
+          value={recurringFilter}
+          onChange={(e) => setRecurringFilter(e.target.value)}
+        >
+          <option value="">All Recurring Types</option>
+          <option value="none">None</option>
+          <option value="daily">Daily</option>
+          <option value="weekly">Weekly</option>
+          <option value="fortnightly">Fortnightly</option>
+          <option value="monthly">Monthly</option>
+          <option value="quarterly">Quarterly</option>
+          <option value="half_yearly">Half Yearly</option>
+          <option value="yearly">Yearly</option>
+        </Select>
+        </div>
+
+        <div className="w-full sm:w-40">
+        <Select
+          value={dateFilter}
+          onChange={(e) => setDateFilter(e.target.value)}
+        >
+          <option value="all_time">All Time</option>
+          <option value="today">Today</option>
+          <option value="yesterday">Yesterday</option>
+          <option value="last_7_days">Last 7 Days</option>
+          <option value="last_30_days">Last 30 Days</option>
+          <option value="custom">Custom Range</option>
+        </Select>
+        </div>
+
+        {dateFilter === 'custom' && (
+          <div className="flex items-center gap-2">
+            <div className="w-full sm:w-38"><DateInput
+              value={customStart}
+              onChange={(e) => setCustomStart(e.target.value)}
+            /></div>
+            <span className="text-slate-500 text-sm">to</span>
+            <div className="w-full sm:w-38"><DateInput
+              value={customEnd}
+              onChange={(e) => setCustomEnd(e.target.value)}
+            /></div>
+          </div>
         )}
+      </FilterBar>
+      {loading ? (
+        <TableSkeleton rows={10} />
+      ) : sortedTasks.length === 0 ? (
+        <div className="bg-white rounded-card border border-slate-200 shadow-card">
+          <EmptyState icon={Table2} title="No tasks found." description="Try adjusting the filters above." />
+        </div>
+      ) : (
+      <>
+      <div className="sm:hidden space-y-3">
+        {sortedTasks.map((t) => {
+          const onHoliday = isHoliday(t.due_date, holidays);
+          const today = getTodayIST();
+          const isOverdue =
+            (t.status === 'overdue' || t.due_date < today) &&
+            t.status !== 'completed' &&
+            t.status !== 'cancelled' &&
+            t.status !== 'closed_permanently';
+          const flags = getRowActionFlags(t);
+          return (
+            <TaskCard
+              key={t.id}
+              title={t.title}
+              description={t.description}
+              status={t.status}
+              tone={isOverdue ? 'overdue' : onHoliday ? 'holiday' : undefined}
+              meta={
+                <>
+                  <TaskCardMeta label="Assigned to">{t.assigned_to_name}{t.assignee_deleted ? ' (deleted)' : ''}</TaskCardMeta>
+                  <TaskCardMeta label="Assigned by">{t.assigned_by_name}</TaskCardMeta>
+                  <TaskCardMeta label="Due">{formatDateValue(t.due_date)}{onHoliday ? ' · Holiday' : ''}</TaskCardMeta>
+                  <TaskCardMeta label="Recurring">{formatRecurringLabel(getDisplayRecurring(t, taskById), 'None')}</TaskCardMeta>
+                  {(t.verifier_name || t.verified_by || t.verification_required) && (
+                    <TaskCardMeta label="Verifier">{t.verifier_name || t.verified_by || 'Required'}</TaskCardMeta>
+                  )}
+                  {t.doer_remark && <TaskCardMeta label="Remark">{t.doer_remark}</TaskCardMeta>}
+                  {t.status === 'correction_required' && t.verification_rejection_comment && (
+                    <TaskCardMeta label="Verifier note">{t.verification_rejection_comment}</TaskCardMeta>
+                  )}
+                </>
+              }
+              actions={
+                <>
+                  {flags.showComplete && (
+                    <Button size="sm" variant="success" onClick={() => handleCompleteClick(t)}>
+                      Complete
+                    </Button>
+                  )}
+                  {flags.canClosePermanently && (
+                    <Button size="sm" variant="danger" onClick={() => handleClosePermanentlyTask(t)}>
+                      Close Permanently
+                    </Button>
+                  )}
+                  {flags.canEditTask && (
+                    <Button size="sm" variant="secondary" onClick={() => openEditModal(t)} title="Edit Task">
+                      <Pencil size={14} />
+                    </Button>
+                  )}
+                  {flags.canDeleteTask && (
+                    <Button size="sm" variant="danger" onClick={() => handleDeleteTask(t.id)} title="Delete Task">
+                      <Trash2 size={14} />
+                    </Button>
+                  )}
+                  {renderAttachmentAction(t, false)}
+                  {renderSopAction(t)}
+                </>
+              }
+            />
+          );
+        })}
       </div>
-      <div className="mb-6">{paginationControls}</div>
-      <div className="table-container task-table-container">
+      <div className="table-container task-table-container hidden sm:block">
         <table>
           <thead>
             <tr>
@@ -1561,7 +1690,7 @@ export const TaskTable: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => toggleDateSort('start_date')}
-                  className="inline-flex items-center justify-center gap-1 hover:text-teal-700"
+                  className="inline-flex items-center justify-center gap-1 hover:text-brand-700"
                 >
                   Start Date
                   {renderSortIcon('start_date')}
@@ -1571,7 +1700,7 @@ export const TaskTable: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => toggleDateSort('due_date')}
-                  className="inline-flex items-center justify-center gap-1 hover:text-teal-700"
+                  className="inline-flex items-center justify-center gap-1 hover:text-brand-700"
                 >
                   Due Date
                   {renderSortIcon('due_date')}
@@ -1586,26 +1715,7 @@ export const TaskTable: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={tableColumnCount} className="py-12 text-center text-slate-500">
-                  <div className="flex justify-center mb-4">
-                    <div className="w-8 h-8 rounded-full border-2 border-slate-300 border-t-teal-600 animate-spin"></div>
-                  </div>
-                  Loading tasks...
-                </td>
-              </tr>
-            ) : sortedTasks.length === 0 ? (
-              <tr>
-                <td colSpan={tableColumnCount} className="py-16">
-                  <div className="flex flex-col items-center justify-center text-slate-500">
-                    <Table2 className="w-12 h-12 text-slate-300 mb-3" />
-                    <p className="text-base font-medium text-slate-600">No tasks found.</p>
-                  </div>
-                </td>
-              </tr>
-            ) : (
-              sortedTasks.map((t) => {
+            {sortedTasks.map((t) => {
                 const onHoliday = isHoliday(t.due_date, holidays);
                 const today = getTodayIST();
                 const isOverdue =
@@ -1630,35 +1740,7 @@ export const TaskTable: React.FC = () => {
                     <td className="sticky-col-2 whitespace-pre-wrap wrap-anywhere text-sm text-slate-700 align-top">
                       <div className="flex flex-col">
                         <span>{t.description || '-'}</span>
-                        {(() => {
-                          const hasSop = !!t.audit_sop_text || (t.audit_sop_attachments && t.audit_sop_attachments.length > 0) || (t.audit_sop_links && t.audit_sop_links.length > 0);
-                          const isAssigner = user?.id === t.assigned_by_id;
-                          const isAdmin = user?.role === UserRole.OWNER || user?.role === UserRole.MANAGER;
-                          const canEditSop = (isAssigner || isAdmin) && !t.verified_at;
-
-                          if (hasSop) {
-                            return (
-                              <button
-                                type="button"
-                                onClick={() => setSelectedAuditTask(t)}
-                                className="mt-2 text-xs font-medium text-teal-600 hover:text-teal-800 hover:bg-teal-50 px-2 py-1 rounded inline-flex items-center gap-1 w-fit transition-colors border border-teal-100"
-                              >
-                                <FileText size={12} /> View Guidelines to Audit
-                              </button>
-                            );
-                          } else if (canEditSop) {
-                            return (
-                              <button
-                                type="button"
-                                onClick={() => setSelectedAuditTask(t)}
-                                className="mt-2 text-xs font-medium text-slate-400 hover:text-teal-600 hover:bg-slate-50 px-2 py-1 rounded inline-flex items-center gap-1 w-fit transition-colors border border-transparent border-dashed hover:border-teal-200"
-                              >
-                                + Add Guidelines to Audit
-                              </button>
-                            );
-                          }
-                          return null;
-                        })()}
+                        {renderSopAction(t)}
                       </div>
                     </td>
                     <td>
@@ -1688,28 +1770,7 @@ export const TaskTable: React.FC = () => {
                     </td>
                     <td className="text-center">
                       <div className="flex flex-col items-center gap-1 max-w-[14rem] mx-auto">
-                        <span
-                          className={`inline-flex px-2 py-0.5 rounded-lg text-xs font-medium whitespace-nowrap ${t.status === 'completed'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : t.status === 'overdue'
-                              ? 'bg-red-100 text-red-800'
-                              : t.status === 'correction_required'
-                                ? 'bg-amber-100 text-amber-800'
-                                : t.status === 'pending_verification'
-                                  ? 'bg-sky-100 text-sky-800'
-                                  : t.status === 'closed_permanently'
-                                    ? 'bg-purple-100 text-purple-800'
-                                    : 'bg-slate-100 text-slate-600'
-                            }`}
-                        >
-                          {t.status === 'pending_verification'
-                            ? 'Pending Verification'
-                            : t.status === 'correction_required'
-                              ? 'Correction Required'
-                              : t.status === 'closed_permanently'
-                                ? 'Closed Permanently'
-                                : t.status}
-                        </span>
+                        <StatusBadge status={t.status} />
                         {t.status === 'correction_required' && t.verification_rejection_comment && (
                           <p className="text-xs text-amber-900 text-left w-full break-words" title={t.verification_rejection_comment}>
                             <span className="font-medium">Verifier: </span>
@@ -1726,70 +1787,31 @@ export const TaskTable: React.FC = () => {
                         {t.verifier_name || t.verified_by || (t.verification_required ? 'Required' : '-')}
                       </span>
                     </td>
-                    <td className="text-center">
-                      {((t.attachment_urls && t.attachment_urls.length > 0) || t.attachment_url || t.attachment_text) ? (
-                        <button
-                          type="button"
-                          onClick={() => setViewAttachment({
-                            urls: t.attachment_urls || (t.attachment_url ? [t.attachment_url] : []),
-                            text: t.attachment_text
-                          })}
-                          className="text-teal-600 hover:underline text-sm inline-flex items-center justify-center gap-1 font-medium whitespace-nowrap"
-                        >
-                          <ExternalLink size={14} />
-                          View
-                        </button>
-                      ) : t.attachment_required ? (
-                        <span className="text-amber-600 text-xs font-medium whitespace-nowrap">Required</span>
-                      ) : (
-                        <span className="text-slate-400">-</span>
-                      )}
-                    </td>
+                    <td className="text-center">{renderAttachmentAction(t)}</td>
                     <td className="py-3 px-2 text-right pr-4">
                       <div className="flex flex-col gap-1 sm:flex-row sm:items-center justify-end py-2 h-full">
                         {(() => {
-                          const showComplete =
-                            t.assigned_to_id === user?.id &&
-                            t.status !== 'completed' &&
-                            t.status !== 'pending_verification';
-                          const isAssigner = t.assigned_by_id === user?.id;
-                          const isManagerOrOwner = isOwner || isManager;
-                          const assignerUser = allUsers.find(u => u.id === t.assigned_by_id);
-                          const isAssignedByDoer = assignerUser?.role === UserRole.DOER;
-
-                          const canEditTask =
-                            isAssigner ||
-                            (isManagerOrOwner && !isAssignedByDoer);
-
-                          const canDeleteTask =
-                            isAssigner ||
-                            (!isSelfTasksView && isManagerOrOwner) ||
-                            (isManagerOrOwner && (t.status === 'pending_verification' || t.status === 'correction_required'));
-
-                          const canClosePermanently =
-                            t.recurring !== 'none' &&
-                            t.status !== 'closed_permanently' &&
-                            (isAssigner || (isManagerOrOwner && !isAssignedByDoer));
-
-                          const hasAnyAction = showComplete || canEditTask || canDeleteTask || canClosePermanently;
+                          const flags = getRowActionFlags(t);
+                          const hasAnyAction =
+                            flags.showComplete || flags.canEditTask || flags.canDeleteTask || flags.canClosePermanently;
                           return (
                             <>
-                              {showComplete && (
+                              {flags.showComplete && (
                                 <Button size="sm" variant="success" onClick={() => handleCompleteClick(t)} className="w-full sm:w-auto text-xs sm:text-sm px-2 py-1 whitespace-nowrap">
                                   Complete
                                 </Button>
                               )}
-                              {canClosePermanently && (
+                              {flags.canClosePermanently && (
                                 <Button size="sm" variant="danger" onClick={() => handleClosePermanentlyTask(t)} className="w-full sm:w-auto text-xs sm:text-sm px-2 py-1 whitespace-nowrap">
                                   Close Permanently
                                 </Button>
                               )}
-                              {canEditTask && (
+                              {flags.canEditTask && (
                                 <Button size="sm" variant="secondary" onClick={() => openEditModal(t)} className="!px-2" title="Edit Task">
                                   <Pencil size={15} />
                                 </Button>
                               )}
-                              {canDeleteTask && (
+                              {flags.canDeleteTask && (
                                 <Button size="sm" variant="danger" onClick={() => handleDeleteTask(t.id)} className="!px-2" title="Delete Task">
                                   <Trash2 size={15} />
                                 </Button>
@@ -1802,12 +1824,14 @@ export const TaskTable: React.FC = () => {
                     </td>
                   </tr>
                 );
-              })
-            )}
+              })}
           </tbody>
         </table>
       </div>
-      <div className="mt-3 flex justify-end">{paginationControls}</div>
+      <div className="mt-4 hidden sm:block">{paginationControls}</div>
+      </>
+      )}
+      <div className="mt-4 sm:hidden">{!loading && sortedTasks.length > 0 && paginationControls}</div>
 
       {completeTask && (
         <CompleteTaskModal
@@ -1910,7 +1934,7 @@ export const TaskTable: React.FC = () => {
                       value={editTitle}
                       onChange={(e) => setEditTitle(e.target.value)}
                       required
-                      className="w-full h-10 rounded-lg border border-slate-300 px-3 text-sm focus:ring-2 focus:ring-teal-500"
+                      className="w-full h-10 rounded-control border border-slate-200 px-3 text-sm focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 focus:outline-none"
                     />
                   </div>
                   <div>
@@ -1919,7 +1943,7 @@ export const TaskTable: React.FC = () => {
                       value={editDesc}
                       onChange={(e) => setEditDesc(e.target.value)}
                       rows={3}
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500"
+                      className="w-full rounded-control border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 focus:outline-none"
                     />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1945,7 +1969,7 @@ export const TaskTable: React.FC = () => {
                         type="date"
                         value={editStartDate}
                         onChange={(e) => setEditStartDate(e.target.value)}
-                        className="w-full h-10 rounded-lg border border-slate-300 px-3 text-sm focus:ring-2 focus:ring-teal-500"
+                        className="w-full h-10 rounded-control border border-slate-200 px-3 text-sm focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 focus:outline-none"
                       />
                     </div>
                   </div>
@@ -1958,7 +1982,7 @@ export const TaskTable: React.FC = () => {
                         onChange={(e) => setEditDueDate(e.target.value)}
                         min={editStartDate || undefined}
                         required
-                        className="w-full h-10 rounded-lg border border-slate-300 px-3 text-sm focus:ring-2 focus:ring-teal-500"
+                        className="w-full h-10 rounded-control border border-slate-200 px-3 text-sm focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 focus:outline-none"
                       />
                     </div>
                     {/*
@@ -1967,7 +1991,7 @@ export const TaskTable: React.FC = () => {
                       <select
                         value={editPriority}
                         onChange={(e) => setEditPriority(e.target.value as Task['priority'])}
-                        className="w-full h-10 rounded-lg border border-slate-300 px-3 text-sm focus:ring-2 focus:ring-teal-500"
+                        className="w-full h-10 rounded-control border border-slate-200 px-3 text-sm focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 focus:outline-none"
                       >
                         <option value="low">Low</option>
                         <option value="medium">Medium</option>
@@ -1983,7 +2007,7 @@ export const TaskTable: React.FC = () => {
                       <select
                         value={editRecurring}
                         disabled
-                        className="w-full h-10 rounded-lg border border-slate-300 px-3 text-sm focus:ring-2 focus:ring-teal-500"
+                        className="w-full h-10 rounded-control border border-slate-200 px-3 text-sm focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 focus:outline-none"
                       >
                         <option value="none">None</option>
                         <option value="daily">Daily</option>
@@ -2002,7 +2026,7 @@ export const TaskTable: React.FC = () => {
                         type="checkbox"
                         checked={editAttachmentRequired}
                         onChange={(e) => setEditAttachmentRequired(e.target.checked)}
-                        className="rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+                        className="rounded border-slate-300 text-brand-600 focus:ring-brand-500"
                       />
                       <label htmlFor="edit-attachment-required" className="text-sm font-medium text-slate-700">
                         Attachment required
@@ -2017,7 +2041,7 @@ export const TaskTable: React.FC = () => {
                         <select
                           value={editAttachmentType}
                           onChange={(e) => setEditAttachmentType(e.target.value as 'media' | 'text')}
-                          className="w-full h-10 rounded-lg border border-slate-300 px-3 text-sm focus:ring-2 focus:ring-teal-500"
+                          className="w-full h-10 rounded-control border border-slate-200 px-3 text-sm focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 focus:outline-none"
                         >
                           <option value="media">Media</option>
                           <option value="text">Text</option>
@@ -2030,7 +2054,7 @@ export const TaskTable: React.FC = () => {
                           value={editAttachmentDescription}
                           onChange={(e) => setEditAttachmentDescription(e.target.value)}
                           placeholder="Describe required attachment"
-                          className="w-full h-10 rounded-lg border border-slate-300 px-3 text-sm focus:ring-2 focus:ring-teal-500"
+                          className="w-full h-10 rounded-control border border-slate-200 px-3 text-sm focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 focus:outline-none"
                         />
                       </div>
                     </div>
@@ -2049,7 +2073,7 @@ export const TaskTable: React.FC = () => {
                               setEditVerifierId('');
                             }
                           }}
-                          className="rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+                          className="rounded border-slate-300 text-brand-600 focus:ring-brand-500"
                         />
                         <label htmlFor="edit-verification-required" className="text-sm font-medium text-slate-700">
                           Verification Required
@@ -2086,7 +2110,7 @@ export const TaskTable: React.FC = () => {
                               );
                             }}
                             className={`px-2.5 py-1 rounded text-xs transition-colors ${editRecurringDays.includes(d.value)
-                              ? 'bg-teal-600 text-white'
+                              ? 'bg-brand-600 text-white'
                               : 'bg-white border border-slate-300 text-slate-600 hover:bg-slate-100'
                               }`}
                           >
