@@ -13,26 +13,34 @@ interface BrandLogoProps {
   className?: string;
 }
 
-/** The Briyo Supplements wordmark lockup: BRIYO over letter-spaced SUPPLEMENTS. */
+/**
+ * The Briyo Supplements wordmark lockup: heavy BRIYO with SUPPLEMENTS
+ * justified edge-to-edge beneath it, matching the brand logo. The second
+ * line's letters are flex-justified so it always spans exactly the width
+ * the BRIYO line sets, at any size.
+ */
 export const BrandLogo: React.FC<BrandLogoProps> = ({ size = 'sm', className }) => (
-  <span className={cn('inline-flex flex-col items-center leading-none select-none', className)}>
+  <span className={cn('inline-flex flex-col leading-none select-none', className)}>
     <span
       className={cn(
-        'font-extrabold tracking-tight text-current',
+        'font-extrabold tracking-[0.03em] -mr-[0.03em] text-current',
         size === 'lg' ? 'text-4xl' : 'text-xl'
       )}
     >
       BRIYO
     </span>
     <span
+      aria-label="Supplements"
       className={cn(
-        'font-bold uppercase text-current',
-        size === 'lg'
-          ? 'text-[11px] tracking-[0.42em] mt-1.5 -mr-[0.42em]'
-          : 'text-[6.5px] tracking-[0.34em] mt-0.5 -mr-[0.34em]'
+        'flex justify-between font-extrabold uppercase text-current',
+        size === 'lg' ? 'text-[13px] mt-1' : 'text-[7px] mt-0.5'
       )}
     >
-      Supplements
+      {'SUPPLEMENTS'.split('').map((c, i) => (
+        <span key={i} aria-hidden="true">
+          {c}
+        </span>
+      ))}
     </span>
   </span>
 );
