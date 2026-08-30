@@ -106,15 +106,18 @@ export const RedZone: React.FC = () => {
 
   const loadTasks = useCallback(async () => {
     setLoading(true);
-    const assignedToId =
-      user?.role === UserRole.DOER ? user?.id : undefined;
-    const overdue = await api.getOverdueTasks({
-      assignedToId,
-      limitCount: 500,
-    });
-    await hydrateRecurringLookup(overdue);
-    setTasks(overdue);
-    setLoading(false);
+    try {
+      const assignedToId =
+        user?.role === UserRole.DOER ? user?.id : undefined;
+      const overdue = await api.getOverdueTasks({
+        assignedToId,
+        limitCount: 500,
+      });
+      await hydrateRecurringLookup(overdue);
+      setTasks(overdue);
+    } finally {
+      setLoading(false);
+    }
   }, [hydrateRecurringLookup, user?.id, user?.role]);
 
   useEffect(() => {
