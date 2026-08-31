@@ -16,6 +16,8 @@ import { DepartmentSelect } from '../components/ui/DepartmentSelect';
 import { EmptyState } from '../components/ui/EmptyState';
 import { UserPlus, Trash2, Pencil, Upload, Download, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import Papa from 'papaparse';
+import { normalizePhoneForStorage } from '../lib/utils';
+import { PhoneInput } from '../components/ui/PhoneInput';
 
 const ROWS_PER_PAGE_OPTIONS = [50, 100] as const;
 
@@ -78,10 +80,7 @@ export const Members: React.FC = () => {
     setError('');
     try {
 
-      let formattedPhone = newUserPhone?.trim() || undefined;
-      if (formattedPhone && !formattedPhone.startsWith('+91')) {
-        formattedPhone = '+91' + formattedPhone;
-      }
+      const formattedPhone = normalizePhoneForStorage(newUserPhone);
 
       await api.createUser({
         name: newUserName,
@@ -144,7 +143,7 @@ export const Members: React.FC = () => {
     setEditEmail(u.email);
     setEditRole(u.role);
     setEditDepartment(u.department || '');
-    setEditPhone(u.phone || '');
+    setEditPhone((u.phone || '').replace(/^\+?91/, '').trim());
     setEditError('');
   };
 
@@ -163,10 +162,7 @@ export const Members: React.FC = () => {
     setEditError('');
     try {
 
-      let formattedPhone = editPhone?.trim() || undefined;
-      if (formattedPhone && !formattedPhone.startsWith('+91')) {
-        formattedPhone = '+91' + formattedPhone;
-      }
+      const formattedPhone = normalizePhoneForStorage(editPhone);
 
       const updates: Partial<User> = {
         name: editName,
@@ -221,22 +217,7 @@ export const Members: React.FC = () => {
 
           const rows = results.data as any[];
 
-          const formatPhone = (phoneStr: string) => {
-            let p = phoneStr?.trim() || '';
-            if (!p) return undefined;
-            if (p.startsWith('="') && p.endsWith('"')) {
-              p = p.slice(2, -1);
-            }
-            p = p.replace(/[^\d+]/g, '');
-            if (!p.startsWith('+91')) {
-              if (p.startsWith('91') && p.length === 12) {
-                p = '+' + p;
-              } else {
-                p = '+91' + p.replace(/^\+/, '');
-              }
-            }
-            return p;
-          };
+          const formatPhone = (phoneStr: string) => normalizePhoneForStorage(phoneStr);
 
           const processedRows = rows
             .filter(row => row.Name?.trim() && row.Email?.trim() && row.Phone?.trim())
@@ -518,11 +499,11 @@ export const Members: React.FC = () => {
                   value={newUserDepartment}
                   onChange={setNewUserDepartment}
                 />
-                <Input
+                <PhoneInput
                   label="Phone (for WhatsApp)"
                   value={newUserPhone}
                   onChange={(e) => setNewUserPhone(e.target.value)}
-                  placeholder="+91..."
+                  placeholder="98765 43210"
                 />
                 <div className="flex gap-2 pt-2">
                   <Button type="submit" isLoading={submitting}>
@@ -689,7 +670,7 @@ export const Members: React.FC = () => {
                   <p className="mt-1 text-xs text-slate-500">Role changes take effect the next time the member signs in.</p>
                 </div>
                 <DepartmentSelect value={editDepartment} onChange={setEditDepartment} />
-                <Input label="Phone (for WhatsApp)" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} placeholder="+91..." />
+                <PhoneInput label="Phone (for WhatsApp)" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} placeholder="98765 43210" />
                 <div className="flex gap-2 pt-2">
                   <Button type="submit" isLoading={editSubmitting}>Save changes</Button>
                   <Button type="button" variant="secondary" onClick={() => setEditingUser(null)}>Cancel</Button>

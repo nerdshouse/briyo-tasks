@@ -325,3 +325,15 @@ export function formatCooldownRemaining(ms: number): string {
   const m = totalMinutes % 60;
   return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
+
+/**
+ * Canonicalize an Indian mobile number to +91XXXXXXXXXX for storage.
+ * Login matches the stored string exactly, so spaces or doubled country
+ * codes (e.g. "+91 99206 14558", "+91918169540571") break sign-in.
+ */
+export function normalizePhoneForStorage(raw: string | undefined | null): string | undefined {
+  let d = String(raw || '').replace(/\D/g, '');
+  if (!d) return undefined;
+  while (d.length >= 12 && d.startsWith('91')) d = d.slice(2);
+  return '+91' + d;
+}

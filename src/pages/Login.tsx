@@ -12,6 +12,7 @@ import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { AlertTriangle, ArrowLeft, MessageSquare, Phone } from 'lucide-react';
 import { BrandLogo, DeveloperCredit } from '../components/ui/BrandLogo';
+import { PhoneInput } from '../components/ui/PhoneInput';
 
 const RESEND_COOLDOWN_SECONDS = 30;
 
@@ -113,10 +114,8 @@ export const Login: React.FC = () => {
                   Enter your registered mobile number. We&apos;ll send a one-time code on WhatsApp.
                 </p>
               </div>
-              <Input
+              <PhoneInput
                 label="Mobile Number"
-                type="tel"
-                inputMode="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 required
