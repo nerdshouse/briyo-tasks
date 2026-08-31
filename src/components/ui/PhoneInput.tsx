@@ -18,15 +18,28 @@ interface PhoneInputProps
  * the local digits the person types; normalize with normalizePhoneForStorage
  * before saving.
  */
+/** Keep only the 10 local digits: strip non-digits, pasted 91/0 prefixes, cap at 10. */
+const sanitizeLocalDigits = (raw: string): string => {
+  let d = raw.replace(/\D/g, '');
+  while (d.length >= 12 && d.startsWith('91')) d = d.slice(2);
+  if (d.length === 11 && d.startsWith('0')) d = d.slice(1);
+  return d.slice(0, 10);
+};
+
 export const PhoneInput: React.FC<PhoneInputProps> = ({
   label,
   error,
   className = '',
   id,
+  onChange,
   ...props
 }) => {
   const fallbackId = useId();
   const inputId = id || props.name || fallbackId;
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.target.value = sanitizeLocalDigits(e.target.value);
+    onChange?.(e);
+  };
   return (
     <div className="w-full">
       {label && (
@@ -47,8 +60,10 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
         </span>
         <input
           type="tel"
-          inputMode="tel"
+          inputMode="numeric"
+          maxLength={14}
           id={inputId}
+          onChange={handleChange}
           className="min-w-0 flex-1 bg-transparent px-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none disabled:opacity-50"
           {...props}
         />
