@@ -10,6 +10,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Layout } from './components/Layout';
 import { HelpKpi } from './pages/HelpKpi';
 
+const Home = lazy(() => import('./pages/Home').then((m) => ({ default: m.Home })));
 const Login = lazy(() => import('./pages/Login').then((m) => ({ default: m.Login })));
 
 const AssignTask = lazy(() => import('./pages/AssignTask').then((m) => ({ default: m.AssignTask })));
@@ -51,7 +52,15 @@ const App: React.FC = () => {
               path="/"
               element={
                 <ProtectedRoute>
-                  <Navigate to="/tasks" replace />
+                  <Navigate to="/home" replace />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/home"
+              element={
+                <ProtectedRoute>
+                  <Home />
                 </ProtectedRoute>
               }
             />

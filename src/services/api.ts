@@ -1481,6 +1481,28 @@ export const api = {
   // --- WhatsApp (11za) ---
   // Sent server-side now (sendTaskAssignmentNotification Cloud Function) so the 11za
   // auth token never has to live in the browser bundle.
+  /**
+   * Fire-and-forget: WhatsApp the assignee a task's current details after an
+   * edit (reuses the approved task_assignment template, title marked Updated).
+   * Skips self-edits and assignees without phones; never throws.
+   */
+  notifyAssigneeTaskUpdated: (
+    assignee: Pick<User, 'id' | 'phone'> | undefined,
+    task: { title: string; description?: string; due_date: string; assigned_by_name?: string },
+    editorId: string
+  ): void => {
+    if (!assignee?.phone || assignee.id === editorId) return;
+    api
+      .sendTaskAssignmentWhatsApp(assignee.phone, {
+        title: `${task.title} (Updated)`,
+        description: task.description || 'N/A',
+        due_date: (task.due_date || '').split('-').reverse().join('-'),
+        assigned_by_name: task.assigned_by_name || '',
+        link: 'https://app.briyo.xyz/tasks',
+      })
+      .catch((err) => console.error('[TaskUpdate] WhatsApp notify failed:', err));
+  },
+
   /** Bell-icon reminder: server enforces roles + the 4h per-task-per-member cooldown. */
   sendTaskReminder: async (
     taskId: string

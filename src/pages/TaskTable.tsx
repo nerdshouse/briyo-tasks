@@ -983,6 +983,16 @@ export const TaskTable: React.FC = () => {
         }
 
         await api.updateTask(editingTask.id, updates);
+        api.notifyAssigneeTaskUpdated(
+          assigneeUser,
+          {
+            title: editTitle,
+            description: editDesc,
+            due_date: editDueDate,
+            assigned_by_name: editingTask.assigned_by_name || user.name,
+          },
+          user.id
+        );
 
         setTasks((prev) =>
           prev.map((t) =>
