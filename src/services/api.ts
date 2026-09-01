@@ -19,6 +19,7 @@ import {
   getDocs,
   getCountFromServer,
   addDoc,
+  setDoc,
   updateDoc,
   deleteField,
   deleteDoc,
@@ -45,6 +46,7 @@ import {
   HelpTicketProposedSolution,
   HelpTicketRating,
   TaskLogAction,
+  TaskLog,
 } from '../types';
 import { getTodayIST, resolveInitialTaskStatus } from '../lib/dates';
 
@@ -1481,6 +1483,38 @@ export const api = {
   // --- WhatsApp (11za) ---
   // Sent server-side now (sendTaskAssignmentNotification Cloud Function) so the 11za
   // auth token never has to live in the browser bundle.
+  /** Latest audit-trail entries, newest first (Home activity feed). */
+  getRecentTaskLogs: async (n = 10): Promise<TaskLog[]> => {
+    const snap = await getDocs(
+      query(collection(db, COLLECTIONS.TASK_LOGS), orderBy('timestamp', 'desc'), limit(n))
+    );
+    return snap.docs.map((d) => {
+      const data = d.data();
+      return { ...data, id: d.id, timestamp: timestampToISO(data.timestamp) } as TaskLog;
+    });
+  },
+
+  // --- Announcements (single company-wide banner, admin-managed) ---
+  getAnnouncement: async (): Promise<{ message: string; active: boolean; updated_by?: string } | null> => {
+    try {
+      const snap = await getDoc(doc(db, 'announcements', 'current'));
+      if (!snap.exists()) return null;
+      const d = snap.data();
+      return { message: d.message || '', active: d.active === true, updated_by: d.updated_by };
+    } catch {
+      return null; // rules not deployed yet / offline — banner simply hides
+    }
+  },
+
+  setAnnouncement: async (message: string, active: boolean, actor: Actor): Promise<void> => {
+    await setDoc(doc(db, 'announcements', 'current'), {
+      message,
+      active,
+      updated_by: actor.name,
+      updated_at: isoToTimestamp(new Date().toISOString()),
+    });
+  },
+
   /**
    * Fire-and-forget: WhatsApp the assignee a task's current details after an
    * edit (reuses the approved task_assignment template, title marked Updated).

@@ -61,6 +61,10 @@ service cloud.firestore {
     match /password_reset_otps/{docId} {
       allow read, write: if false; // server-only (Cloud Functions, Admin SDK)
     }
+    match /announcements/{docId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
     match /help_tickets/{docId} {
       allow read, write: if isSignedIn();
     }
