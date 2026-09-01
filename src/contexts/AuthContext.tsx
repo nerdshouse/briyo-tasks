@@ -5,16 +5,48 @@
  * Unauthorized copying, modification, or distribution is strictly prohibited.
  */
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { onAuthStateChanged, signInWithCustomToken, signOut } from 'firebase/auth';
+import {
+  browserLocalPersistence,
+  browserSessionPersistence,
+  onAuthStateChanged,
+  setPersistence,
+  signInWithCustomToken,
+  signOut,
+} from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import { api } from '../services/api';
 import { User } from '../types';
 
+const SESSION_EXPIRY_KEY = 'briyo_session_expires_at';
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+
+const readSessionExpiry = (): number | null => {
+  try {
+    const raw = localStorage.getItem(SESSION_EXPIRY_KEY);
+    return raw ? Number(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
+const writeSessionExpiry = (value: number | null): void => {
+  try {
+    if (value == null) localStorage.removeItem(SESSION_EXPIRY_KEY);
+    else localStorage.setItem(SESSION_EXPIRY_KEY, String(value));
+  } catch {
+    /* storage unavailable — session just follows Firebase persistence */
+  }
+};
+
 interface AuthContextType {
   user: User | null;
   ready: boolean;
-  /** Completes the WhatsApp-OTP sign-in: verifies the OTP and establishes the session. */
-  login: (phone: string, otp: string) => Promise<void>;
+  /**
+   * Completes the WhatsApp-OTP sign-in: verifies the OTP and establishes the
+   * session. `remember` keeps the device signed in for 7 days; otherwise the
+   * session ends when the browser closes.
+   */
+  login: (phone: string, otp: string, remember?: boolean) => Promise<void>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
 }
@@ -34,6 +66,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setReady(true);
         return;
       }
+      // Enforce the 7-day "remember this device" window.
+      const expiresAt = readSessionExpiry();
+      if (expiresAt != null && Date.now() > expiresAt) {
+        writeSessionExpiry(null);
+        await signOut(auth);
+        setUser(null);
+        setReady(true);
+        return;
+      }
       try {
         const profile = await api.getUserProfile(firebaseUser.uid);
         setUser(profile);
@@ -47,9 +88,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return unsubscribe;
   }, []);
 
-  const login = async (phone: string, otp: string) => {
+  const login = async (phone: string, otp: string, remember: boolean = true) => {
     const { token } = await api.loginWithOtp(phone, otp);
+    await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
     const { user: firebaseUser } = await signInWithCustomToken(auth, token);
+    writeSessionExpiry(remember ? Date.now() + SEVEN_DAYS_MS : null);
     // Set state directly rather than waiting on onAuthStateChanged's async callback —
     // callers navigate right after `login()` resolves, and ProtectedRoute needs
     // `isAuthenticated` to already be true at that point.
@@ -58,6 +101,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
+    writeSessionExpiry(null);
     await signOut(auth);
     setUser(null);
   };

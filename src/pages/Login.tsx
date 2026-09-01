@@ -28,6 +28,7 @@ export const Login: React.FC = () => {
 
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [phone, setPhone] = useState('');
+  const [rememberDevice, setRememberDevice] = useState(true);
   const [otp, setOtp] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -73,7 +74,7 @@ export const Login: React.FC = () => {
     setError('');
     setLoading(true);
     try {
-      await login(phone, otp);
+      await login(phone, otp, rememberDevice);
       navigate('/');
     } catch (err: any) {
       setError(err?.message || 'Invalid OTP. Please try again.');
@@ -122,6 +123,15 @@ export const Login: React.FC = () => {
                 autoFocus
                 placeholder="98765 43210"
               />
+              <label className="flex items-center gap-2 text-sm text-slate-600 select-none">
+                <input
+                  type="checkbox"
+                  checked={rememberDevice}
+                  onChange={(e) => setRememberDevice(e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300 accent-brand-600"
+                />
+                Remember this device for 7 days
+              </label>
               <Button type="submit" className="w-full h-11 text-sm font-semibold" isLoading={loading}>
                 Send OTP
               </Button>
