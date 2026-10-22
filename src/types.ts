@@ -129,6 +129,25 @@ export interface Absence {
   created_at: string;
 }
 
+export interface DailyUpdateItem {
+  text: string;
+  /** Optional time spent, in hours. */
+  hours?: number;
+}
+
+/** One user's work log for one day. Doc id is `${user_id}_${date}`. */
+export interface DailyUpdate {
+  id: string;
+  user_id: string;
+  user_name: string;
+  department?: string;
+  /** YYYY-MM-DD (IST). */
+  date: string;
+  items: DailyUpdateItem[];
+  created_at: string;
+  updated_at: string;
+}
+
 export interface RemovalRequest {
   id: string;
   task_id: string;

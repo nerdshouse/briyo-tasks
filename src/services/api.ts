@@ -39,6 +39,8 @@ import {
   // TaskPriority,
   Holiday,
   Absence,
+  DailyUpdate,
+  DailyUpdateItem,
   RemovalRequest,
   AuditStatus,
   HelpTicket,
@@ -49,6 +51,20 @@ import {
   TaskLog,
 } from '../types';
 import { getTodayIST, resolveInitialTaskStatus } from '../lib/dates';
+
+const toDailyUpdate = (d: QueryDocumentSnapshot): DailyUpdate => {
+  const data = d.data();
+  return {
+    id: d.id,
+    user_id: data.user_id,
+    user_name: data.user_name,
+    department: data.department,
+    date: data.date,
+    items: Array.isArray(data.items) ? data.items : [],
+    created_at: timestampToISO(data.created_at),
+    updated_at: timestampToISO(data.updated_at),
+  };
+};
 
 /** Actor descriptor passed into audit-logging mutations. */
 type Actor = { id: string; name: string; role: string };
@@ -1131,6 +1147,48 @@ export const api = {
       created_at: isoToTimestamp(new Date().toISOString()),
     });
     return { ...a, id: ref.id, created_at: new Date().toISOString() };
+  },
+
+  // --- Daily Updates (one doc per user per day) ---
+  getMyDailyUpdates: async (userId: string, limitCount: number = 30): Promise<DailyUpdate[]> => {
+    const snap = await getDocs(
+      query(
+        collection(db, COLLECTIONS.DAILY_UPDATES),
+        where('user_id', '==', userId),
+        orderBy('date', 'desc'),
+        limit(limitCount)
+      )
+    );
+    return snap.docs.map(toDailyUpdate);
+  },
+
+  getDailyUpdatesForDate: async (date: string): Promise<DailyUpdate[]> => {
+    const snap = await getDocs(
+      query(collection(db, COLLECTIONS.DAILY_UPDATES), where('date', '==', date))
+    );
+    return snap.docs.map(toDailyUpdate);
+  },
+
+  saveDailyUpdate: async (
+    user: { id: string; name: string; department?: string },
+    date: string,
+    items: DailyUpdateItem[]
+  ): Promise<void> => {
+    const ref = doc(db, COLLECTIONS.DAILY_UPDATES, `${user.id}_${date}`);
+    const existing = await getDoc(ref);
+    const now = isoToTimestamp(new Date().toISOString());
+    await setDoc(ref, {
+      user_id: user.id,
+      user_name: user.name,
+      ...(user.department && { department: user.department }),
+      date,
+      items: items.map((i) => ({
+        text: i.text,
+        ...(typeof i.hours === 'number' && i.hours > 0 && { hours: i.hours }),
+      })),
+      created_at: existing.exists() ? existing.data().created_at : now,
+      updated_at: now,
+    });
   },
 
   // --- Removal Requests ---

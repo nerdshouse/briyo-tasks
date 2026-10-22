@@ -67,4 +67,5 @@ export const COLLECTIONS = {
   PASSWORD_RESET_OTPS: 'password_reset_otps',
   HELP_TICKETS: 'help_tickets',
   TASK_LOGS: 'task_logs',
+  DAILY_UPDATES: 'daily_updates',
 };

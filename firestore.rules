@@ -73,6 +73,17 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow update, delete: if false;
     }
+    // Daily work logs: one doc per user per day, id = `${uid}_${date}`.
+    // Owners read/write their own; admins and sub-admins can read everyone's.
+    match /daily_updates/{docId} {
+      allow read: if isSignedIn()
+        && (resource == null || resource.data.user_id == request.auth.uid || canManageMembers());
+      allow create, update: if isSignedIn()
+        && request.resource.data.user_id == request.auth.uid
+        && docId == request.auth.uid + '_' + request.resource.data.date
+        && (resource == null || resource.data.user_id == request.auth.uid);
+      allow delete: if false;
+    }
     match /rate_limits/{key} {
       allow read, write: if false; // server-only (Cloud Functions, Admin SDK)
     }

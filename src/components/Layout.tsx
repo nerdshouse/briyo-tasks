@@ -25,6 +25,7 @@ import {
   Repeat,
   LifeBuoy,
   LayoutDashboard,
+  NotebookPen,
 } from 'lucide-react';
 
 const roleLabels: Record<UserRole, string> = {
@@ -189,6 +190,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
   const navItems: NavItemType[] = [
         { to: '/home', icon: LayoutDashboard, label: 'Home', section: 'Tasks' as const },
+        { to: '/daily-updates', icon: NotebookPen, label: 'Daily Updates', section: 'Tasks' as const },
         ...(isAdminRole ? [{ to: '/my-tasks', icon: ClipboardList, label: 'My Tasks', section: 'Tasks' as const }] : []),
         { to: '/assign', icon: ClipboardList, label: 'Assign Task', section: 'Tasks' as const },
         { to: '/approve', icon: ClipboardCheck, label: 'Approve Task', section: 'Tasks' as const },
@@ -280,6 +282,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
   const pathTitles: Record<string, string> = {
     '/home': 'Home',
+    '/daily-updates': 'Daily Updates',
     '/': 'Dashboard',
     '/tasks': 'Task Table',
     '/recurring-tasks': 'Recurring Tasks',
