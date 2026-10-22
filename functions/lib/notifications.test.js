@@ -102,3 +102,13 @@ const dailyUpdates_1 = require("./dailyUpdates");
 (0, node_test_1.test)('daily update reminder button points at the Daily Updates page', () => {
     assert.equal(whatsappTemplates_1.WHATSAPP_BUTTON_VALUES.dailyUpdateReminder, 'daily-updates');
 });
+(0, node_test_1.test)('dailyUpdateReminderSkipReason explains each skip', () => {
+    const absences = [{ user_id: 'e', from_date: '2026-10-20', to_date: '2026-10-23' }];
+    const submitted = new Set(['b']);
+    const reason = (m) => (0, dailyUpdates_1.dailyUpdateReminderSkipReason)(m, submitted, absences, '2026-10-22');
+    assert.equal(reason({ id: 'a', name: 'A', phone: '9876543210' }), null);
+    assert.equal(reason({ id: 'b', name: 'B', phone: '9876543211' }), 'submitted');
+    assert.equal(reason({ id: 'c', name: 'C', phone: ' ' }), 'no_phone');
+    assert.equal(reason({ id: 'd', name: 'D', phone: '9876543212', approved: false }), 'unapproved');
+    assert.equal(reason({ id: 'e', name: 'E', phone: '9876543213' }), 'absent');
+});

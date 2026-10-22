@@ -14,7 +14,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.onRecurringTaskAuditSopUpdated = exports.onTaskAuditSopUpdated = exports.transitionScheduledTasks = exports.generateRecurringTasksDaily = exports.sendDailyReminder = exports.sendDailyUpdateReminder = exports.sendTaskReminder = exports.onMemberCreated = void 0;
+exports.onRecurringTaskAuditSopUpdated = exports.onTaskAuditSopUpdated = exports.transitionScheduledTasks = exports.generateRecurringTasksDaily = exports.sendDailyReminder = exports.remindDailyUpdate = exports.sendDailyUpdateReminder = exports.sendTaskReminder = exports.onMemberCreated = void 0;
 /*
  * Developed by Nerdshouse Technologies LLP — https://nerdshouse.com
  * © 2026 WhiteRock (Royal Enterprise). All rights reserved.
@@ -33,6 +33,7 @@ Object.defineProperty(exports, "onMemberCreated", { enumerable: true, get: funct
 Object.defineProperty(exports, "sendTaskReminder", { enumerable: true, get: function () { return notifications_1.sendTaskReminder; } });
 var dailyUpdates_1 = require("./dailyUpdates");
 Object.defineProperty(exports, "sendDailyUpdateReminder", { enumerable: true, get: function () { return dailyUpdates_1.sendDailyUpdateReminder; } });
+Object.defineProperty(exports, "remindDailyUpdate", { enumerable: true, get: function () { return dailyUpdates_1.remindDailyUpdate; } });
 const RECURRING_TYPES = [
     'daily',
     'weekly',

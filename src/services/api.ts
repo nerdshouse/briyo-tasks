@@ -41,6 +41,7 @@ import {
   Absence,
   DailyUpdate,
   DailyUpdateItem,
+  DailyUpdateReminderResult,
   RemovalRequest,
   AuditStatus,
   HelpTicket,
@@ -1189,6 +1190,13 @@ export const api = {
       created_at: existing.exists() ? existing.data().created_at : now,
       updated_at: now,
     });
+  },
+
+  /** Admin/sub-admin: WhatsApp members who haven't logged today's update. No userIds = everyone missing. */
+  remindDailyUpdate: async (userIds?: string[]): Promise<DailyUpdateReminderResult> => {
+    const fn = httpsCallable<{ userIds?: string[] }, DailyUpdateReminderResult>(functions, 'remindDailyUpdate');
+    const res = await fn(userIds ? { userIds } : {});
+    return res.data;
   },
 
   // --- Removal Requests ---

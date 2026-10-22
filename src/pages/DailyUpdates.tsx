@@ -5,10 +5,10 @@
  * Unauthorized copying, modification, or distribution is strictly prohibited.
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Trash2, NotebookPen, Lock, Search, Users } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Trash2, NotebookPen, Lock, Search, Users, BellRing, Check } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api';
-import { DailyUpdate, DailyUpdateItem, User } from '../types';
+import { DailyUpdate, DailyUpdateItem, DailyUpdateReminderResult, User } from '../types';
 import { getTodayIST } from '../lib/dates';
 import { canManageMembers } from '../lib/permissions';
 import { Button } from '../components/ui/Button';
@@ -330,6 +330,11 @@ const TeamUpdates: React.FC = () => {
   const [updates, setUpdates] = useState<DailyUpdate[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  /** Members nudged (or already in cooldown) during this visit, for today only. */
+  const [remindedIds, setRemindedIds] = useState<Set<string>>(new Set());
+  const [remindingId, setRemindingId] = useState<string | 'all' | null>(null);
+  const [remindNotice, setRemindNotice] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
+  const isToday = date === today;
 
   useEffect(() => {
     api.getUsers().then(setUsers).catch((err) => console.error('Failed to load users:', err));
@@ -338,6 +343,7 @@ const TeamUpdates: React.FC = () => {
   useEffect(() => {
     let mounted = true;
     setLoading(true);
+    setRemindNotice(null);
     api
       .getDailyUpdatesForDate(date)
       .then((u) => mounted && setUpdates(u))
@@ -369,6 +375,49 @@ const TeamUpdates: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [users, submittedIds, s]
   );
+
+  const nameOf = (id: string) => users.find((u) => u.id === id)?.name || 'member';
+
+  const summarize = (res: DailyUpdateReminderResult): { tone: 'ok' | 'error'; text: string } => {
+    const skipLabels = { no_phone: 'no phone number', unapproved: 'not approved', submitted: 'already submitted', absent: 'on leave' };
+    const parts: string[] = [];
+    if (res.sent.length) parts.push(`Reminder sent to ${res.sent.length === 1 ? nameOf(res.sent[0]) : `${res.sent.length} members`}.`);
+    if (res.cooldown.length) {
+      parts.push(
+        `${res.cooldown.length === 1 ? nameOf(res.cooldown[0]) : `${res.cooldown.length} members`} already reminded in the last ${Math.round(res.cooldownMs / 3600000)} h.`
+      );
+    }
+    if (res.skipped.length) {
+      parts.push(
+        `Skipped: ${res.skipped.map((s) => `${nameOf(s.id)} (${skipLabels[s.reason]})`).join(', ')}.`
+      );
+    }
+    if (res.failed.length) parts.push(`${res.failed.length} failed to send${res.aborted ? '; stopped early' : ''}.`);
+    if (!parts.length) parts.push('Nobody to remind.');
+    return { tone: res.failed.length && !res.sent.length ? 'error' : 'ok', text: parts.join(' ') };
+  };
+
+  const handleRemind = async (target: User | 'all') => {
+    if (remindingId) return;
+    const ids = target === 'all' ? missing.filter((u) => !remindedIds.has(u.id)).map((u) => u.id) : [target.id];
+    if (ids.length === 0) return;
+    if (target === 'all' && !window.confirm(`Send a WhatsApp reminder to ${ids.length} member${ids.length === 1 ? '' : 's'}?`)) {
+      return;
+    }
+    setRemindingId(target === 'all' ? 'all' : target.id);
+    setRemindNotice(null);
+    try {
+      const res = await api.remindDailyUpdate(ids);
+      setRemindedIds((prev) => new Set([...prev, ...res.sent, ...res.cooldown]));
+      setRemindNotice(summarize(res));
+    } catch (err: any) {
+      setRemindNotice({ tone: 'error', text: err?.message || 'Failed to send the WhatsApp reminder.' });
+    } finally {
+      setRemindingId(null);
+    }
+  };
+
+  const pendingReminders = missing.filter((u) => !remindedIds.has(u.id)).length;
 
   return (
     <div className="space-y-4">
@@ -429,19 +478,67 @@ const TeamUpdates: React.FC = () => {
           </div>
 
           <aside className={`${cardCls} p-4 self-start`}>
-            <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-800 mb-3">
-              <Users size={14} /> Not submitted ({missing.length})
-            </h3>
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+                <Users size={14} /> Not submitted ({missing.length})
+              </h3>
+              {isToday && pendingReminders > 0 && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => handleRemind('all')}
+                  disabled={remindingId !== null}
+                  title="WhatsApp everyone listed who hasn't submitted"
+                >
+                  <BellRing size={14} className="mr-1.5" />
+                  {remindingId === 'all' ? 'Sending…' : 'Remind all'}
+                </Button>
+              )}
+            </div>
+            {remindNotice && (
+              <p
+                className={`mb-3 rounded-control px-3 py-2 text-xs ${remindNotice.tone === 'ok' ? 'bg-success-50 text-success-700' : 'bg-danger-50 text-danger-700'
+                  }`}
+              >
+                {remindNotice.text}
+              </p>
+            )}
             {missing.length === 0 ? (
               <p className="text-sm text-slate-500">Everyone has submitted.</p>
             ) : (
-              <ul className="space-y-1.5 max-h-[480px] overflow-y-auto">
-                {missing.map((u) => (
-                  <li key={u.id} className="text-sm text-slate-700">
-                    {u.name}
-                    {u.department && <span className="text-xs text-slate-400"> · {u.department}</span>}
-                  </li>
-                ))}
+              <ul className="space-y-1 max-h-[480px] overflow-y-auto">
+                {missing.map((u) => {
+                  const reminded = remindedIds.has(u.id);
+                  return (
+                    <li key={u.id} className="flex items-center justify-between gap-2 text-sm text-slate-700">
+                      <span className="min-w-0 truncate">
+                        {u.name}
+                        {u.department && <span className="text-xs text-slate-400"> · {u.department}</span>}
+                      </span>
+                      {isToday &&
+                        (reminded ? (
+                          <span className="shrink-0 inline-flex items-center gap-1 text-xs text-success-700">
+                            <Check size={12} /> Reminded
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleRemind(u)}
+                            disabled={remindingId !== null}
+                            className="shrink-0 p-1.5 rounded-control text-slate-400 hover:text-brand-700 hover:bg-brand-50 disabled:opacity-40 disabled:pointer-events-none"
+                            title={`Send ${u.name} a WhatsApp reminder`}
+                            aria-label={`Remind ${u.name}`}
+                          >
+                            {remindingId === u.id ? (
+                              <span className="text-xs">…</span>
+                            ) : (
+                              <BellRing size={14} />
+                            )}
+                          </button>
+                        ))}
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </aside>

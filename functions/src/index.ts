@@ -14,7 +14,7 @@ admin.initializeApp();
 
 export * from './auth';
 export { onMemberCreated, sendTaskReminder } from './notifications';
-export { sendDailyUpdateReminder } from './dailyUpdates';
+export { sendDailyUpdateReminder, remindDailyUpdate } from './dailyUpdates';
 
 const RECURRING_TYPES = [
   'daily',

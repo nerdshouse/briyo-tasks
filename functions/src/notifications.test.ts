@@ -15,7 +15,11 @@ import {
   cooldownRemainingMs,
   REMINDER_COOLDOWN_MS,
 } from './notifications';
-import { pickDailyUpdateReminderRecipients, buildDailyUpdateReminderParams } from './dailyUpdates';
+import {
+  pickDailyUpdateReminderRecipients,
+  buildDailyUpdateReminderParams,
+  dailyUpdateReminderSkipReason,
+} from './dailyUpdates';
 
 test('firstNameOf takes the first word, trimmed', () => {
   assert.equal(firstNameOf('Axit Mehta'), 'Axit');
@@ -121,4 +125,16 @@ test('buildDailyUpdateReminderParams returns [firstName, DD-MMM-YYYY]', () => {
 
 test('daily update reminder button points at the Daily Updates page', () => {
   assert.equal(WHATSAPP_BUTTON_VALUES.dailyUpdateReminder, 'daily-updates');
+});
+
+test('dailyUpdateReminderSkipReason explains each skip', () => {
+  const absences = [{ user_id: 'e', from_date: '2026-10-20', to_date: '2026-10-23' }];
+  const submitted = new Set(['b']);
+  const reason = (m: { id: string; name: string; phone?: string; approved?: boolean }) =>
+    dailyUpdateReminderSkipReason(m, submitted, absences, '2026-10-22');
+  assert.equal(reason({ id: 'a', name: 'A', phone: '9876543210' }), null);
+  assert.equal(reason({ id: 'b', name: 'B', phone: '9876543211' }), 'submitted');
+  assert.equal(reason({ id: 'c', name: 'C', phone: ' ' }), 'no_phone');
+  assert.equal(reason({ id: 'd', name: 'D', phone: '9876543212', approved: false }), 'unapproved');
+  assert.equal(reason({ id: 'e', name: 'E', phone: '9876543213' }), 'absent');
 });

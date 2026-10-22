@@ -148,6 +148,16 @@ export interface DailyUpdate {
   updated_at: string;
 }
 
+export interface DailyUpdateReminderResult {
+  sent: string[];
+  /** Already reminded within the cooldown window. */
+  cooldown: string[];
+  failed: string[];
+  skipped: { id: string; reason: 'no_phone' | 'unapproved' | 'submitted' | 'absent' }[];
+  aborted: boolean;
+  cooldownMs: number;
+}
+
 export interface RemovalRequest {
   id: string;
   task_id: string;
