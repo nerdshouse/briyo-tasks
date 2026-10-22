@@ -10,6 +10,7 @@ const node_test_1 = require("node:test");
 const assert = require("node:assert/strict");
 const whatsappTemplates_1 = require("./whatsappTemplates");
 const notifications_1 = require("./notifications");
+const dailyUpdates_1 = require("./dailyUpdates");
 (0, node_test_1.test)('firstNameOf takes the first word, trimmed', () => {
     assert.equal((0, notifications_1.firstNameOf)('Axit Mehta'), 'Axit');
     assert.equal((0, notifications_1.firstNameOf)('  Priya   Sharma Patel '), 'Priya');
@@ -78,4 +79,26 @@ const notifications_1 = require("./notifications");
 (0, node_test_1.test)('cooldown: one millisecond before the boundary still blocks', () => {
     const now = 1000000000000;
     assert.equal((0, notifications_1.cooldownRemainingMs)(now - notifications_1.REMINDER_COOLDOWN_MS + 1, now), 1);
+});
+(0, node_test_1.test)('pickDailyUpdateReminderRecipients skips submitted, absent, unapproved and phoneless members', () => {
+    const members = [
+        { id: 'a', name: 'Asha', phone: '9876543210' },
+        { id: 'b', name: 'Bhavin', phone: '9876543211' },
+        { id: 'c', name: 'Chirag', phone: '' },
+        { id: 'd', name: 'Dev', phone: '9876543212', approved: false },
+        { id: 'e', name: 'Esha', phone: '9876543213' },
+        { id: 'f', name: 'Farah', phone: '9876543214' },
+    ];
+    const absences = [
+        { user_id: 'e', from_date: '2026-10-20', to_date: '2026-10-23' },
+        { user_id: 'f', from_date: '2026-10-23', to_date: '2026-10-25' },
+    ];
+    const picked = (0, dailyUpdates_1.pickDailyUpdateReminderRecipients)(members, new Set(['b']), absences, '2026-10-22');
+    assert.deepEqual(picked.map((m) => m.id), ['a', 'f']);
+});
+(0, node_test_1.test)('buildDailyUpdateReminderParams returns [firstName, DD-MMM-YYYY]', () => {
+    assert.deepEqual((0, dailyUpdates_1.buildDailyUpdateReminderParams)('Axit Mehta', '2026-10-22'), ['Axit', '22-Oct-2026']);
+});
+(0, node_test_1.test)('daily update reminder button points at the Daily Updates page', () => {
+    assert.equal(whatsappTemplates_1.WHATSAPP_BUTTON_VALUES.dailyUpdateReminder, 'daily-updates');
 });

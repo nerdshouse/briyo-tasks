@@ -11,6 +11,9 @@ exports.COLLECTIONS = {
     RECURRING_TASKS: 'recurring_tasks',
     PASSWORD_RESET_OTPS: 'password_reset_otps',
     RATE_LIMITS: 'rate_limits',
+    HOLIDAYS: 'holidays',
+    ABSENCES: 'absences',
+    DAILY_UPDATES: 'daily_updates',
 };
 /** Normalize phone to 11za format: country code + number, no + or spaces */
 function normalizePhone(phone) {

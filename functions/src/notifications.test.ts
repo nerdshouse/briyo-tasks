@@ -15,6 +15,7 @@ import {
   cooldownRemainingMs,
   REMINDER_COOLDOWN_MS,
 } from './notifications';
+import { pickDailyUpdateReminderRecipients, buildDailyUpdateReminderParams } from './dailyUpdates';
 
 test('firstNameOf takes the first word, trimmed', () => {
   assert.equal(firstNameOf('Axit Mehta'), 'Axit');
@@ -95,4 +96,29 @@ test('cooldown: expired exactly at and after the 4h boundary', () => {
 test('cooldown: one millisecond before the boundary still blocks', () => {
   const now = 1_000_000_000_000;
   assert.equal(cooldownRemainingMs(now - REMINDER_COOLDOWN_MS + 1, now), 1);
+});
+
+test('pickDailyUpdateReminderRecipients skips submitted, absent, unapproved and phoneless members', () => {
+  const members = [
+    { id: 'a', name: 'Asha', phone: '9876543210' },
+    { id: 'b', name: 'Bhavin', phone: '9876543211' },
+    { id: 'c', name: 'Chirag', phone: '' },
+    { id: 'd', name: 'Dev', phone: '9876543212', approved: false },
+    { id: 'e', name: 'Esha', phone: '9876543213' },
+    { id: 'f', name: 'Farah', phone: '9876543214' },
+  ];
+  const absences = [
+    { user_id: 'e', from_date: '2026-10-20', to_date: '2026-10-23' },
+    { user_id: 'f', from_date: '2026-10-23', to_date: '2026-10-25' },
+  ];
+  const picked = pickDailyUpdateReminderRecipients(members, new Set(['b']), absences, '2026-10-22');
+  assert.deepEqual(picked.map((m) => m.id), ['a', 'f']);
+});
+
+test('buildDailyUpdateReminderParams returns [firstName, DD-MMM-YYYY]', () => {
+  assert.deepEqual(buildDailyUpdateReminderParams('Axit Mehta', '2026-10-22'), ['Axit', '22-Oct-2026']);
+});
+
+test('daily update reminder button points at the Daily Updates page', () => {
+  assert.equal(WHATSAPP_BUTTON_VALUES.dailyUpdateReminder, 'daily-updates');
 });
